@@ -5,7 +5,7 @@
 """
 import numpy as np
 
-from .persistence_algebra import barcode_basis
+from .barcode_bases import barcode_basis
 
 from .image_kernel import image_kernel
 

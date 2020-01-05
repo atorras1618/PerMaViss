@@ -1,9 +1,5 @@
 """
-    persistence_algebra.py
-
-    This module implements algebra functions for working with:
-    -Barcode basis
-    -Persistence vectors
+    barcode_bases.py
 
 """
 import numpy as np
@@ -13,32 +9,51 @@ import matplotlib.pyplot as plt
 class barcode_basis(object):
     """
         This class implements barcode bases.
+    
+        Barcode bases are assumed to be well defined, that is:
+            -They are linearly independent with respect to boxplus operation
+            -They generate the respective module or submodule.
+        There is the exception of broken barcode bases, which come up
+        when solving the extension problem. 
+        There are a few general functions, followed by more specific functions
+        used by image_kernel.py and spectral_sequence.py
+            
     """
     def __init__(self, bars, prev_basis=None, coordinates=np.array([[]]), store_well_defined=False, 
                  broken_basis=False, broken_differentials=None):
         """
-            TO DO: change *coord for optional arguments
-            Sorting is done outside, mainly because in some cases we
-            need not to sort the result. A case is when we perform the quotient.
-            Initialize barcode basis. 
-            Order barcodes as well.
+            Associated bars and coordinates are given for some barcode base. 
+            We assume that this is well defined as a basis. 
             Each coordinate is stored in a column, whereas bars are stored on rows.  
+            This generates a barcode basis with all the input data. 
             INPUT:
                 - bars: list of pairs specifiying birth and death radius of barcode.
-                - prev_basis : reference to a previously defined barcode basis
+                - prev_basis : reference to a previously defined barcode basis. 
+                                This will be the basis in which the coordinates are given. 
                 - coordinates : cooridnates of this basis in terms of prev_basis
                 - store_well_defined : store the indices of well defined bars.
-                - broken_basis: whether the barcode basis is broken. i.e. it is not really a barcode basis.
+                    That is, whether we wish to store indices of bars where the 
+                    birth radius is strictly smaller than the death radius. 
+                - broken_basis: whether the barcode basis is broken. 
+                               i.e. it is not natural.
                 - broken_differentials: a np.array containing the broken differentials.
+                        These give coefficients of a barcode generator in term of other
+                        generators. This is used when the given generator dies, and we 
+                        write it in terms of other generators that are still alive. 
+            OUTPUT:
+                - Generates a barcode basis object. 
         """
         # When the basis is broken, the death_differentials must be given as an np.array
         if broken_basis and type(broken_differentials) != type(np.array([])):
             raise ValueError
 
         self.broken_basis = broken_basis
+
+        # Store given data  
         self.barcode = np.copy(bars)
         self.prev_basis = prev_basis
         self.coordinates = coordinates
+        # Assume the barcode basis is not sorted 
         self.sorted = False
         # Take out trivial bars and also bad defined bars
         if len(bars)==0:
@@ -218,19 +233,19 @@ class barcode_basis(object):
         
         return A
 
-
-barcode = [[1,2],[1,4],[-0.25,5] ,[0.1,1]]
-bas = barcode_basis(barcode)
-order = bas.sort(send_order=True)
-assert np.array_equal(order[np.argsort(order)],range(4))
-assert np.array_equal(np.array([[-0.25,5.],[ 0.1,1.],[1.,4.],[1.,2.]]), bas.barcode)
-assert np.array_equal(bas.active(1.1),np.array([0,2,3]))
-assert np.array_equal(bas.active(1.1, start=2),np.array([0,1]))
-assert np.array_equal(bas.trans_active_coord([0,1,1],1.2), np.array([0,0,1,1]))
-assert np.array_equal(bas.death(4), np.array([2]))
-assert np.array_equal(bas.death(4,start=2), np.array([0]))
-assert bas.birth_radius(np.array([1,1,0,0])) == -0.25
-assert bas.death_radius(np.array([1,1,0,1])) == 5
-assert np.array_equal(bas.changes_list(), np.array([-0.25, 0.1, 1, 2, 4, 5]))
+# # Basic tests for barcode_bases
+# barcode = [[1,2],[1,4],[-0.25,5] ,[0.1,1]]
+# bas = barcode_basis(barcode)
+# order = bas.sort(send_order=True)
+# assert np.array_equal(order[np.argsort(order)],range(4))
+# assert np.array_equal(np.array([[-0.25,5.],[ 0.1,1.],[1.,4.],[1.,2.]]), bas.barcode)
+# assert np.array_equal(bas.active(1.1),np.array([0,2,3]))
+# assert np.array_equal(bas.active(1.1, start=2),np.array([0,1]))
+# assert np.array_equal(bas.trans_active_coord([0,1,1],1.2), np.array([0,0,1,1]))
+# assert np.array_equal(bas.death(4), np.array([2]))
+# assert np.array_equal(bas.death(4,start=2), np.array([0]))
+# assert bas.birth_radius(np.array([1,1,0,0])) == -0.25
+# assert bas.death_radius(np.array([1,1,0,1])) == 5
+# assert np.array_equal(bas.changes_list(), np.array([-0.25, 0.1, 1, 2, 4, 5]))
 
         

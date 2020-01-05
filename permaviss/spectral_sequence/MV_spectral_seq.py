@@ -21,7 +21,7 @@ from ..simplicial_complexes.vietoris_rips import vietoris_rips
 from ..persistence_algebra.PH_classic import persistent_homology
 from ..persistence_algebra.image_kernel import image_kernel
 from ..persistence_algebra.module_persistence_homology import module_persistence_homology
-from ..persistence_algebra.persistence_algebra import barcode_basis
+from ..persistence_algebra.barcode_bases import barcode_basis
 
 from ..gauss_mod_p.gauss_mod_p import gauss_col
 

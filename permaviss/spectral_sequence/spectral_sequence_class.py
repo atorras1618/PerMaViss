@@ -11,7 +11,7 @@
 """
 import numpy as np
 
-from ..persistence_algebra.persistence_algebra import barcode_basis
+from ..persistence_algebra.barcode_bases import barcode_basis
 from ..simplicial_complexes.differentials import complex_differentials
 from ..gauss_mod_p.functions import solve_mod_p, solve_matrix_mod_p, multiply_mod_p
 

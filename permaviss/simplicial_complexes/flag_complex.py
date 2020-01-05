@@ -64,7 +64,7 @@ def flag_complex(graph, no_vertices, max_dim):
                 simplices = np.ones((np.size(N), 1 + np.size(simplex)))
                 simplices = np.multiply(np.append([1],simplex), simplices)
                 simplices[:,0] = N
-                if fl_cpx[d+1] != []:
+                if type(fl_cpx[d+1]) != type([]):
                     fl_cpx[d+1] = np.append(fl_cpx[d + 1], simplices, 0)
                 else:
                     fl_cpx[d + 1] = simplices

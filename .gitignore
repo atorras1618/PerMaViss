@@ -1,2 +1,7 @@
 # Python3 dev files
 __pycache__
+.cache
+*.egg-info
+setup.cfg
+.pytest_cache
+.ipynb_checkpoints

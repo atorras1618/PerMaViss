@@ -6,7 +6,7 @@
 """
 import numpy as np
 
-from .persistence_algebra import *
+from .barcode_bases import *
 
 from ..gauss_mod_p import gauss_mod_p
 from ..gauss_mod_p.functions import multiply_mod_p 

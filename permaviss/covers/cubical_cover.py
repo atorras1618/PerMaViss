@@ -6,7 +6,7 @@ from ..simplicial_complexes import flag_complex as flCpx
 ###############################################################################
 # Jump to next hypercube in cover
 
-def _next_hypercube(pos,div):
+def next_hypercube(pos,div):
     """
     How to advance to the next hypercube taking into acount
     the divisions list div.
@@ -40,7 +40,7 @@ def generate_cover(max_div, overlap, point_cloud):
     #get the dimension of our dataset
     dim = np.size(point_cloud, 1)
     #Find the 'corners' of the dataset
-    min_corner, max_corner = _corners_hypercube(point_cloud)
+    min_corner, max_corner = corners_hypercube(point_cloud)
     #Find the largest coordinate difference between min_corner and max_corner
     max_length = np.amax(np.absolute(max_corner - min_corner))
 
@@ -100,10 +100,10 @@ def generate_cover(max_div, overlap, point_cloud):
         divided_point_cloud[i] = np.array(divided_point_cloud[i])
         points_IN[i] = np.array(points_IN[i])
         # advance position of hypercube
-        _next_hypercube(pos, div)  
+        next_hypercube(pos, div)  
 
     # Compute nerve of the cover
-    nerve = _nerve_hypercube_cover(div)
+    nerve = nerve_hypercube_cover(div)
 
     # Compute the point cloud and IN for each simplex in Nerve
     # Return this information so that the function spectral_sequence has less work to do
@@ -126,7 +126,7 @@ def generate_cover(max_div, overlap, point_cloud):
 ###############################################################################
 # Background functions supporting generate_cover
 
-def _corners_hypercube(point_cloud):
+def corners_hypercube(point_cloud):
     """
     This takes a point cloud and returns the minimum and maximum corners
     of the hypercube containing them.
@@ -141,15 +141,10 @@ def _corners_hypercube(point_cloud):
 
     return min_corner, max_corner
 
-assert np.array_equal(np.array([[0,-1,-0.5],[2,1,1]]), np.array(
-        _corners_hypercube(np.array([[0,0,0],[0,-1,1],[1,1,0], [2,1,-0.5]]))))
-assert np.array_equal(np.array([[0,-10],[1,1]]), np.array(
-            _corners_hypercube(np.array([[0,0],[1,1], [1,-10], [0.5,0.5]]))))
-
 ###############################################################################
 # Generate the nerve of an hypercube covering
 
-def _nerve_hypercube_cover(div):
+def nerve_hypercube_cover(div):
     """
     Given an array of divisions of an hypercube cover, this generates the nerve.
     INPUT:
@@ -198,7 +193,7 @@ def _nerve_hypercube_cover(div):
                         neighbour_step[-k-1]=-1
                     break
         
-        _next_hypercube(pos, div) 
+        next_hypercube(pos, div) 
  
     return flCpx.flag_complex(nerve_graph, number_hypercubes, 2**dim)    
 
@@ -223,47 +218,3 @@ def _intersection_covers(points_IN,  simplex):
 
     return points_IN_intersection
 
-###############################################################################
-# Determine whether a point is part of a cover element
-
-# def _membership_points(point_cloud, min_corner, max_corner, div, overlap, side):
-#     """
-#     This takes a point cloud, together with the enclosing hypercube and
-#     the number of divisions we want to perform. Taking into account an
-#     overlap, we return an array detailing to which hypercubes each point
-#     belongs to.
-#     INPUT:
-#         - point_cloud: np.array[number points, dim],
-#         - min_corner, max_corner: np.arrays[dim], corners of hypercube.
-#         - div: np.array[dim], number of divisions per dimension.
-#     OUTPUT:
-#         - list_simplices: np.array[num_points, *]
-#     """
-#     assert overlap > side, f"Overlap is too big."
-# 
-#     dim = point_cloud.shape[1]
-#     regions = []
-#     for d in range(dim):
-#         regions.append(np.linspace(min_corner[d], max_corner[d],
-#                        num=div[d] + 1)[1:])
-# 
-#     regions = np.asarray(regions)
-#     list_simplices = []
-#     for pt in point_cloud:
-#         simplex = np.array([0])
-#         for d in range(dim-1, -1, -1):
-#             pos = np.argmax(pt[d] < regions[d] + (overlap / 2))
-#             step = np.prod(div[d+1:])
-#             simplex = simplex + step * pos
-#             if (pos > 0) and (pt[d] < regions[d][pos-1] + (overlap / 2)):
-#                 simplex = np.concatenate((simplex - step, simplex), axis=0)
-#             if (pos < div[d]-1) and (pt[d] > regions[d][pos] - (overlap / 2)):
-#                 simplex = np.concatenate((simplex, simplex + step), axis=0)
-# 
-#         list_simplices.append(simplex)
-# 
-#     return np.asarray(list_simplices)
-# 
-#assert np.array_equal(np.array([[0], [0,2], [2], [1], [0,1,2,3]]),
-#                      _membership_points(np.array([[0,0], [1,0], [2,0], [0,2],
-#                                        [1,1]]), [0,0], [2,2], [2,2], 0.5, 1))
