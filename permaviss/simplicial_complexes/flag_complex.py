@@ -72,7 +72,3 @@ def flag_complex(graph, no_vertices, max_dim):
 
     return fl_cpx
 
-# graph = [[1,2],[0,1],[0,2],[0,3],[2,3], [1,3]]
-# for c in flag_complex(graph, 4, 4):
-#     print(c)
-

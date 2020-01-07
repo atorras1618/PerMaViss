@@ -18,8 +18,6 @@ def add_mod_c(a, b, c):
     s = a + b
     return s % c
 
-assert add_mod_c(4,3,5)==2
-
 
 def add_arrays_mod_c(A, B, c):
     """
@@ -42,10 +40,6 @@ def add_arrays_mod_c(A, B, c):
     
     return C
 
-A1 = np.array([1,2,3])
-B1 = np.array([4,0,4])
-C1 = np.array([2,2,1])
-assert np.array_equal(add_arrays_mod_c(A1, B1, 3), C1)
 
 ###############################################################################
 # Inverse mod p
@@ -73,7 +67,4 @@ def inv_mod_p(a, p):
     if x0 < 0:
         x0 = x0 + p
     return x0
-
-assert inv_mod_p(2,7) == 4 
-assert inv_mod_p(9,5) == 4
 

@@ -16,15 +16,6 @@ def multiply_mod_p( A, B, p):
     """
     return np.matmul(A,B) % p
 
-A = np.array([[2,3],[4,5]])
-B = np.array([[1,1],[2,3]])
-assert np.array_equal(multiply_mod_p(A,B,5),np.array([[3,1],[4,4]]))
-A = np.array([[1,0],[1,1]])
-B = np.array([[1,1],[0,1]])
-assert np.array_equal(multiply_mod_p(A,B,2),np.array([[1,1],[1,0]]))
-A = np.array([[1,1,1],[0,1,1],[0,0,1]])
-B = np.array([1,1,1])
-assert np.array_equal(multiply_mod_p(A,B,5),np.array([3,2,1]))
 
 #################################################################################
 # solve_mod_p
@@ -49,17 +40,6 @@ def solve_mod_p(A, b, p):
     # Return last column from T without the last row
     return -T[:,-1][:-1] % p
 
-# Test 1
-A = np.array(
-[[ 1.,  1.,  1.,  0.],
- [ 0.,  4.,  0.,  1.],
- [ 0.,  0.,  4.,  0.],
- [ 0.,  0.,  0.,  4.]])
-b = np.array([ 0.,  0.,  1.,  4.])
-p = 5
-solution = solve_mod_p(A,b,p)
-correct_sol = np.array([0,1,4,1])
-assert np.allclose(solution, correct_sol, rtol=1e-05, atol=1e-08)
 
 ###############################################################################
 # solve_matrix_mod_p
@@ -87,16 +67,3 @@ def solve_matrix_mod_p(A, B, p):
     # Return matrix X
     return - T[:, np.size(A,1):][:np.size(A,1)] % p
 
-# Test 1
-A = np.array(
-[[ 1.,  1.,  1.,  0.],
- [ 0.,  4.,  0.,  1.],
- [ 0.,  0.,  4.,  0.],
- [ 0.,  0.,  0.,  4.]])
-B = np.array([[ 0.,  0.,  1.,  4.],
-              [ 4.,  0.,  0.,  3.]])
-p = 5
-solution = solve_matrix_mod_p(A,B,p)
-correct_sol = np.array([[0,1,4,1],
-                        [2,2,0,2]]).T
-assert np.allclose(solution, correct_sol, rtol=1e-05, atol=1e-08)

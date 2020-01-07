@@ -3,7 +3,6 @@
 """
 
 import numpy as np
-import scipy.spatial.distance as dist # this module computes distance matrices and compressed distance matrices
 
 def _lower_neighbours(G, u):
     """
@@ -96,7 +95,3 @@ def vietoris_rips(Dist, max_r, max_dim):
  
     return C, R
 
-X = np.array([
-    [0,0],[1,0],[0,1],[1,1]])
-Dist = dist.squareform(dist.pdist(X))
-C , R= vietoris_rips(Dist, 4,4)
