@@ -6,7 +6,7 @@
 """
 import numpy as np
 
-from .barcode_bases import *
+from .barcode_bases import barcode_basis
 
 from ..gauss_mod_p import gauss_mod_p
 from ..gauss_mod_p.functions import multiply_mod_p 
@@ -16,12 +16,15 @@ from ..gauss_mod_p.functions import multiply_mod_p
 
 def _pivot(l):
     """ 
-    Given a 1D array of integers, return the index of the last nonzero entry.  
-    Returns -1 if the list is zero.  
-    INPUT: 
-    -l: list on integers. 
-    OUTPUT: 
-    -index of last nonzero entry. 
+    Parameters
+    ---------- 
+    l : :obj:`list(int)` 
+        List of integers to compute pivot from.  
+
+    Returns
+    ------- 
+    int 
+        Index of last nonzero entry on `l`. Returns -1 if the list is zero.
     """ 
     l_bool = np.nonzero(l) 
     if len(l_bool[0]) > 0: 
@@ -40,6 +43,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     """
     This computes basis for the image and kernel of a persistence morphism.
         f: A --> B
+
     It can also compute relative barcode bases for the image and kernel. The optional argument
     start_index indicates the minimum index from which we want to compute barcodes
     relative to the previous generators. That is, given start_index, the function will return 
@@ -52,19 +56,33 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     the barcodes are sorted according to the standard order of barcodes.
     Also, this handles the case for when B is a broken barcode basis. 
     Notice that in such a case, only the barcode basis of the imate will be computed
-    INPUT:
-    -A: barcode basis of domain.  
-    -B: barcode basis of range.  This can be a broken barcode basis.
-    -F: matrix associated to the considered persistence morphism.
-    -p: prime number of finite field.
-    -start_index: (default=0) index from which we get a barcode basis for the image.
-    -prev_basis:(default=None) if the start_index > 0, we need to also give a reference to a basis
-            of barcodes from A[start_dim] until A[A.dim].
-    OUTPUT:
-    -Ker: absolute/relative basis of kernel of f.
-    -Im: absolute/relative basis of image of f.
-    -PreIm: absolute/relative preimage coordinates of f. That is, each column stores the
-            sums that generate the corresponding Image barcode. 
+
+    Parameters
+    ----------
+    A : :class:`barcode_basis` object
+        Basis of domain.  
+    B : :class:`barcode_basis` object
+        Basis of range.  This can be a `broken` barcode basis.
+    F : Numpy Array (`B`.dim, `A`.dim)
+        Matrix associated to the considered persistence morphism.
+    p : int
+        prime number of finite field.
+    start_index : int, default is 0
+        Index from which we get a barcode basis for the image.
+    prev_basis : int, default is None
+        If  `start_index` > 0, we need to also give a reference to a basis
+        of barcodes from A[start_dim] until A[A.dim].
+   
+    Returns
+    ------- 
+    Ker : :class:`barcode_basis` object
+        Absolute/relative basis of kernel of f.
+    Im : :class:`barcode_basis` object
+        Absolute/relative basis of image of f.
+    PreIm : Numpy Array (A.dim, Im.dim)
+        Absolute/relative preimage coordinates of f. That is, each column stores the
+        sums that generate the corresponding Image barcode. 
+
     """
     # If the basis B is not ordered, we order it
     B_origin = B

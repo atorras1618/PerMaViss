@@ -23,14 +23,29 @@ def multiply_mod_p( A, B, p):
 
 def solve_mod_p(A, b, p):
     """
+    Find the vector x such that A * x = b (mod p)
+
     This method assumes that a solution exists to the equation A * x = b (mod p)
     If a solution does not exist, it raises a ValueError exception.  
-    INPUT:
-    -A: 2D numpy.array 
-    -b: 1D numpy.array
-    -p: prime number
-    OUTPUT:
-    -x: 1D numpy.array
+
+    Parameters
+    ----------
+    A : :obj:`Numpy Array` 
+        2D array
+    b : :obj:`Numpy Array`
+        1D array
+    p : int(prime) 
+        Number to mod out by. 
+
+    Returns
+    -------
+    x : :obj:`Numpy Array`
+        1D array. Solution to equation.
+
+    Raises
+    ------
+    ValueError
+        If a solution to the equation does not exist. 
     """
     R, T = gauss_col(np.append(A, np.array([b]).T , axis=1), p)
     if np.any(R[:,-1]):
@@ -50,14 +65,28 @@ def solve_mod_p(A, b, p):
 #
 def solve_matrix_mod_p(A, B, p):
     """
-    This method assumes that a solution exists to the matrix equation A * X = B (mod p)
-    If a solution does not exist, it raises a ValueError exception.  
-    INPUT:
-    -A: 2D numpy.array 
-    -B: 2D numpy.array
-    -p: prime number
-    OUTPUT:
-    -X: 2D numpy.array
+    Same as :meth:`solve_mod_p`, but with B and X being matrices. 
+
+    That is, given two matrices A and B, we want to find a matrix X
+    such that A * X = B (mod p)
+
+    Parameters
+    ----------
+    A : :obj:`Numpy Array`
+        2D array 
+    B : :obj:`Numpy Array`
+        2D array
+    p : int(prime) 
+
+    Returns
+    -------
+    X : :obj:`Numpy Array`
+        2D array solution. 
+    
+    Raises
+    ------
+    ValueError
+        There is no solution to the given equation
     """
     R, T = gauss_col(np.append(A, B.T , axis=1), p)
     if np.any(R[:, np.size(A,1):]):

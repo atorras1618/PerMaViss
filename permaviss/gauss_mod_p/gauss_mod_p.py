@@ -1,7 +1,7 @@
 """
     gauss_mod_p.py
 
-    This module implements gaussian elimination mod a prime number p.
+    This module implements gaussian elimination by columns modulo a prime number p.
 """
 import numpy as np
 from .arithmetic_mod_p import *
@@ -10,13 +10,17 @@ from .arithmetic_mod_p import *
 # Index searching function    
 
 def _index_pivot(l):
-    """
-    Given a 1D array of integers, return the index of the last nonzero entry. 
-    Returns -1 if the list is zero. 
-    INPUT:
-    -l: list on integers.
-    OUTPUT:
-    -index of last nonzero entry.
+    """Returns the pivot of a 1D array
+
+    Parameters
+    ---------- 
+    l : :obj:`list(int)` 
+        List of integers to compute pivot from.  
+
+    Returns
+    ------- 
+    int 
+        Index of last nonzero entry on `l`. Returns -1 if the list is zero.
     """
     l_bool = np.nonzero(l)
     if len(l_bool[0]) > 0:
@@ -31,14 +35,24 @@ assert _index_pivot(np.array([0,0,0]))==-1
 # Gaussian elimination procedure 
 
 def gauss_col(A, p):
-    """
-    This function implements the gaussian elimination by columns. 
-    INPUT:
-    -A: matrix to be reduced
-    -p: prime number. The corresponding field will be Z mod p.
-    OUTPUT:
-    -R: reduced matrix by left to right column additions. 
-    -T: matrix recording additions performed, so that AT = R
+    """This function implements the gaussian elimination by columns. 
+
+    A is reduced by left to right column additions. The reduced matrix has
+    unique column pivots.
+
+    Parameters
+    ----------
+    A : :obj:`Numpy Array`
+        Matrix to be reduced
+    p : `int(prime)`
+        Prime number. The corresponding field will be Z mod p.
+
+    Returns
+    -------
+    R : :obj:`Numpy Array`
+        Reduced matrix by left to right column additions. 
+    T : :obj:`Numpy Array`
+        Matrix recording additions performed, so that AT = R
     """
     if np.size(A,0) == 0:
         return np.array([]), np.array([])

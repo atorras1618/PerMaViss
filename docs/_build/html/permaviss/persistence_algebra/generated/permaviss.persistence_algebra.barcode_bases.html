@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>permaviss.persistence_algebra.barcode_bases &mdash; PerMaViss 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="permaviss.persistence_algebra.image_kernel" href="permaviss.persistence_algebra.image_kernel.html" />
+    <link rel="prev" title="permaviss.persistence_algebra.PH_classic" href="permaviss.persistence_algebra.PH_classic.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PerMaViss
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">permaviss.persistence_algebra</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="permaviss.persistence_algebra.PH_classic.html">permaviss.persistence_algebra.PH_classic</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">permaviss.persistence_algebra.barcode_bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="permaviss.persistence_algebra.image_kernel.html">permaviss.persistence_algebra.image_kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="permaviss.persistence_algebra.module_persistence_homology.html">permaviss.persistence_algebra.module_persistence_homology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../gauss_mod_p/index.html">permaviss.gauss_mod_p</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sample_point_clouds/index.html">permaviss.sample_point_clouds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simplicial_complexes/index.html">permaviss.simplicial_complexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../covers/index.html">permaviss.covers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spectral_sequence/index.html">permaviss.spectral_sequence</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PerMaViss</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">permaviss.persistence_algebra</a> &raquo;</li>
+        
+      <li>permaviss.persistence_algebra.barcode_bases</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/permaviss/persistence_algebra/generated/permaviss.persistence_algebra.barcode_bases.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-permaviss.persistence_algebra.barcode_bases">
+<span id="permaviss-persistence-algebra-barcode-bases"></span><h1>permaviss.persistence_algebra.barcode_bases<a class="headerlink" href="#module-permaviss.persistence_algebra.barcode_bases" title="Permalink to this headline">¶</a></h1>
+<p>barcode_bases.py</p>
+<p class="rubric">Classes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis" title="permaviss.persistence_algebra.barcode_bases.barcode_basis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barcode_basis</span></code></a>(bars[, prev_basis, …])</p></td>
+<td><p>This class implements barcode bases.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis">
+<em class="property">class </em><code class="sig-prename descclassname">permaviss.persistence_algebra.barcode_bases.</code><code class="sig-name descname">barcode_basis</code><span class="sig-paren">(</span><em class="sig-param">bars</em>, <em class="sig-param">prev_basis=None</em>, <em class="sig-param">coordinates=array([]</em>, <em class="sig-param">shape=(1</em>, <em class="sig-param">0)</em>, <em class="sig-param">dtype=float64)</em>, <em class="sig-param">store_well_defined=False</em>, <em class="sig-param">broken_basis=False</em>, <em class="sig-param">broken_differentials=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class implements barcode bases.</p>
+<p>Associated bars and coordinates are given for some barcode base.
+Each coordinate is stored in a column, whereas bars are stored on rows.
+This generates a barcode basis with all the input data.
+There is the exception of broken barcode bases, which come up
+when solving the extension problem.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Barcode bases are assumed to be well defined in the sense that:</p>
+<blockquote>
+<div><p>1)They are linearly independent with respect to boxplus operation</p>
+<p>2)They generate the respective module or submodule.</p>
+</div></blockquote>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bars</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">Array</span> <span class="pre">(dim,</span> <span class="pre">2)</span></code>) – Each entry is a pair specifiying birth and death radius of a bar.</p></li>
+<li><p><strong>prev_basis</strong> (reference to a previously defined <a class="reference internal" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis" title="permaviss.persistence_algebra.barcode_bases.barcode_basis"><code class="xref py py-class docutils literal notranslate"><span class="pre">barcode_basis</span></code></a> object.) – This will be the basis in which the coordinates are given.</p></li>
+<li><p><strong>coordinates</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">Array</span> <span class="pre">(dim,</span> <span class="pre">prev_basis.dim)</span></code>) – Cooridnates of this basis in terms of <cite>prev_basis</cite></p></li>
+<li><p><strong>store_well_defined</strong> (bool, default is <cite>False</cite>) – Whether we want to store the indices of well defined bars.
+That is, whether we wish to store indices of bars where the
+birth radius is strictly smaller than the death radius.</p></li>
+<li><p><strong>broken_basis</strong> (bool, default is <cite>False</cite>) – Whether the barcode basis is <cite>broken</cite>. This appears when solving
+the extension problem. A barcode base is <cite>broken</cite> when it is not natural.</p></li>
+<li><p><strong>broken_differentials</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">Array</span> <span class="pre">(dim,</span> <span class="pre">dim)</span></code>) – Matrix of broken differentials.
+These give coefficients of a barcode generator in term of other
+generators. This is used when the given generator dies, and we
+write it in terms of other generators that are still alive.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis" title="permaviss.persistence_algebra.barcode_bases.barcode_basis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barcode_basis</span></code></a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <cite>prev_coord.dim</cite> is different to the number of rows in <cite>coordinates</cite></p></li>
+<li><p><strong>ValueError</strong> – If the number of rows in <cite>bar</cite> is different to the number of columns in <cite>coordinates</cite>.</p></li>
+<li><p><strong>ValueError</strong> – If <cite>broken_basis = True</cite> but <cite>broken_differentials</cite> is not given.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.__str__">
+<code class="sig-name descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Printing function for barcode bases.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.active">
+<code class="sig-name descname">active</code><span class="sig-paren">(</span><em class="sig-param">rad</em>, <em class="sig-param">start=0</em>, <em class="sig-param">end=-1</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.active"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.active" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns array with active indices at rad.
+Option to restrict to generators from start to self.dim</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.birth_radius">
+<code class="sig-name descname">birth_radius</code><span class="sig-paren">(</span><em class="sig-param">coordinates</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.birth_radius"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.birth_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>This finds the birth radius of a list of coordinates.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.changes_list">
+<code class="sig-name descname">changes_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.changes_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.changes_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array with the values of changes occouring in the basis.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.death">
+<code class="sig-name descname">death</code><span class="sig-paren">(</span><em class="sig-param">rad</em>, <em class="sig-param">start=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.death"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.death" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array with the indices dying at rad.
+These indices are relative to the optional argument start.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.death_radius">
+<code class="sig-name descname">death_radius</code><span class="sig-paren">(</span><em class="sig-param">coordinates</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.death_radius"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.death_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the death radius of given coordinates.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.sort">
+<code class="sig-name descname">sort</code><span class="sig-paren">(</span><em class="sig-param">precision=7</em>, <em class="sig-param">send_order=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.sort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sorts a barcode basis according to the standard order.
+That is, from smaller birth radius to biger, and from
+biger death radius to smaller.
+A precision up to n zeros is an optional argument.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.trans_active_coord">
+<code class="sig-name descname">trans_active_coord</code><span class="sig-paren">(</span><em class="sig-param">coord</em>, <em class="sig-param">rad</em>, <em class="sig-param">start=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.trans_active_coord"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.trans_active_coord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given coordinates on the active generators.
+Obtain coordinates in the whole basis.
+This also can be done with coordinates starting from start to self.dim</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.persistence_algebra.barcode_bases.barcode_basis.update_broken">
+<code class="sig-name descname">update_broken</code><span class="sig-paren">(</span><em class="sig-param">A</em>, <em class="sig-param">rad</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/persistence_algebra/barcode_bases.html#barcode_basis.update_broken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.persistence_algebra.barcode_bases.barcode_basis.update_broken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates a matrix A, using the broken differentials of the generators dying at rad.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">Array</span></code>) – columns represent coordinates in the barcode_basis.</p></li>
+<li><p><strong>rad</strong> (<em>float</em>) – Radius at which we want to update the coordinates using the broken_differentials.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>A</strong> – return updated matrix</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">Array</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="permaviss.persistence_algebra.image_kernel.html" class="btn btn-neutral float-right" title="permaviss.persistence_algebra.image_kernel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="permaviss.persistence_algebra.PH_classic.html" class="btn btn-neutral float-left" title="permaviss.persistence_algebra.PH_classic" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Alvaro Torras Casas
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

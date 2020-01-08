@@ -1,0 +1,397 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>permaviss.spectral_sequence.spectral_sequence_class &mdash; PerMaViss 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="prev" title="permaviss.spectral_sequence.MV_spectral_seq" href="permaviss.spectral_sequence.MV_spectral_seq.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PerMaViss
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../persistence_algebra/index.html">permaviss.persistence_algebra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gauss_mod_p/index.html">permaviss.gauss_mod_p</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sample_point_clouds/index.html">permaviss.sample_point_clouds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simplicial_complexes/index.html">permaviss.simplicial_complexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../covers/index.html">permaviss.covers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">permaviss.spectral_sequence</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="permaviss.spectral_sequence.MV_spectral_seq.html">permaviss.spectral_sequence.MV_spectral_seq</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">permaviss.spectral_sequence.spectral_sequence_class</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PerMaViss</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">permaviss.spectral_sequence</a> &raquo;</li>
+        
+      <li>permaviss.spectral_sequence.spectral_sequence_class</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-permaviss.spectral_sequence.spectral_sequence_class">
+<span id="permaviss-spectral-sequence-spectral-sequence-class"></span><h1>permaviss.spectral_sequence.spectral_sequence_class<a class="headerlink" href="#module-permaviss.spectral_sequence.spectral_sequence_class" title="Permalink to this headline">¶</a></h1>
+<p>spectral_sequence_class.py</p>
+<p>This module will implement barcode basis systems for spectral sequences.
+These will be used in order to suppport the spectral sequence logic.
+In particular, dimensions for each position will be stored for each page
+of the spectral sequence.
+This will include a method for translating a vector to zero page and
+backwards to current page.</p>
+<p class="rubric">Classes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence" title="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spectral_sequence</span></code></a>(nerve, nerve_point_cloud, …)</p></td>
+<td><p># __init__ # zig_zag # load_to_zero_page # cech_differential # lift_to_page # lift_preimage # extension</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence">
+<em class="property">class </em><code class="sig-prename descclassname">permaviss.spectral_sequence.spectral_sequence_class.</code><code class="sig-name descname">spectral_sequence</code><span class="sig-paren">(</span><em class="sig-param">nerve</em>, <em class="sig-param">nerve_point_cloud</em>, <em class="sig-param">points_IN</em>, <em class="sig-param">max_dim</em>, <em class="sig-param">max_r</em>, <em class="sig-param">no_pages</em>, <em class="sig-param">p</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p># __init__
+# zig_zag
+# load_to_zero_page
+# cech_differential
+# lift_to_page
+# lift_preimage
+# extension</p>
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.cech_differential">
+<code class="sig-name descname">cech_differential</code><span class="sig-paren">(</span><em class="sig-param">start_coordinates</em>, <em class="sig-param">n_dim</em>, <em class="sig-param">deg</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.cech_differential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.cech_differential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the Cech Differential on start_coordinates
+INPUT:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>n_dim, deg : current position in double complex.</p></li>
+<li><p>start_coordinates: list of coordiantes on zero page</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><ul class="simple">
+<li><p>target_coordinates: list containing the image of Cech Differential</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.extension">
+<code class="sig-name descname">extension</code><span class="sig-paren">(</span><em class="sig-param">start_n_dim</em>, <em class="sig-param">start_deg</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.extension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.extension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate extension block matrices for given n_dim and deg
+INPUT:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>-start_n_dim, start_deg: position on spectral sequence where we want</dt><dd><p>to compute the extensions of the contained barcodes.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><p>-extensions: list containing matrix blocks of extensions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.image_coordinates">
+<code class="sig-name descname">image_coordinates</code><span class="sig-paren">(</span><em class="sig-param">start_coordinates</em>, <em class="sig-param">R</em>, <em class="sig-param">n_dim</em>, <em class="sig-param">deg</em>, <em class="sig-param">target_page</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.image_coordinates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.image_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lifts 0 page expression to target_page.
+Then, assuming that this lies on the image of the spectral sequence
+differential, it computes the coordinates on the image basis.
+INPUT:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>start_coordinates: coordinates on zero page for several barcodes</p></li>
+<li><p>R: initial radius of barcodes</p></li>
+<li><p>n_dim, deg: position in spectral sequence</p></li>
+<li><p>target_page: page of spectral sequence at which we want to solve the image equation.</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><ul class="simple">
+<li><p>image_coordinates: start_coordinates classes in target_page written in terms of image of differential.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.lift_preimage">
+<code class="sig-name descname">lift_preimage</code><span class="sig-paren">(</span><em class="sig-param">start_coordinates</em>, <em class="sig-param">R</em>, <em class="sig-param">n_dim</em>, <em class="sig-param">deg</em>, <em class="sig-param">sign=-1</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.lift_preimage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.lift_preimage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a zero page element, we lift it using the vertical differentials.
+Additionally, we multiply the lift by -1 mod self.p
+In this method we assume that this can be done.
+INPUT:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>start_coordinates: list of dictionaries on zero page</p></li>
+<li><p>R: list of birth radius of start_coordinates</p></li>
+<li><p>n_dim, deg: position on spectral sequence</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><ul class="simple">
+<li><p>lifted_coordinates: lifted sum on position (n_dim, deg+1)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.lift_to_page">
+<code class="sig-name descname">lift_to_page</code><span class="sig-paren">(</span><em class="sig-param">start_coordinates</em>, <em class="sig-param">R</em>, <em class="sig-param">n_dim</em>, <em class="sig-param">deg</em>, <em class="sig-param">target_page</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.lift_to_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.lift_to_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lifts some zero page element to a target page.
+INPUT:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>start_coordinates: list of dictionary pairs on zero page</p></li>
+<li><p>R: list of radius at which we want to lift</p></li>
+<li><p>n_dim, deg: position on page</p></li>
+<li><p>target_page: where we want to lift this sum</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>target_coordinates: lifted start_coordinates to target page</dt><dd><p>Target coordinates are in rows.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.load_to_zero_page">
+<code class="sig-name descname">load_to_zero_page</code><span class="sig-paren">(</span><em class="sig-param">initial_sum</em>, <em class="sig-param">n_dim</em>, <em class="sig-param">deg</em>, <em class="sig-param">current_page</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.load_to_zero_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.load_to_zero_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an expression on the nth page of the spectral sequence, we pick a
+representative on the 0th page and return it.
+INPUT:</p>
+<blockquote>
+<div><p>-initial_sum: expression to load to zero page. Coordinates for each element are on the columns.
+-n_dim, deg: position and number in page
+-current_page: page where we start
+-Hom: barcode basis for homology</p>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><p>-target_coordinates: List of coordinates in zero page.
+-R: inital radius of each bar.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.vert_image">
+<code class="sig-name descname">vert_image</code><span class="sig-paren">(</span><em class="sig-param">initial_sum</em>, <em class="sig-param">n_dim</em>, <em class="sig-param">deg</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.vert_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.vert_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an expression on zero page, computes the image under the vertical differentials.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.zig_zag">
+<code class="sig-name descname">zig_zag</code><span class="sig-paren">(</span><em class="sig-param">n_dim</em>, <em class="sig-param">deg</em>, <em class="sig-param">current_page</em>, <em class="sig-param">lift_sum=True</em>, <em class="sig-param">initial_sum=[]</em>, <em class="sig-param">store_reps=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/permaviss/spectral_sequence/spectral_sequence_class.html#spectral_sequence.zig_zag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.zig_zag" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will take an expression on the nth page of the spectral sequence.
+It then computes its image under the nth differential and returns it.
+INPUT:</p>
+<blockquote>
+<div><p>-n_dim, deg: position on the page.
+-current_page: n, number of page where we are.
+-lift_sum (default True): whether we return a lifted sum on current_page or</p>
+<blockquote>
+<div><p>we return an expresion on the 0 page instead.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>-initial_sum (default identity(see below)): expression for which we want to compute zig-zag</dt><dd><p>Coordinates come as columns.</p>
+</dd>
+</dl>
+<p>-store_reps (default False): whether we want to store total complex representatives.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>OUTPUT:</dt><dd><p>target_coordinates: image of start_coordinates under the current_page differential.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="permaviss.spectral_sequence.MV_spectral_seq.html" class="btn btn-neutral float-left" title="permaviss.spectral_sequence.MV_spectral_seq" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Alvaro Torras Casas
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

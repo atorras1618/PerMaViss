@@ -1,0 +1,557 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>permaviss.covers.cubical_cover &mdash; PerMaViss 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PerMaViss
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/persistence_algebra/index.html">permaviss.persistence_algebra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/gauss_mod_p/index.html">permaviss.gauss_mod_p</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/sample_point_clouds/index.html">permaviss.sample_point_clouds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/simplicial_complexes/index.html">permaviss.simplicial_complexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/covers/index.html">permaviss.covers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/spectral_sequence/index.html">permaviss.spectral_sequence</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PerMaViss</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>permaviss.covers.cubical_cover</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for permaviss.covers.cubical_cover</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">..simplicial_complexes</span> <span class="k">import</span> <span class="n">flag_complex</span> <span class="k">as</span> <span class="n">flCpx</span>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># Jump to next hypercube in cover</span>
+
+<div class="viewcode-block" id="next_hypercube"><a class="viewcode-back" href="../../../permaviss/covers/generated/permaviss.covers.cubical_cover.html#permaviss.covers.cubical_cover.next_hypercube">[docs]</a><span class="k">def</span> <span class="nf">next_hypercube</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span><span class="n">div</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Jumps to next hypercube in cubical cover</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pos : :obj:`list`</span>
+<span class="sd">        List of integer values specifying the position of the current hypercube.</span>
+<span class="sd">        This is edited to the next hypercube</span>
+
+<span class="sd">    div : :obj:`list`</span>
+<span class="sd">        List of integer values specifying how many hypercubes divide each dimension.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">        &gt;&gt;&gt; pos = [1,1,1]</span>
+<span class="sd">        &gt;&gt;&gt; div = [3,3,2]</span>
+<span class="sd">        &gt;&gt;&gt; next_hypercube(pos, div)</span>
+<span class="sd">        &gt;&gt;&gt; pos</span>
+<span class="sd">        [1, 2, 0]</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">pos</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">div</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">pos</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                <span class="n">pos</span><span class="p">[</span><span class="o">-</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span>
+            <span class="k">break</span></div>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># Generate cubical cover of a point cloud</span>
+
+<div class="viewcode-block" id="generate_cover"><a class="viewcode-back" href="../../../permaviss/covers/generated/permaviss.covers.cubical_cover.html#permaviss.covers.cubical_cover.generate_cover">[docs]</a><span class="k">def</span> <span class="nf">generate_cover</span><span class="p">(</span><span class="n">max_div</span><span class="p">,</span> <span class="n">overlap</span><span class="p">,</span> <span class="n">point_cloud</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Divides a point cloud into a cubical cover.</span>
+
+<span class="sd">    Receives a point cloud point_cloud in R^n and returns it divided into cubes</span>
+<span class="sd">    and their respective intersections. It also generates the nerve of the covering.</span>
+<span class="sd">    </span>
+<span class="sd">    Paramters</span>
+<span class="sd">    ---------</span>
+<span class="sd">    max_div : int</span>
+<span class="sd">        Number of divisions on the maximum side of point_cloud</span>
+<span class="sd">    overlap : float</span>
+<span class="sd">        Overlap between adjacent hypercubes.</span>
+<span class="sd">    point_cloud : :obj:`Numpy Array`</span>
+<span class="sd">        Each row contains the coordinates of a point</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    divided_point_cloud : :obj:`list(list(Numpy Array 2D))` </span>
+<span class="sd">        Point cloud coordinates indexed by nerve. The ith entry contains the </span>
+<span class="sd">        point cloud coordinates indexed by the ith simplices of the nerve. That is, </span>
+<span class="sd">        the first entry contains the coordinates contained in hypercubes. The second entry</span>
+<span class="sd">        the coordinates of points in double intersections of hypercubes. And so on.</span>
+<span class="sd">    points_IN : :obj:`list(list(Numpy Array 1D))` </span>
+<span class="sd">        Identification Numbers (IN) of points in regions indexed by nerve.</span>
+<span class="sd">        That is, this is the same as `divided_point_cloud` but storing IN instead</span>
+<span class="sd">        of coordinates.  </span>
+<span class="sd">    nerve : :obj:`list(Numpy Array)`</span>
+<span class="sd">        The nerve of the hypercube cover.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">        &gt;&gt;&gt; point_cloud = circle(5, 1)</span>
+<span class="sd">        &gt;&gt;&gt; max_div = 2</span>
+<span class="sd">        &gt;&gt;&gt; overlap = 0.5</span>
+<span class="sd">        &gt;&gt;&gt; divided_point_cloud, points_IN, nerve = generate_cover(max_div, overlap, point_cloud)</span>
+<span class="sd">        &gt;&gt;&gt; divided_point_cloud[0]</span>
+<span class="sd">        [array([[-0.80901699, -0.58778525],</span>
+<span class="sd">               [ 0.30901699, -0.95105652]]), array([[ 0.30901699,  0.95105652],</span>
+<span class="sd">               [-0.80901699,  0.58778525]]), array([[ 1.        ,  0.        ],</span>
+<span class="sd">               [ 0.30901699, -0.95105652]]), array([[ 1.        ,  0.        ],</span>
+<span class="sd">               [ 0.30901699,  0.95105652]])]</span>
+<span class="sd">        &gt;&gt;&gt; divided_point_cloud[1]</span>
+<span class="sd">        [array([], shape=(0, 2), dtype=float64), array([[ 0.30901699, -0.95105652]]), array([], shape=(0, 2), dtype=float64), array([], shape=(0, 2), dtype=float64), array([[ 0.30901699,  0.95105652]]), array([[ 1.,  0.]])]</span>
+<span class="sd">        &gt;&gt;&gt; points_IN[0]</span>
+<span class="sd">        [array([3, 4]), array([1, 2]), array([0, 4]), array([0, 1])]</span>
+<span class="sd">        &gt;&gt;&gt; points_IN[1]</span>
+<span class="sd">        [array([], dtype=float64), array([4]), array([], dtype=float64), array([], dtype=float64), array([1]), array([0])]</span>
+<span class="sd">        &gt;&gt;&gt; nerve[0]</span>
+<span class="sd">        4</span>
+<span class="sd">        &gt;&gt;&gt; nerve[1]</span>
+<span class="sd">        array([[ 0.,  1.],</span>
+<span class="sd">               [ 0.,  2.],</span>
+<span class="sd">               [ 1.,  2.],</span>
+<span class="sd">               [ 0.,  3.],</span>
+<span class="sd">               [ 1.,  3.],</span>
+<span class="sd">               [ 2.,  3.]])</span>
+<span class="sd">        &gt;&gt;&gt; nerve[2]</span>
+<span class="sd">        array([[ 0.,  1.,  2.],</span>
+<span class="sd">               [ 0.,  1.,  3.],</span>
+<span class="sd">               [ 0.,  2.,  3.],</span>
+<span class="sd">               [ 1.,  2.,  3.]])</span>
+<span class="sd">        &gt;&gt;&gt; nerve[3]</span>
+<span class="sd">        array([[ 0.,  1.,  2.,  3.]])</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#get the dimension of our dataset</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1">#Find the &#39;corners&#39; of the dataset</span>
+    <span class="n">min_corner</span><span class="p">,</span> <span class="n">max_corner</span> <span class="o">=</span> <span class="n">corners_hypercube</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">)</span>
+    <span class="c1">#Find the largest coordinate difference between min_corner and max_corner</span>
+    <span class="n">max_length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">max_corner</span> <span class="o">-</span> <span class="n">min_corner</span><span class="p">))</span>
+
+    <span class="n">side</span> <span class="o">=</span> <span class="n">max_length</span> <span class="o">/</span> <span class="n">max_div</span>  <span class="c1"># side of division hypercubes</span>
+    <span class="n">number_hypercubes</span> <span class="o">=</span> <span class="mi">1</span> 
+    <span class="n">div</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list containing no of divisions per dimension</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list containing current position</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+        <span class="n">div</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">max_corner</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">-</span> <span class="n">min_corner</span><span class="p">[</span><span class="n">d</span><span class="p">])</span> <span class="o">/</span> <span class="n">side</span><span class="p">))</span>
+        <span class="n">number_hypercubes</span> <span class="o">*=</span> <span class="n">div</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>  <span class="c1"># compute total number of hypercubes</span>
+        <span class="n">pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># initialize position list to zero</span>
+
+    <span class="n">divided_point_cloud</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">points_IN</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_hypercubes</span><span class="p">):</span>
+        <span class="n">divided_point_cloud</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+        <span class="n">points_IN</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Now we assign points to each division hypercube.</span>
+<span class="sd">    Also we compute the underlying graph of the nerve.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">neighbour_graph</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># dist: distance from the center of an hypercube to a face</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">overlap</span> <span class="o">/</span> <span class="mf">2.</span> <span class="o">+</span> <span class="n">side</span> <span class="o">/</span> <span class="mf">2.</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_hypercubes</span><span class="p">):</span>
+        <span class="c1">#Find two corners and center point of small hypercube</span>
+        <span class="n">lcor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">min_corner</span><span class="p">)</span>      <span class="c1"># lower corner</span>
+        <span class="n">ucor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">min_corner</span><span class="p">)</span>      <span class="c1"># upper corner</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">min_corner</span><span class="p">)</span>    <span class="c1"># center point</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+            <span class="n">lcor</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">+=</span> <span class="n">side</span> <span class="o">*</span> <span class="n">pos</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+            <span class="n">ucor</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">+=</span> <span class="n">side</span> <span class="o">*</span> <span class="n">pos</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+            <span class="n">center</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">+=</span> <span class="n">side</span> <span class="o">*</span> <span class="n">pos</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">+</span> <span class="n">side</span> <span class="o">/</span> <span class="mf">2.</span>
+            <span class="n">lcor</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dist</span> <span class="o">-</span> <span class="n">side</span> <span class="o">/</span> <span class="mf">2.</span>
+            <span class="n">ucor</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dist</span> <span class="o">+</span> <span class="n">side</span> <span class="o">/</span> <span class="mf">2.</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Include points in divided_point_cloud[i] if they lie on this hypercube</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">idx_pt</span><span class="p">,</span> <span class="n">pt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">):</span>
+            <span class="n">in_hypercube</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># assume the point lies on the hypercube</span>
+            <span class="sd">&quot;&quot;&quot;Now we check whether x lies really on the hypercube&quot;&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">lcor</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">pt</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                    <span class="n">in_hypercube</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">break</span>
+                <span class="k">if</span> <span class="n">ucor</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">pt</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                    <span class="n">in_hypercube</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">break</span>
+            <span class="sd">&quot;&quot;&quot;If x is in hypercube we include it&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">in_hypercube</span><span class="p">:</span>
+                <span class="n">divided_point_cloud</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+                <span class="n">points_IN</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx_pt</span><span class="p">)</span>
+
+        <span class="n">divided_point_cloud</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">divided_point_cloud</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">points_IN</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">points_IN</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="c1"># advance position of hypercube</span>
+        <span class="n">next_hypercube</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">div</span><span class="p">)</span>  
+
+    <span class="c1"># Compute nerve of the cover</span>
+    <span class="n">nerve</span> <span class="o">=</span> <span class="n">nerve_hypercube_cover</span><span class="p">(</span><span class="n">div</span><span class="p">)</span>
+
+    <span class="c1"># Compute the point cloud and IN for each simplex in Nerve</span>
+    <span class="c1"># Return this information so that the function spectral_sequence has less work to do</span>
+    <span class="c1"># This can be parallelized</span>
+    <span class="n">nerve_point_cloud</span> <span class="o">=</span> <span class="p">[</span><span class="n">divided_point_cloud</span><span class="p">]</span>
+    <span class="n">nerve_points_IN</span> <span class="o">=</span> <span class="p">[</span><span class="n">points_IN</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">k_simplices_nerve</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nerve</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="n">nerve_point_cloud</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+        <span class="n">nerve_points_IN</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">simplex</span> <span class="ow">in</span> <span class="n">k_simplices_nerve</span><span class="p">:</span>
+            <span class="n">points_IN_intersection</span> <span class="o">=</span> <span class="n">intersection_covers</span><span class="p">(</span><span class="n">points_IN</span><span class="p">,</span> <span class="n">simplex</span><span class="p">)</span>
+            <span class="n">points_coord_intersection</span> <span class="o">=</span> <span class="n">point_cloud</span><span class="p">[</span><span class="n">points_IN_intersection</span><span class="p">]</span>
+            <span class="n">nerve_points_IN</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">points_IN_intersection</span><span class="p">))</span>
+            <span class="n">nerve_point_cloud</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">points_coord_intersection</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">nerve_point_cloud</span><span class="p">,</span> <span class="n">nerve_points_IN</span><span class="p">,</span> <span class="n">nerve</span></div>
+
+
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># Background functions supporting generate_cover</span>
+
+<div class="viewcode-block" id="corners_hypercube"><a class="viewcode-back" href="../../../permaviss/covers/generated/permaviss.covers.cubical_cover.html#permaviss.covers.cubical_cover.corners_hypercube">[docs]</a><span class="k">def</span> <span class="nf">corners_hypercube</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns maximum and minimum corners of hypercube containing point_cloud.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    point_cloud : :obj:`Numpy Array`</span>
+<span class="sd">        Coordinates of point data. Each row corresponds to a point.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    min_corner, max_corner : :obj:`Numpy Array`, :obj:`Numpy Array`</span>
+<span class="sd">        Minimum and maximum corners of containing hypercube.</span>
+<span class="sd">    </span>
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">        &gt;&gt;&gt; from permaviss.sample_point_clouds.examples import random_cube</span>
+<span class="sd">        &gt;&gt;&gt; point_cloud = random_cube(5,2)</span>
+<span class="sd">        &gt;&gt;&gt; point_cloud</span>
+<span class="sd">        array([[-0.30392908, -0.40559307],</span>
+<span class="sd">               [ 0.4736051 , -0.28257937],</span>
+<span class="sd">               [-0.41760472, -0.30445089],</span>
+<span class="sd">               [-0.02406966,  0.001455  ],</span>
+<span class="sd">               [-0.28425041, -0.11212227]])</span>
+<span class="sd">        &gt;&gt;&gt; min_corner, max_corner = corners_hypercube(point_cloud)</span>
+<span class="sd">        &gt;&gt;&gt; min_corner</span>
+<span class="sd">        array([-0.41760472, -0.40559307])</span>
+<span class="sd">        &gt;&gt;&gt; max_corner</span>
+<span class="sd">        array([ 0.4736051,  0.001455 ])</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">min_corner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">max_corner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">min_corner</span><span class="p">,</span> <span class="n">max_corner</span></div>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># Generate the nerve of an hypercube covering</span>
+
+<div class="viewcode-block" id="nerve_hypercube_cover"><a class="viewcode-back" href="../../../permaviss/covers/generated/permaviss.covers.cubical_cover.html#permaviss.covers.cubical_cover.nerve_hypercube_cover">[docs]</a><span class="k">def</span> <span class="nf">nerve_hypercube_cover</span><span class="p">(</span><span class="n">div</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates the nerve of an hypercube covering.</span>
+<span class="sd">    </span>
+<span class="sd">    Given an array of divisions of an hypercube cover, this returns the nerve.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    div : :obj:`Numpy Array`</span>
+<span class="sd">        1D array of divisions per dimension.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nerve : :obj:`list(Numpy Array)` </span>
+<span class="sd">        Nerve associated to hypercube covering.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    ------- </span>
+<span class="sd">    Nerve for three dimensional covering. There are 6 hypercubes and the divisions</span>
+<span class="sd">    per dimension are given as 1 x 3 x 2.</span>
+<span class="sd">        &gt;&gt;&gt; div = [1,3,2]</span>
+<span class="sd">        &gt;&gt;&gt; nerve = nerve_hypercube_cover(div)</span>
+<span class="sd">        &gt;&gt;&gt; nerve[0]</span>
+<span class="sd">        6</span>
+<span class="sd">        &gt;&gt;&gt; nerve[1]</span>
+<span class="sd">        array([[ 0.,  1.],</span>
+<span class="sd">               [ 0.,  2.],</span>
+<span class="sd">               [ 1.,  2.],</span>
+<span class="sd">               [ 0.,  3.],</span>
+<span class="sd">               [ 1.,  3.],</span>
+<span class="sd">               [ 2.,  3.],</span>
+<span class="sd">               [ 2.,  4.],</span>
+<span class="sd">               [ 3.,  4.],</span>
+<span class="sd">               [ 2.,  5.],</span>
+<span class="sd">               [ 3.,  5.],</span>
+<span class="sd">               [ 4.,  5.]])</span>
+<span class="sd">        &gt;&gt;&gt; nerve[2]</span>
+<span class="sd">        array([[ 0.,  1.,  2.],</span>
+<span class="sd">               [ 0.,  1.,  3.],</span>
+<span class="sd">               [ 0.,  2.,  3.],</span>
+<span class="sd">               [ 1.,  2.,  3.],</span>
+<span class="sd">               [ 2.,  3.,  4.],</span>
+<span class="sd">               [ 2.,  3.,  5.],</span>
+<span class="sd">               [ 2.,  4.,  5.],</span>
+<span class="sd">               [ 3.,  4.,  5.]])</span>
+<span class="sd">        &gt;&gt;&gt; nerve[3]</span>
+<span class="sd">        array([[ 0.,  1.,  2.,  3.],</span>
+<span class="sd">               [ 2.,  3.,  4.,  5.]])</span>
+<span class="sd">        &gt;&gt;&gt; nerve[4]</span>
+<span class="sd">        []</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">div</span><span class="p">)</span>
+    <span class="c1"># compute number of hypercubes</span>
+    <span class="n">number_hypercubes</span> <span class="o">=</span> <span class="mi">1</span> 
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+        <span class="n">number_hypercubes</span> <span class="o">*=</span> <span class="n">div</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>  
+
+    <span class="n">nerve_graph</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">current_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_hypercubes</span><span class="p">):</span>
+        <span class="n">neighbour_step</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="c1"># step on current position to neighbour</span>
+        <span class="c1"># Add all the edges to the neighbour graph</span>
+        <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">neighbour_step</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)):</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># this step tracks how much we need to move the index for each coordinate</span>
+            <span class="c1"># Initialize and compute the index of the neighbour</span>
+            <span class="n">neighbour_index</span> <span class="o">=</span> <span class="n">current_index</span>  <span class="c1"># initialize the lower index</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+                <span class="c1"># if the hypercube is not a neighbour pass</span>
+                <span class="k">if</span> <span class="p">(</span>
+                        <span class="p">((</span><span class="n">pos</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">neighbour_step</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="ow">or</span>
+                        <span class="p">((</span><span class="n">pos</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">div</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">neighbour_step</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))):</span>
+                    <span class="n">neighbour_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                    <span class="k">break</span>
+
+                <span class="n">neighbour_index</span> <span class="o">+=</span> <span class="n">neighbour_step</span><span class="p">[</span><span class="o">-</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">step</span>  <span class="c1"># update lower index</span>
+                <span class="n">step</span> <span class="o">*=</span> <span class="n">div</span><span class="p">[</span><span class="o">-</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># increase coordinate step</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">neighbour_index</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="n">neighbour_index</span><span class="p">,</span> <span class="n">current_index</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nerve_graph</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                    Include edge (index_neighbour,index_current) to the nerve graph</span>
+<span class="sd">                    Only do this whenever this makes sense and the edge is not in the nerve already</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">nerve_graph</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="n">neighbour_index</span><span class="p">,</span> <span class="n">current_index</span><span class="p">]))</span>
+
+            <span class="c1"># advance to next neigbhour step</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">neighbour_step</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">neighbour_step</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                        <span class="n">neighbour_step</span><span class="p">[</span><span class="o">-</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">=-</span><span class="mi">1</span>
+                    <span class="k">break</span>
+        
+        <span class="n">next_hypercube</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">div</span><span class="p">)</span> 
+ 
+    <span class="k">return</span> <span class="n">flCpx</span><span class="o">.</span><span class="n">flag_complex</span><span class="p">(</span><span class="n">nerve_graph</span><span class="p">,</span> <span class="n">number_hypercubes</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="n">dim</span><span class="p">)</span>    </div>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># Compute the common points on the interesection determined by simplex</span>
+
+<div class="viewcode-block" id="intersection_covers"><a class="viewcode-back" href="../../../permaviss/covers/generated/permaviss.covers.cubical_cover.html#permaviss.covers.cubical_cover.intersection_covers">[docs]</a><span class="k">def</span> <span class="nf">intersection_covers</span><span class="p">(</span><span class="n">points_IN</span><span class="p">,</span>  <span class="n">simplex</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes the points in the intersection specified by a nerve simplex.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points_IN : :obj:`list(list(Numpy Array 1D))` </span>
+<span class="sd">        Identification Numbers (IN) of points in covering hypercubes.</span>
+<span class="sd">    simplex : :obj:`Numpy Array`</span>
+<span class="sd">        Simplex in nerve which specifies intersection between hypercubes. </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    points_IN_intersection : :obj:`list(int)`</span>
+<span class="sd">        IN of points in the intersection specified by simplex</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">        &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">        &gt;&gt;&gt; points_IN = [np.array([0,3,5]),np.array([0,1]),np.array([1,5])]</span>
+<span class="sd">        &gt;&gt;&gt; simplex = np.array([0,1])</span>
+<span class="sd">        &gt;&gt;&gt; intersection_covers(points_IN, simplex)</span>
+<span class="sd">        [0]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points_IN_intersection</span> <span class="o">=</span> <span class="n">points_IN</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">simplex</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">simplex</span><span class="p">)):</span>
+        <span class="n">points_IN_intersection</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">idx_pt</span> <span class="k">for</span> <span class="n">idx_pt</span> <span class="ow">in</span> <span class="n">points_IN_intersection</span>
+                <span class="k">if</span> <span class="n">idx_pt</span> <span class="ow">in</span> <span class="n">points_IN</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">simplex</span><span class="p">[</span><span class="n">k</span><span class="p">])]]</span>
+
+    <span class="k">return</span> <span class="n">points_IN_intersection</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Alvaro Torras Casas
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

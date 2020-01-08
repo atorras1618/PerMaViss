@@ -1,0 +1,930 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>permaviss.spectral_sequence.spectral_sequence_class &mdash; PerMaViss 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PerMaViss
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/persistence_algebra/index.html">permaviss.persistence_algebra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/gauss_mod_p/index.html">permaviss.gauss_mod_p</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/sample_point_clouds/index.html">permaviss.sample_point_clouds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/simplicial_complexes/index.html">permaviss.simplicial_complexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/covers/index.html">permaviss.covers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/spectral_sequence/index.html">permaviss.spectral_sequence</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PerMaViss</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>permaviss.spectral_sequence.spectral_sequence_class</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for permaviss.spectral_sequence.spectral_sequence_class</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    spectral_sequence_class.py</span>
+<span class="sd">    </span>
+<span class="sd">    This module will implement barcode basis systems for spectral sequences.  </span>
+<span class="sd">    These will be used in order to suppport the spectral sequence logic. </span>
+<span class="sd">    In particular, dimensions for each position will be stored for each page</span>
+<span class="sd">    of the spectral sequence. </span>
+<span class="sd">    This will include a method for translating a vector to zero page and</span>
+<span class="sd">    backwards to current page. </span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">..persistence_algebra.barcode_bases</span> <span class="k">import</span> <span class="n">barcode_basis</span>
+<span class="kn">from</span> <span class="nn">..simplicial_complexes.differentials</span> <span class="k">import</span> <span class="n">complex_differentials</span>
+<span class="kn">from</span> <span class="nn">..gauss_mod_p.functions</span> <span class="k">import</span> <span class="n">solve_mod_p</span><span class="p">,</span> <span class="n">solve_matrix_mod_p</span><span class="p">,</span> <span class="n">multiply_mod_p</span>
+
+<div class="viewcode-block" id="spectral_sequence"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence">[docs]</a><span class="k">class</span> <span class="nc">spectral_sequence</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        # __init__</span>
+<span class="sd">        # zig_zag</span>
+<span class="sd">        # load_to_zero_page </span>
+<span class="sd">        # cech_differential </span>
+<span class="sd">        # lift_to_page</span>
+<span class="sd">        # lift_preimage</span>
+<span class="sd">        # extension</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nerve</span><span class="p">,</span> <span class="n">nerve_point_cloud</span><span class="p">,</span> <span class="n">points_IN</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">,</span> <span class="n">max_r</span><span class="p">,</span> <span class="n">no_pages</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This saves enough space for the spectral sequence.</span>
+<span class="sd">        Perhaps add subcomplexes and differentials into here. </span>
+<span class="sd">        Add a vector thay would translate local coordinates to global</span>
+<span class="sd">        and the other way round.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># dimensions of spectral sequence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_pages</span> <span class="o">=</span> <span class="n">no_pages</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span> <span class="o">=</span> <span class="n">max_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nerve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_r</span> <span class="o">=</span> <span class="n">max_r</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="c1"># add nerve_point_cloud to spectral_sequence info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nerve_point_cloud</span> <span class="o">=</span> <span class="n">nerve_point_cloud</span>
+        <span class="c1"># add points IN to support Cech Differential</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points_IN</span> <span class="o">=</span> <span class="n">points_IN</span>
+        <span class="c1"># add nerve and compute nerve differentials</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nerve</span> <span class="o">=</span> <span class="n">nerve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nerve_differentials</span> <span class="o">=</span> <span class="n">complex_differentials</span><span class="p">(</span><span class="n">nerve</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="c1"># list containing barcode bases for Hom, Im and PreIm</span>
+        <span class="c1"># Hom and Im go through all pages, whereas </span>
+        <span class="c1"># PreIm is only contained in the 0 page</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span> <span class="o">=</span> <span class="p">[[]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Im</span> <span class="o">=</span> <span class="p">[[]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span> <span class="o">=</span> <span class="p">[[]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">differentials</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># vectors that translate local indices to global</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_coord</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nerve</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">differentials</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+        
+        
+        <span class="c1"># make lists to store information in higher pages</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">no_pages</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+        
+        <span class="c1"># save space for dimension matrices for all pages</span>
+        <span class="c1"># the order of variables is for easier printing of the spectral sequence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">no_pages</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="c1"># Save space for extension matrices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension_matrices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extension_matrices</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+            <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">extension_matrices</span><span class="p">[</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+        
+        <span class="c1"># define persistent homology and order of diagonal basis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persistent_homology</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order_diagonal_basis</span> <span class="o">=</span> <span class="p">[]</span>
+        
+            
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># add content to first page</span>
+        
+    <span class="k">def</span> <span class="nf">add_output_first</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">it</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">output</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">differentials</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">it</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">output</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">it</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">output</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">it</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">output</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">it</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">output</span><span class="p">]</span>
+
+        <span class="c1"># Number of simplices in nerve[n_dim]</span>
+        <span class="k">if</span> <span class="n">n_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">n_spx_number</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nerve</span><span class="p">[</span><span class="n">n_dim</span><span class="p">],</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_spx_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nerve</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># add this to check that the level of intersection is not empty.</span>
+        <span class="c1"># otherwise we might run out of index range</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+                <span class="n">no_cycles</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="c1"># cumulative dimensions</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_spx_number</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_spx_number</span><span class="p">):</span>
+                    <span class="c1"># Generate page dim matrix and local_coordinates info</span>
+                    <span class="n">cycles_in_cover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span>
+                    <span class="n">no_cycles</span> <span class="o">+=</span> <span class="n">cycles_in_cover</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">no_cycles</span>
+                <span class="c1"># end for</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">no_cycles</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end if</span>
+        
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># double complex check</span>
+
+    <span class="k">def</span> <span class="nf">double_complex_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;checking vertical diff&quot;</span><span class="p">)</span>
+        <span class="c1"># check that complex is a double complex</span>
+        <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span><span class="p">):</span>
+            <span class="c1"># check for vertical differential</span>
+            <span class="k">if</span> <span class="n">n_dim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rk_nerve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nerve</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rk_nerve</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nerve</span><span class="p">[</span><span class="n">n_dim</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">nerv_spx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rk_nerve</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+                    <span class="n">zero_coordinates</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">coord_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">]))</span>
+                    <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">])):</span>
+                        <span class="n">zero_coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">nerv_spx</span> <span class="p">:</span> <span class="n">coord_matrix</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]})</span>
+                    <span class="c1"># end for</span>
+                    <span class="n">im_vert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vert_image</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="n">im_vert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vert_image</span><span class="p">(</span><span class="n">im_vert</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">im_vert</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">n</span><span class="p">]):</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;vertical not differentials&quot;</span><span class="p">)</span>
+                                <span class="k">raise</span> <span class="ne">RuntimeError</span>
+                            <span class="c1"># end if</span>
+                        <span class="c1"># end for</span>
+                    <span class="c1"># end for</span>
+                <span class="c1"># end for</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;checking Cech diff&quot;</span><span class="p">)</span>
+        <span class="c1"># check for Cech differentials</span>
+        <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">nerv_spx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nerve</span><span class="p">[</span><span class="n">n_dim</span><span class="p">])):</span>
+                    <span class="n">zero_coordinates</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">if</span> <span class="n">deg</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">no_simplexes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">no_simplexes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">])</span>
+                    <span class="n">coord_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">no_simplexes</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">no_simplexes</span><span class="p">):</span>
+                        <span class="n">zero_coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">nerv_spx</span> <span class="p">:</span> <span class="n">coord_matrix</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]})</span>
+                    <span class="c1"># end for</span>
+                    <span class="n">cech_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="n">cech_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">cech_diff</span><span class="p">,</span> <span class="n">n_dim</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cech_diff</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">n</span><span class="p">]):</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cech differentials not differentials&quot;</span><span class="p">)</span>
+                                <span class="k">raise</span> <span class="ne">RuntimeError</span>
+                            <span class="c1"># end if</span>
+                        <span class="c1"># end for</span>
+                    <span class="c1"># end for</span>
+                <span class="c1"># end for</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;checking anticommutativity&quot;</span><span class="p">)</span>
+        <span class="c1"># check for anticommutativity</span>
+        <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_columns</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">nerv_spx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nerve</span><span class="p">[</span><span class="n">n_dim</span><span class="p">])):</span>
+                <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span> 
+                    <span class="n">zero_coordinates</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">coord_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">]))</span>
+                    <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">])):</span>
+                        <span class="n">zero_coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">nerv_spx</span> <span class="p">:</span> <span class="n">coord_matrix</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]})</span>
+                    <span class="c1"># end for</span>
+                    <span class="n">im_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="n">im_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vert_image</span><span class="p">(</span><span class="n">im_left</span><span class="p">,</span> <span class="n">n_dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="n">im_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vert_image</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="n">im_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">im_right</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">im_left</span><span class="p">):</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">_add_dictionaries</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">coord</span><span class="p">,</span> <span class="n">im_right</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">n</span><span class="p">]):</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;n_dim:</span><span class="si">{}</span><span class="s2">, deg:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">))</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;anticommutativity fails&quot;</span><span class="p">)</span>
+                                <span class="k">raise</span> <span class="ne">RuntimeError</span>
+                            <span class="c1"># end if</span>
+                        <span class="c1"># end for</span>
+                    <span class="c1"># end for</span>
+                <span class="c1"># end for</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># add higher page contents</span>
+
+    <span class="k">def</span> <span class="nf">add_higher_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Hom</span><span class="p">,</span> <span class="n">Im</span><span class="p">,</span> <span class="n">PreIm</span><span class="p">,</span> <span class="n">start_n_dim</span><span class="p">,</span> <span class="n">start_deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">):</span>
+        <span class="n">n_dim</span> <span class="o">=</span> <span class="n">start_n_dim</span>
+        <span class="n">deg</span> <span class="o">=</span> <span class="n">start_deg</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Hom</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="n">current_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span> <span class="o">=</span> <span class="n">PreIm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">current_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">current_page</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">dim</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">current_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span> <span class="o">=</span> <span class="n">Im</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">deg</span> <span class="o">=</span> <span class="n">start_deg</span> <span class="o">-</span> <span class="n">current_page</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">n_dim</span> <span class="o">+=</span> <span class="n">current_page</span>
+         
+
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># zig_zag </span>
+    
+<div class="viewcode-block" id="spectral_sequence.zig_zag"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.zig_zag">[docs]</a>    <span class="k">def</span> <span class="nf">zig_zag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">,</span> <span class="n">lift_sum</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">initial_sum</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">store_reps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This will take an expression on the nth page of the spectral sequence.</span>
+<span class="sd">        It then computes its image under the nth differential and returns it.</span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            -n_dim, deg: position on the page.</span>
+<span class="sd">            -current_page: n, number of page where we are.</span>
+<span class="sd">            -lift_sum (default True): whether we return a lifted sum on current_page or</span>
+<span class="sd">                        we return an expresion on the 0 page instead. </span>
+<span class="sd">            -initial_sum (default identity(see below)): expression for which we want to compute zig-zag</span>
+<span class="sd">                        Coordinates come as columns. </span>
+<span class="sd">            -store_reps (default False): whether we want to store total complex representatives. </span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            target_coordinates: image of start_coordinates under the current_page differential.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_sum</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">initial_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">current_page</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">])</span>
+        <span class="c1"># end if</span>
+
+        <span class="c1"># Save initial positions if we store reps</span>
+        <span class="k">if</span> <span class="n">store_reps</span><span class="p">:</span>
+            <span class="n">start_n_dim</span> <span class="o">=</span> <span class="n">n_dim</span>
+            <span class="n">start_deg</span> <span class="o">=</span> <span class="n">deg</span>
+        <span class="c1"># end if</span>
+
+        <span class="c1"># Handle trivial arrows</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">current_page</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="c1"># end if</span>
+
+        <span class="c1"># Load expression to zero page</span>
+        <span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_to_zero_page</span><span class="p">(</span><span class="n">initial_sum</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">store_reps</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="p">[</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_dim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="c1"># end if</span>
+        <span class="c1"># end if</span>
+                
+        <span class="c1"># Compute zigzag for the zero_page expression</span>
+        <span class="n">zero_coordinates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+        
+        <span class="n">n_dim</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">current_page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">zero_coordinates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lift_preimage</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span>  <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+            <span class="n">deg</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">store_reps</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="p">[</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">n_dim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span>
+
+            <span class="n">zero_coordinates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span> 
+            <span class="n">n_dim</span> <span class="o">-=</span> <span class="mi">1</span>
+    
+        <span class="c1"># Lift back to current_page </span>
+        <span class="k">if</span> <span class="n">lift_sum</span><span class="p">:</span>
+            <span class="n">target_coordinates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lift_to_page</span><span class="p">(</span><span class="n">zero_coordinates</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span>  <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">)</span> 
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target_coordinates</span> <span class="o">=</span> <span class="n">zero_coordinates</span>
+
+        <span class="k">return</span> <span class="n">target_coordinates</span></div>
+   
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># vert_image</span>
+
+<div class="viewcode-block" id="spectral_sequence.vert_image"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.vert_image">[docs]</a>    <span class="k">def</span> <span class="nf">vert_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_sum</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an expression on zero page, computes the image under the vertical differentials.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rep</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">initial_sum</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">({})</span>
+            <span class="k">for</span> <span class="n">nerv_spx</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">rep</span><span class="p">):</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">multiply_mod_p</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">differentials</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">],</span> <span class="n">rep</span><span class="p">[</span><span class="n">nerv_spx</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">nerv_spx</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span>
+                <span class="c1"># end if</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+    
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># load_to_zero_page </span>
+    
+<div class="viewcode-block" id="spectral_sequence.load_to_zero_page"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.load_to_zero_page">[docs]</a>    <span class="k">def</span> <span class="nf">load_to_zero_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_sum</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an expression on the nth page of the spectral sequence, we pick a</span>
+<span class="sd">        representative on the 0th page and return it.</span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            -initial_sum: expression to load to zero page. Coordinates for each element are on the columns.</span>
+<span class="sd">            -n_dim, deg: position and number in page</span>
+<span class="sd">            -current_page: page where we start</span>
+<span class="sd">            -Hom: barcode basis for homology</span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            -target_coordinates: List of coordinates in zero page. </span>
+<span class="sd">            -R: inital radius of each bar.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Load sum to 1st page</span>
+        <span class="n">aux_sum</span> <span class="o">=</span> <span class="n">initial_sum</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">current_page</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">aux_sum</span> <span class="o">=</span> <span class="n">multiply_mod_p</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">aux_sum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+        <span class="c1"># end for</span>
+
+        <span class="c1"># Load sum from 1 to 0 page</span>
+	<span class="c1"># Transform coordinates to dictionary data types</span>
+        <span class="n">target_coordinates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">aux_sum</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
+            <span class="n">target_coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">({})</span> 
+            <span class="k">for</span> <span class="n">nerve_spx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">local_coordinates</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> 
+                                          <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx</span><span class="p">]]</span>
+
+                <span class="c1"># If the local coordinates are nontrivial, add them to dictionary</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_coordinates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">local_coordinates</span><span class="p">):</span>
+                    <span class="n">target_coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">nerve_spx</span><span class="p">]</span> <span class="o">=</span> <span class="n">multiply_mod_p</span><span class="p">(</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
+                                    <span class="n">local_coordinates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                <span class="c1"># end if</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+        <span class="c1"># Get initial radius of barcodes</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">current_page</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">current_page</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">initial_sum</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">nerve_spx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">local_coordinates</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> 
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx</span><span class="p">]]</span>
+                    <span class="c1"># Take the maximum of birth radius over all nontrivial local coordinates</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_coordinates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">local_coordinates</span><span class="p">):</span>
+                        <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">birth_radius</span><span class="p">(</span><span class="n">local_coordinates</span><span class="p">))</span>
+                    <span class="c1"># end if</span>
+                <span class="c1"># end for</span>
+            <span class="c1"># end for</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">initial_sum</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
+                <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">current_page</span> <span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">birth_radius</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>        
+            <span class="c1"># end for</span>
+        <span class="c1"># end else</span>
+
+        <span class="k">return</span> <span class="n">target_coordinates</span><span class="p">,</span> <span class="n">R</span></div>
+    
+    
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># cech_differential </span>
+    
+<div class="viewcode-block" id="spectral_sequence.cech_differential"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.cech_differential">[docs]</a>    <span class="k">def</span> <span class="nf">cech_differential</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_coordinates</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs the Cech Differential on start_coordinates</span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            - n_dim, deg : current position in double complex.</span>
+<span class="sd">            - start_coordinates: list of coordiantes on zero page</span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            - target_coordinates: list containing the image of Cech Differential</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+       
+        <span class="n">target_coordinates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">deg_sign</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="n">deg</span>
+        <span class="c1"># go through all dictionaries in input</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coordinates</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">):</span>
+            <span class="n">cech_image</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># look at each nerve simplex on each dictionary</span>
+            <span class="k">for</span> <span class="n">nerve_spx_index</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">coordinates</span><span class="p">):</span>
+                <span class="n">points_IN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">points_IN</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">])</span>
+                <span class="c1"># Iterate over simplices in boundary of nerve simplex</span>
+                <span class="n">nerv_boundary_indx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nerve_differentials</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][:,</span><span class="n">nerve_spx_index</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">nerv_boundary_coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nerve_differentials</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][:,</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">nerv_boundary_indx</span><span class="p">]</span>
+                <span class="c1"># go through all faces for each simplex in nerve</span>
+                <span class="k">for</span> <span class="n">nerve_face_index</span><span class="p">,</span> <span class="n">nerve_coeff</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nerv_boundary_indx</span><span class="p">,</span> <span class="n">nerv_boundary_coeff</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">deg</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># inclusions for points</span>
+                        <span class="c1"># Preallocate space</span>
+                        <span class="k">if</span> <span class="n">nerve_face_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cech_image</span><span class="p">:</span>
+                            <span class="n">cech_image</span><span class="p">[</span><span class="n">nerve_face_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="o">-</span><span class="mi">1</span>
+                                                                        <span class="p">][</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="c1"># end if</span>
+                        <span class="k">for</span> <span class="n">point_idx</span><span class="p">,</span> <span class="n">point_coeff</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coordinates</span><span class="p">[</span><span class="n">nerve_spx_index</span><span class="p">]):</span>
+                            <span class="k">if</span> <span class="n">point_coeff</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">face_point_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">points_IN</span><span class="p">[</span><span class="n">n_dim</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span>
+                                                                <span class="n">nerve_face_index</span><span class="p">]</span> <span class="o">==</span> <span class="n">points_IN</span><span class="p">[</span><span class="n">point_idx</span><span class="p">])</span>
+                                <span class="n">cech_image</span><span class="p">[</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">face_point_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">nerve_coeff</span> <span class="o">*</span> <span class="n">point_coeff</span> <span class="o">*</span> <span class="n">deg_sign</span>
+                                <span class="n">cech_image</span><span class="p">[</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">face_point_idx</span><span class="p">]</span> <span class="o">%=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+                            <span class="c1"># end if</span>
+                        <span class="c1"># end for</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># inclusions for edges, 2-simplices and higher simplices</span>
+                        <span class="c1"># Preallocate space</span>
+                        <span class="k">if</span> <span class="n">nerve_face_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cech_image</span><span class="p">:</span>
+                            <span class="n">cech_image</span><span class="p">[</span><span class="n">nerve_face_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="o">-</span><span class="mi">1</span>
+                                                                        <span class="p">][</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]))</span>
+                        <span class="c1"># end if</span>
+                        <span class="c1"># Iterate over nontrivial local simplices in domain</span>
+                        <span class="n">spx_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">coordinates</span><span class="p">[</span><span class="n">nerve_spx_index</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">spx_coefficients</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">spx_indices</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">spx_index</span><span class="p">,</span> <span class="n">spx_coeff</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">spx_indices</span><span class="p">,</span> <span class="n">spx_coefficients</span><span class="p">):</span>
+                            <span class="c1"># Obtain IN for vertices of simplex</span>
+                            <span class="n">vertices_spx</span> <span class="o">=</span> <span class="n">points_IN</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">spx_index</span><span class="p">]]</span>
+                            <span class="c1"># Iterate over simplices in range to see which one has vertices_spx as vertices.</span>
+                            <span class="k">for</span> <span class="n">im_indx</span><span class="p">,</span> <span class="n">im_spx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subcomplexes</span><span class="p">[</span><span class="n">n_dim</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]):</span>
+                                <span class="n">vertices_face</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_IN</span><span class="p">[</span><span class="n">n_dim</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">im_spx</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)]</span> 
+                                <span class="c1"># When the vertices coincide, break the loop</span>
+                                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">vertices_spx</span><span class="p">,</span> <span class="n">vertices_face</span><span class="p">))</span> <span class="o">==</span> <span class="n">deg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> 
+                                    <span class="n">cech_image</span><span class="p">[</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">im_indx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">spx_coeff</span> <span class="o">*</span> <span class="n">nerve_coeff</span> <span class="o">*</span> <span class="n">deg_sign</span>
+                                    <span class="n">cech_image</span><span class="p">[</span><span class="n">nerve_face_index</span><span class="p">][</span><span class="n">im_indx</span><span class="p">]</span> <span class="o">%=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+                                    <span class="k">break</span>
+                                <span class="c1"># end if</span>
+                            <span class="c1"># end for</span>
+                        <span class="c1"># end for</span>
+                    <span class="c1"># end else</span>
+                <span class="c1"># end for</span>
+            <span class="c1"># end for</span>
+            <span class="n">target_coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cech_image</span><span class="p">)</span>
+        <span class="c1"># end for</span>
+
+        <span class="k">return</span> <span class="n">target_coordinates</span></div>
+    
+    
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># lift_to_page</span>
+    
+<div class="viewcode-block" id="spectral_sequence.lift_to_page"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.lift_to_page">[docs]</a>    <span class="k">def</span> <span class="nf">lift_to_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_coordinates</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span>  <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">target_page</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Lifts some zero page element to a target page. </span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            - start_coordinates: list of dictionary pairs on zero page</span>
+<span class="sd">            - R: list of radius at which we want to lift</span>
+<span class="sd">            - n_dim, deg: position on page </span>
+<span class="sd">            - target_page: where we want to lift this sum</span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            - target_coordinates: lifted start_coordinates to target page</span>
+<span class="sd">                                Target coordinates are in rows. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Lift from 0 to 1 page</span>
+        <span class="c1"># Transform from dictionary to np.array</span>
+        <span class="n">target_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">nerve_spx_index</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                <span class="c1"># solve (Im|Hom) localy</span>
+                <span class="c1"># This is with respect to the active coordinates at R[i]</span>
+                <span class="n">Hom_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span>
+                <span class="k">if</span> <span class="n">Hom_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">Hom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active_domain</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">Im_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span> 
+                <span class="k">if</span> <span class="n">Hom_dim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">Hom</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">Im_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">Im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active_domain</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="n">Im_dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">Im</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">Im_Hom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Im</span><span class="p">,</span> <span class="n">Hom</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                            
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">Im_Hom</span> <span class="o">=</span> <span class="n">Hom</span>
+                    <span class="c1"># end else</span>
+
+                    <span class="n">active_coordinates</span> <span class="o">=</span> <span class="n">solve_mod_p</span><span class="p">(</span><span class="n">Im_Hom</span><span class="p">,</span> <span class="n">coord</span><span class="p">[</span><span class="n">nerve_spx_index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)[</span><span class="n">Im_dim</span><span class="p">:]</span>
+                    <span class="c1"># Save resulting coordinates as 1 page coordinates</span>
+                    <span class="n">local_lifted_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">]</span> <span class="o">-</span>
+                                                        <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">local_active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">local_lifted_coordinates</span><span class="p">[</span><span class="n">local_active</span><span class="p">]</span> <span class="o">=</span> <span class="n">active_coordinates</span>
+                    <span class="n">target_coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> 
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">]]</span> <span class="o">=</span> <span class="n">local_lifted_coordinates</span>            
+                <span class="c1"># end if</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+   
+        <span class="c1"># Lift from 1 to target page </span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">target_page</span><span class="p">):</span>
+            <span class="n">prev_target_coordinates</span> <span class="o">=</span> <span class="n">target_coordinates</span>
+            <span class="n">target_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">prev_target_coordinates</span><span class="p">):</span>
+                <span class="c1"># solve (Im|Hom) localy</span>
+                <span class="n">Hom_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span>
+                <span class="k">if</span> <span class="n">Hom_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">Hom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active_coordinates</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+                <span class="n">Im_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span>
+                <span class="k">if</span> <span class="n">Hom_dim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">Hom</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">Im_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">Im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active_coordinates</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="n">Im_dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">Im</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="n">Im_Hom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Im</span><span class="p">,</span> <span class="n">Hom</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">Im_Hom</span> <span class="o">=</span> <span class="n">Hom</span>
+                    <span class="c1"># end else</span>
+                    <span class="n">lifted_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">Im_Hom</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">prev_active_coordinates</span> <span class="o">=</span> <span class="n">prev_target_coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">prev_basis</span><span class="o">.</span><span class="n">active</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span>
+                        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">prev_active_coordinates</span><span class="p">):</span>
+                            <span class="n">active_coordinates</span> <span class="o">=</span> <span class="n">solve_mod_p</span><span class="p">(</span><span class="n">Im_Hom</span><span class="p">,</span> <span class="n">prev_active_coordinates</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)[</span><span class="n">Im_dim</span><span class="p">:]</span>
+                            <span class="n">lifted_coordinates</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">=</span> <span class="n">active_coordinates</span>
+                        <span class="c1"># end if</span>
+                    <span class="c1"># end if</span>
+                    <span class="n">target_coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lifted_coordinates</span>
+                <span class="c1"># end if</span>
+            <span class="c1"># end for </span>
+        <span class="c1"># end for</span>
+                   
+        <span class="k">return</span> <span class="n">target_coordinates</span></div>
+    
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># lift_preimage</span>
+    
+<div class="viewcode-block" id="spectral_sequence.lift_preimage"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.lift_preimage">[docs]</a>    <span class="k">def</span> <span class="nf">lift_preimage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">start_coordinates</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">sign</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a zero page element, we lift it using the vertical differentials. </span>
+<span class="sd">        Additionally, we multiply the lift by -1 mod self.p</span>
+<span class="sd">        In this method we assume that this can be done. </span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            - start_coordinates: list of dictionaries on zero page</span>
+<span class="sd">            - R: list of birth radius of start_coordinates </span>
+<span class="sd">            - n_dim, deg: position on spectral sequence</span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            - lifted_coordinates: lifted sum on position (n_dim, deg+1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+   
+        <span class="n">lifted_coordinates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">):</span>
+            <span class="n">lifted_coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">({})</span>
+            <span class="k">for</span> <span class="n">nerve_spx_index</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">coord</span><span class="p">):</span>
+                <span class="c1"># Only lift nontrivial expressions</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">nerve_spx_index</span><span class="p">]):</span>
+                    <span class="n">Im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active_domain</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">solution</span> <span class="o">=</span> <span class="n">solve_mod_p</span><span class="p">(</span><span class="n">Im</span><span class="p">,</span> <span class="n">coord</span><span class="p">[</span><span class="n">nerve_spx_index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                    <span class="n">local_lift</span> <span class="o">=</span> <span class="n">multiply_mod_p</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="o">+</span><span class="mi">1</span><span class="p">][:,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">])],</span>
+                                                <span class="n">solution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                    <span class="c1"># lifted coordinates in terms of all coordinates </span>
+                    <span class="n">lifted_coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">nerve_spx_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="n">local_lift</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+                <span class="c1"># end if</span>
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+    
+        <span class="k">return</span> <span class="n">lifted_coordinates</span></div>
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># extension</span>
+        
+<div class="viewcode-block" id="spectral_sequence.extension"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.extension">[docs]</a>    <span class="k">def</span> <span class="nf">extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_n_dim</span><span class="p">,</span> <span class="n">start_deg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate extension block matrices for given n_dim and deg</span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            -start_n_dim, start_deg: position on spectral sequence where we want</span>
+<span class="sd">                        to compute the extensions of the contained barcodes. </span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            -extensions: list containing matrix blocks of extensions. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">death_R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">barcode</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">dim_domain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span>
+        <span class="n">not_infty</span> <span class="o">=</span> <span class="n">death_R</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_r</span>
+        <span class="n">death_R</span> <span class="o">=</span> <span class="n">death_R</span><span class="p">[</span><span class="n">not_infty</span><span class="p">]</span>
+        <span class="n">not_infty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">not_infty</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">dim_ext</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_infty</span><span class="p">)</span>
+        <span class="c1"># Take only the representatives that are not infinity</span>
+        <span class="n">total_representatives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="p">[</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span>
+        <span class="n">representatives</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">zero_coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">total_representatives</span><span class="p">):</span>
+            <span class="n">representatives</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">_copy_dictionary</span><span class="p">(</span><span class="n">zero_coord</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">not_infty</span><span class="p">])</span>
+
+        <span class="c1"># Start in specified entry, and go backwards</span>
+        <span class="n">ext_deg</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">deg</span> <span class="o">=</span> <span class="n">start_deg</span>
+        <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_n_dim</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># find and store extension coefficients</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">n_dim</span><span class="p">],</span> <span class="n">dim_domain</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_infty</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">extension_coefficients</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lift_to_page</span><span class="p">(</span><span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span><span class="p">],</span> <span class="n">death_R</span><span class="p">,</span> 
+                                                            <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">extension</span><span class="p">[:,</span> <span class="n">not_infty</span><span class="p">]</span> <span class="o">=</span> <span class="n">extension_coefficients</span><span class="o">.</span><span class="n">T</span>
+                <span class="c1"># change total chain representatives accordingly</span>
+                <span class="n">current_representatives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim_ext</span><span class="p">):</span>
+                    <span class="c1"># substract sum of coefficients along all total complex, starting at n_dim, deg</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">rep</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">current_representatives</span><span class="p">):</span>
+                        <span class="n">substractor</span> <span class="o">=</span> <span class="n">_add_dictionaries</span><span class="p">(</span><span class="n">extension_coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">rep</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> 
+                        <span class="n">representatives</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="n">ext_deg</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_add_dictionaries</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> 
+                                                            <span class="p">[</span><span class="n">representatives</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="n">ext_deg</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">substractor</span><span class="p">],</span> 
+                                                            <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                    <span class="c1"># end for</span>
+                <span class="c1"># end for </span>
+                <span class="c1"># substract images to representatives, so that we can lift the vertical differentials </span>
+                <span class="k">if</span> <span class="n">n_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                        <span class="n">image_coefficients</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_coordinates</span><span class="p">(</span><span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span><span class="p">],</span> <span class="n">death_R</span><span class="p">,</span> 
+                                                                    <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">page</span><span class="p">)</span>
+                        <span class="c1"># If image in position is nontrivial</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_coefficients</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">image_coefficients</span><span class="p">):</span>
+                            <span class="n">preimages_sums</span> <span class="o">=</span> <span class="n">multiply_mod_p</span><span class="p">(</span><span class="n">image_coefficients</span><span class="p">,</span> 
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">PreIm</span><span class="p">[</span><span class="n">page</span><span class="p">][</span><span class="n">n_dim</span><span class="o">+</span><span class="n">page</span><span class="p">][</span><span class="n">deg</span><span class="o">-</span><span class="n">page</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                            <span class="c1"># substract images to zero page sums</span>
+                            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">preimages_sums</span><span class="p">):</span>
+                                <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zig_zag</span><span class="p">(</span><span class="n">n_dim</span><span class="o">-</span><span class="n">page</span><span class="p">,</span> <span class="n">deg</span><span class="o">+</span><span class="n">page</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">lift_sum</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                                                      <span class="n">initial_sum</span> <span class="o">=</span> <span class="n">preimages_sums</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> 
+                                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim_ext</span><span class="p">):</span>
+                                    <span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_add_dictionaries</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> 
+                                                                    <span class="p">[</span><span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">images</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> 
+                                                                    <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                                <span class="c1"># end for</span>
+                            <span class="c1"># end if</span>
+                        <span class="c1"># end if</span>
+                    <span class="c1"># end for </span>
+                    <span class="c1"># lift through vertical differential the last nontrivial entry in total complex diagonal</span>
+                    <span class="n">preimages_sums</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lift_preimage</span><span class="p">(</span><span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span><span class="p">],</span> <span class="n">death_R</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+                    <span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="c1"># compute the cech differential for preimage_sums</span>
+                    <span class="n">cech_images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cech_differential</span><span class="p">(</span><span class="n">preimages_sums</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="c1"># substract cech differential of preimage</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim_ext</span><span class="p">):</span>
+                        <span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_add_dictionaries</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> 
+                                            <span class="p">[</span><span class="n">representatives</span><span class="p">[</span><span class="n">ext_deg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">cech_images</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                    <span class="c1"># end for</span>
+                <span class="c1"># end if</span>
+            <span class="c1"># end if</span>
+            <span class="n">extensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
+            <span class="n">deg</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ext_deg</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># end for</span>
+        <span class="k">return</span> <span class="n">extensions</span></div>
+            
+            
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># image_coordinates</span>
+
+<div class="viewcode-block" id="spectral_sequence.image_coordinates"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.spectral_sequence_class.html#permaviss.spectral_sequence.spectral_sequence_class.spectral_sequence.image_coordinates">[docs]</a>    <span class="k">def</span> <span class="nf">image_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_coordinates</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span>  <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">target_page</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Lifts 0 page expression to target_page. </span>
+<span class="sd">        Then, assuming that this lies on the image of the spectral sequence</span>
+<span class="sd">        differential, it computes the coordinates on the image basis. </span>
+<span class="sd">        INPUT:</span>
+<span class="sd">            - start_coordinates: coordinates on zero page for several barcodes</span>
+<span class="sd">            - R: initial radius of barcodes</span>
+<span class="sd">            - n_dim, deg: position in spectral sequence</span>
+<span class="sd">            - target_page: page of spectral sequence at which we want to solve the image equation.</span>
+<span class="sd">        OUTPUT:</span>
+<span class="sd">            - image_coordinates: start_coordinates classes in target_page written in terms of image of differential.</span>
+<span class="sd">        &quot;&quot;&quot;</span> 
+        <span class="c1"># Lift start_coordinates from 0 to target_page</span>
+        <span class="n">lifted_sum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lift_to_page</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span>  <span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">target_page</span><span class="p">)</span>
+        <span class="c1"># If image is trivial, return</span>
+        <span class="n">Im_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">target_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span>
+        <span class="k">if</span> <span class="n">Im_dim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Compute each coordinate in terms of images</span>
+        <span class="n">image_coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">start_coordinates</span><span class="p">),</span> <span class="n">Im_dim</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rad</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">R</span><span class="p">):</span>
+            <span class="n">Im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">target_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active_coordinates</span><span class="p">(</span><span class="n">rad</span><span class="p">)</span>
+            <span class="n">active_lifted_sum</span> <span class="o">=</span> <span class="n">lifted_sum</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">target_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">prev_basis</span><span class="o">.</span><span class="n">active</span><span class="p">(</span><span class="n">rad</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">active_lifted_sum</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">image_coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Im</span><span class="p">[</span><span class="n">target_page</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">active</span><span class="p">(</span><span class="n">rad</span><span class="p">)]</span> <span class="o">=</span> <span class="n">solve_mod_p</span><span class="p">(</span>
+                                                                <span class="n">Im</span><span class="p">,</span> <span class="n">active_lifted_sum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+       
+        <span class="k">return</span> <span class="n">image_coordinates</span></div></div>
+    <span class="c1"># end def</span>
+<span class="c1"># end spectral_sequence class</span>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># _add_dictionaries</span>
+<span class="c1"># </span>
+<span class="c1"># This mainly supports extension. Does what its name says.</span>
+<span class="c1"># That is, entries with the same key are added. </span>
+
+<span class="k">def</span> <span class="nf">_add_dictionaries</span><span class="p">(</span><span class="n">coefficients</span><span class="p">,</span> <span class="n">representatives</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">rep_sum</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rep</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">representatives</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">rep</span><span class="p">):</span> 
+            <span class="k">if</span> <span class="n">spx_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rep_sum</span><span class="p">:</span>
+                <span class="n">rep_sum</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">rep</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">])</span> <span class="o">%</span> <span class="n">p</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rep_sum</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rep_sum</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">rep</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">])</span> <span class="o">%</span> <span class="n">p</span>
+            <span class="c1"># end else</span>
+        <span class="c1"># end for</span>
+    <span class="c1"># end for</span>
+    <span class="c1"># Find simplices where expression is zero</span>
+    <span class="n">zero_simplices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">rep_sum</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">rep_sum</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]):</span>
+            <span class="n">zero_simplices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spx_idx</span><span class="p">)</span>
+        <span class="c1"># end if</span>
+    <span class="c1"># end for</span>
+    <span class="c1"># If an entry is zero,  delete it</span>
+    <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="n">zero_simplices</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">rep_sum</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]</span>
+    <span class="c1"># end for</span>
+        
+    <span class="k">return</span> <span class="n">rep_sum</span> 
+
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># _copy_dictionary</span>
+<span class="c1"># </span>
+
+<span class="k">def</span> <span class="nf">_copy_dictionary</span><span class="p">(</span><span class="n">original</span><span class="p">):</span>
+    <span class="n">copy</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">spx_idx</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">original</span><span class="p">):</span>
+        <span class="n">copy</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">original</span><span class="p">[</span><span class="n">spx_idx</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">copy</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Alvaro Torras Casas
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>permaviss.spectral_sequence.MV_spectral_seq &mdash; PerMaViss 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> PerMaViss
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/persistence_algebra/index.html">permaviss.persistence_algebra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/gauss_mod_p/index.html">permaviss.gauss_mod_p</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/sample_point_clouds/index.html">permaviss.sample_point_clouds</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/simplicial_complexes/index.html">permaviss.simplicial_complexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/covers/index.html">permaviss.covers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../permaviss/spectral_sequence/index.html">permaviss.spectral_sequence</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PerMaViss</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>permaviss.spectral_sequence.MV_spectral_seq</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for permaviss.spectral_sequence.MV_spectral_seq</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module implements the Mayer-Vietoris spectral sequence management.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.spatial.distance</span> <span class="k">as</span> <span class="nn">dist</span>
+
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">..covers</span> <span class="k">import</span> <span class="n">cubical_cover</span> 
+
+<span class="kn">from</span> <span class="nn">..simplicial_complexes.differentials</span> <span class="k">import</span> <span class="n">complex_differentials</span> 
+<span class="kn">from</span> <span class="nn">..simplicial_complexes.vietoris_rips</span> <span class="k">import</span> <span class="n">vietoris_rips</span> 
+
+<span class="kn">from</span> <span class="nn">..persistence_algebra.PH_classic</span> <span class="k">import</span> <span class="n">persistent_homology</span>
+<span class="kn">from</span> <span class="nn">..persistence_algebra.image_kernel</span> <span class="k">import</span> <span class="n">image_kernel</span>
+<span class="kn">from</span> <span class="nn">..persistence_algebra.module_persistence_homology</span> <span class="k">import</span> <span class="n">module_persistence_homology</span>
+<span class="kn">from</span> <span class="nn">..persistence_algebra.barcode_bases</span> <span class="k">import</span> <span class="n">barcode_basis</span>
+
+<span class="kn">from</span> <span class="nn">..gauss_mod_p.gauss_mod_p</span> <span class="k">import</span> <span class="n">gauss_col</span>
+
+<span class="kn">from</span> <span class="nn">.spectral_sequence_class</span> <span class="k">import</span> <span class="n">spectral_sequence</span>
+
+
+<div class="viewcode-block" id="create_MV_ss"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.MV_spectral_seq.html#permaviss.spectral_sequence.MV_spectral_seq.create_MV_ss">[docs]</a><span class="k">def</span> <span class="nf">create_MV_ss</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">,</span> <span class="n">max_r</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">,</span> <span class="n">max_div</span><span class="p">,</span> <span class="n">overlap</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function creates a mayer Vietoris spectral sequence with the given parameters.</span>
+<span class="sd">    The procedure has four main steps:</span>
+<span class="sd">        1) Obtain a cover and a nerve associated to it. </span>
+<span class="sd">        2) Compute the persistent homology on each cover, intersections, and so on. </span>
+<span class="sd">        3) Compute spectral sequence pages until they collapse. </span>
+<span class="sd">        4) Solve the extension problem</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    point_cloud : Numpy Array</span>
+<span class="sd">        Coordinates for given points. Each row corresponds to a point. </span>
+<span class="sd">    max_r : float</span>
+<span class="sd">        Maximum radius of persistence.</span>
+<span class="sd">    max_dim : int</span>
+<span class="sd">        Maximum dimension of simplexes in Vietoris-Rips complex.</span>
+<span class="sd">    max_div : int</span>
+<span class="sd">        Number of division hypercubes on the dimension with maximum length on point cloud.</span>
+<span class="sd">    overlap : float</span>
+<span class="sd">        Overlap between adjacent covers. </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MV_ss : :class:`spectral_sequence` object containing all the information. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Divide point cloud using hypercube cover</span>
+    <span class="c1"># Use points_IN to build Nerve in future more general version</span>
+    <span class="n">nerve_point_cloud</span><span class="p">,</span> <span class="n">points_IN</span><span class="p">,</span> <span class="n">nerve</span> <span class="o">=</span> <span class="n">cubical_cover</span><span class="o">.</span><span class="n">generate_cover</span><span class="p">(</span>
+            <span class="n">max_div</span><span class="p">,</span> <span class="n">overlap</span><span class="p">,</span> <span class="n">point_cloud</span><span class="p">)</span>
+
+    <span class="n">nerve_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nerve</span><span class="p">)</span>
+    <span class="c1"># Count maximum points on hypercube cover</span>
+    <span class="n">max_points</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">hyp_pc</span> <span class="ow">in</span> <span class="n">nerve_point_cloud</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">max_points</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">hyp_pc</span><span class="p">,</span><span class="mi">0</span><span class="p">):</span>
+            <span class="n">max_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">hyp_pc</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="c1"># initialize the spectral sequence, compute the maximum number of pages</span>
+    <span class="n">no_pages</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_dim</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">nerve_dim</span><span class="p">)</span>
+    <span class="n">MV_ss</span> <span class="o">=</span> <span class="n">spectral_sequence</span><span class="p">(</span><span class="n">nerve</span><span class="p">,</span> <span class="n">nerve_point_cloud</span><span class="p">,</span> <span class="n">points_IN</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">,</span> <span class="n">max_r</span><span class="p">,</span> <span class="n">no_pages</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    
+    <span class="c1"># 0 PAGE</span>
+
+    <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">nerve_dim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">n_spx_number</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">nerve</span><span class="p">[</span><span class="n">n_dim</span><span class="p">],</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_spx_number</span> <span class="o">=</span> <span class="n">nerve</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">partial_persistent_homology</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">local_persistent_homology</span><span class="p">,</span>
+                                              <span class="n">nerve_point_cloud</span><span class="p">,</span>
+                                              <span class="n">max_r</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">)</span>
+      
+ 
+        <span class="n">workers_pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">()</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">workers_pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">partial_persistent_homology</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_spx_number</span><span class="p">))</span>
+        <span class="n">workers_pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+   
+        <span class="n">MV_ss</span><span class="o">.</span><span class="n">add_output_first</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">)</span>
+
+    <span class="c1"># # test for double complex well defined</span>
+    <span class="c1"># # check for Cech differential to be an actual differential</span>
+    <span class="c1"># for deg in range(max_dim):</span>
+    <span class="c1">#     for start_n in range(2, nerve_dim):</span>
+    <span class="c1">#         for nerve_spx in range(len(nerve[start_n])): </span>
+    <span class="c1">#             </span>
+    <span class="c1">#     # end for</span>
+    <span class="c1"># # end for</span>
+    <span class="c1"># MV_ss.double_complex_check()</span>
+        
+
+    <span class="c1"># PAGES =&gt; 1 </span>
+    <span class="k">for</span> <span class="n">current_page</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">no_pages</span><span class="p">):</span>
+        <span class="c1"># Print page</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PAGE: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">current_page</span><span class="p">))</span>
+        <span class="n">flip</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">no_rows</span><span class="p">))</span>
+        <span class="n">flip</span> <span class="o">=</span> <span class="o">-</span><span class="n">flip</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">current_page</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">flip</span><span class="p">)])</span>
+        <span class="c1"># Loop through sequences of differentials ending in the first current_page columns</span>
+        <span class="k">for</span> <span class="n">start_n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">current_page</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">start_deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_dim</span><span class="p">):</span>
+                <span class="n">base</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">differentials</span> <span class="o">=</span> <span class="p">[</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">current_page</span><span class="p">,</span> <span class="n">start_deg</span><span class="p">,</span> <span class="n">start_n_dim</span><span class="p">]]</span>
+                <span class="n">deg</span> <span class="o">=</span> <span class="n">start_deg</span>
+                <span class="n">n_dim</span> <span class="o">=</span> <span class="n">start_n_dim</span>
+                <span class="c1"># While (n_dim, deg) lies within the spectral sequence boundaries</span>
+                <span class="k">while</span> <span class="n">deg</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_dim</span> <span class="o">&lt;</span> <span class="n">nerve_dim</span><span class="p">:</span>
+                    <span class="c1"># Generate barcode bases for sending to module_persistence_homology </span>
+                    <span class="k">if</span> <span class="n">current_page</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">n_dim</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">barcode</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">barcode</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="n">n_dim</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+                            <span class="n">prev_cycle_dim</span> <span class="o">=</span> <span class="mi">0</span>
+                            <span class="k">for</span> <span class="n">nerv_spx_index</span><span class="p">,</span> <span class="n">cycle_dim</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">cycle_dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]):</span>
+                                <span class="k">if</span> <span class="n">cycle_dim</span> <span class="o">-</span> <span class="n">prev_cycle_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                    <span class="n">barcode</span><span class="p">[</span><span class="n">prev_cycle_dim</span><span class="p">:</span> <span class="n">cycle_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span>
+                                                                <span class="n">n_dim</span><span class="p">][</span><span class="n">nerv_spx_index</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span><span class="o">.</span><span class="n">barcode</span>
+                                <span class="c1"># end if</span>
+                                <span class="n">prev_cycle_dim</span> <span class="o">=</span> <span class="n">cycle_dim</span>
+                            <span class="c1"># end for </span>
+                        <span class="c1"># end else</span>
+                        <span class="n">base</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">barcode_basis</span><span class="p">(</span><span class="n">barcode</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">current_page</span> <span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">])</span><span class="o">==</span><span class="nb">list</span><span class="p">:</span>
+                            <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">current_page</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">]</span> <span class="o">=</span> <span class="n">barcode_basis</span><span class="p">([])</span>
+                        <span class="c1"># end if </span>
+                        <span class="n">base</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">current_page</span> <span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">])</span>
+                    <span class="c1"># end else</span>
+                    <span class="c1"># Advance to differential domain and compute differential</span>
+                    <span class="n">deg</span> <span class="o">+=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">current_page</span>
+                    <span class="n">n_dim</span> <span class="o">+=</span> <span class="n">current_page</span>
+                    <span class="k">if</span> <span class="n">deg</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_dim</span> <span class="o">&lt;</span> <span class="n">nerve_dim</span><span class="p">:</span>
+                        <span class="n">differentials</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">zig_zag</span><span class="p">(</span><span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+                    <span class="c1"># end if</span>
+                <span class="c1"># end while</span>
+                <span class="n">Hom</span><span class="p">,</span> <span class="n">Im</span><span class="p">,</span> <span class="n">PreIm</span> <span class="o">=</span> <span class="n">module_persistence_homology</span><span class="p">(</span><span class="n">differentials</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+                <span class="n">MV_ss</span><span class="o">.</span><span class="n">add_higher_output</span><span class="p">(</span><span class="n">Hom</span><span class="p">,</span> <span class="n">Im</span><span class="p">,</span> <span class="n">PreIm</span><span class="p">,</span> <span class="n">start_n_dim</span><span class="p">,</span> <span class="n">start_deg</span><span class="p">,</span> <span class="n">current_page</span><span class="p">)</span> 
+            <span class="c1"># end for</span>
+        <span class="c1"># end for</span>
+    <span class="c1"># end for</span>
+    
+    <span class="c1"># compute representatives for cycles</span>
+    <span class="k">for</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">no_columns</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">zig_zag</span><span class="p">(</span><span class="n">n_dim</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span> <span class="o">+</span> <span class="n">deg</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">store_reps</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> 
+                <span class="k">if</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">n_dim</span><span class="p">]</span> <span class="o">!=</span><span class="nb">len</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">tot_complex_reps</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">deg</span><span class="p">][</span><span class="mi">0</span><span class="p">])):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span>
+            <span class="c1"># end if</span>
+        <span class="c1"># end for</span>
+    <span class="c1"># end for</span>
+
+
+    <span class="c1"># EXTENSION PROBLEM</span>
+    <span class="n">MV_ss</span><span class="o">.</span><span class="n">persistent_homology</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Go through each diagonal</span>
+    <span class="k">for</span> <span class="n">deg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">no_rows</span><span class="p">):</span>
+        <span class="c1"># compute dimension of diagonal deg</span>
+        <span class="n">dim_PH</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Cumulative dimensions for persistent homology along diagonals</span>
+        <span class="n">start_deg</span> <span class="o">=</span> <span class="n">deg</span>
+        <span class="k">for</span> <span class="n">start_n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">deg</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">no_columns</span><span class="p">)):</span>
+            <span class="n">dim_PH</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">no_pages</span><span class="p">][</span><span class="n">start_deg</span><span class="p">,</span> <span class="n">start_n_dim</span><span class="p">]</span> <span class="o">+</span> <span class="n">dim_PH</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">start_deg</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="c1"># end for        </span>
+        <span class="k">if</span> <span class="n">dim_PH</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Save space for extension matrix</span>
+            <span class="n">extension_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">dim_PH</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dim_PH</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="c1"># compute extension matrix</span>
+            <span class="n">start_deg</span> <span class="o">=</span> <span class="n">deg</span><span class="o">-</span><span class="mi">1</span>
+            <span class="k">for</span> <span class="n">start_n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">deg</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">no_columns</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">page_dim_matrix</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_deg</span><span class="p">,</span> <span class="n">start_n_dim</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">extensions</span> <span class="o">=</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">extension</span><span class="p">(</span><span class="n">start_n_dim</span><span class="p">,</span> <span class="n">start_deg</span><span class="p">)</span>
+                    <span class="n">column_range</span> <span class="o">=</span> <span class="n">extension_matrix</span><span class="p">[:,</span> <span class="n">dim_PH</span><span class="p">[</span><span class="n">start_n_dim</span><span class="p">]:</span> <span class="n">dim_PH</span><span class="p">[</span><span class="n">start_n_dim</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">blk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">extensions</span><span class="p">):</span>
+                        <span class="n">column_range</span><span class="p">[</span><span class="n">dim_PH</span><span class="p">[</span><span class="n">start_n_dim</span> <span class="o">-</span> <span class="n">i</span><span class="p">]:</span> <span class="n">dim_PH</span><span class="p">[</span><span class="n">start_n_dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">extensions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="c1"># end for</span>
+                <span class="c1"># end if</span>
+                <span class="n">start_deg</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="c1"># end for</span>
+            <span class="c1">#</span>
+            <span class="c1"># add up barcodes in diagonal</span>
+            <span class="n">barcode</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">start_deg</span> <span class="o">=</span> <span class="n">deg</span>
+            <span class="k">for</span> <span class="n">start_n_dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">deg</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">no_columns</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">barcode</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">barcode</span> <span class="o">=</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">barcode</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_n_dim</span><span class="p">][</span><span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">barcode</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">barcode</span><span class="p">,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="n">no_pages</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">start_n_dim</span><span class="p">][</span>
+                                            <span class="n">start_deg</span><span class="p">]</span><span class="o">.</span><span class="n">barcode</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="c1"># end else</span>
+                <span class="n">start_deg</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="c1"># end for</span>
+            <span class="c1"># Create a new barcode basis, based on the death radius of the extension matrix column</span>
+            <span class="n">diagonal_basis</span> <span class="o">=</span> <span class="n">barcode_basis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">barcode</span><span class="p">))</span>
+            <span class="c1"># Create new basis, which is the direct sum matrix. This is a broken barcode basis </span>
+            <span class="c1"># with broken differentials given by the extension matrix.</span>
+            <span class="n">direct_sum_basis</span> <span class="o">=</span> <span class="n">barcode_basis</span><span class="p">(</span><span class="n">barcode</span><span class="p">,</span> <span class="n">broken_basis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">broken_differentials</span><span class="o">=</span> <span class="n">extension_matrix</span><span class="p">)</span>
+            <span class="c1"># Create an identity matrix as a morphism from diagonal_basis to direct_sum_basis.</span>
+            <span class="n">diagonal_differential</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">diagonal_basis</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+            <span class="c1"># Order the barcodes for domain and range</span>
+            <span class="n">MV_ss</span><span class="o">.</span><span class="n">order_diagonal_basis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">diagonal_basis</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">send_order</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">direct_sum_basis</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">send_order</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># Reorder associated matrix accordingly</span>
+            <span class="n">diagonal_differential</span> <span class="o">=</span> <span class="n">diagonal_differential</span><span class="p">[:,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">order_diagonal_basis</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">diagonal_differential</span> <span class="o">=</span> <span class="n">diagonal_differential</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+            <span class="c1"># set all barcode endpoints to max_r in diagonal_basis</span>
+            <span class="n">diagonal_basis</span><span class="o">.</span><span class="n">barcode</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">diagonal_basis</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+            <span class="n">births</span> <span class="o">=</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">barcode</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">deaths</span> <span class="o">=</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">Hom</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">barcode</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">rel_dom</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">rel_range</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">PH</span> <span class="o">=</span> <span class="n">image_kernel</span><span class="p">(</span><span class="n">diagonal_basis</span><span class="p">,</span> <span class="n">direct_sum_basis</span><span class="p">,</span> <span class="n">diagonal_differential</span><span class="p">,</span> <span class="n">MV_ss</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">MV_ss</span><span class="o">.</span><span class="n">persistent_homology</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PH</span><span class="p">)</span>
+        <span class="c1"># end if</span>
+    <span class="c1"># end for </span>
+    <span class="k">return</span> <span class="n">MV_ss</span></div>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># Local persistent homology</span>
+<span class="c1"># Method to be parallelized</span>
+
+<div class="viewcode-block" id="local_persistent_homology"><a class="viewcode-back" href="../../../permaviss/spectral_sequence/generated/permaviss.spectral_sequence.MV_spectral_seq.html#permaviss.spectral_sequence.MV_spectral_seq.local_persistent_homology">[docs]</a><span class="k">def</span> <span class="nf">local_persistent_homology</span><span class="p">(</span><span class="n">nerve_point_cloud</span><span class="p">,</span> <span class="n">max_r</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span>  <span class="n">n_dim</span><span class="p">,</span> <span class="n">spx_idx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function computes the Vietoris Rips complex and persistent homology of a covering region. </span>
+
+<span class="sd">    It is meant to be run in parallel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nerve_point_cloud : :obj:`list(list(Numpy Array))`</span>
+<span class="sd">        Local point cloud coordinates indexed by nerve. The first entry contains</span>
+<span class="sd">        a list of the point cloud coordinates for each covering region. The second entry</span>
+<span class="sd">        contains a list of the point cloud coordinates for each double intersection of</span>
+<span class="sd">        covering regions. And so on. </span>
+<span class="sd">    points_IN : :obj:`list(list(Numpy Array))` </span>
+<span class="sd">        Local Identification Numbers (IN) indexed by nerve. That is, this is the </span>
+<span class="sd">        same as `nerve_point_cloud`, but containing IN instead of</span>
+<span class="sd">        coordinates for each point. </span>
+<span class="sd">    max_r : `float`</span>
+<span class="sd">        Maximum radius for computing persistent homology.  </span>
+<span class="sd">    max_dim : int</span>
+<span class="sd">        Maximum dimension for complexes</span>
+<span class="sd">    n_dim : int</span>
+<span class="sd">        Current dimension in Nerve of cover</span>
+<span class="sd">    spx_idx : int</span>
+<span class="sd">        Index of n_dim simplex of the covering nerve. </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    local_complex : :obj:`list(Numpy Array)`</span>
+<span class="sd">        See :mod:`permaviss.simplicial_complexes.vietoris_rips`</span>
+<span class="sd">    local_differentials : :obj:`list(Numpy Array)`</span>
+<span class="sd">        See :mod:`permaviss.simplicial_complexes.differentials`</span>
+<span class="sd">    Hom, Im, PreIm : :obj:`list(barcode_basis)`, :obj:`list(barcode_basis)`, :obj:`list(Numpy Array)`</span>
+<span class="sd">        See :meth:`permaviss.persistence_algebra.PH_classic.persistent_homology`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">local_point_cloud</span> <span class="o">=</span> <span class="n">nerve_point_cloud</span><span class="p">[</span><span class="n">n_dim</span><span class="p">][</span><span class="n">spx_idx</span><span class="p">]</span>
+    <span class="c1"># Compute local Vietoris Rips complex and differentials</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_point_cloud</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">local_Dist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">local_Dist</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">squareform</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">pdist</span><span class="p">(</span><span class="n">local_point_cloud</span><span class="p">))</span>
+
+    <span class="n">local_complex</span><span class="p">,</span> <span class="n">local_R</span> <span class="o">=</span> <span class="n">vietoris_rips</span><span class="p">(</span><span class="n">local_Dist</span><span class="p">,</span> <span class="n">max_r</span><span class="p">,</span> <span class="n">max_dim</span><span class="p">)</span>
+    <span class="n">local_differentials</span> <span class="o">=</span> <span class="n">complex_differentials</span><span class="p">(</span><span class="n">local_complex</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+
+    <span class="c1"># Persistent Homology</span>
+    <span class="n">Hom</span><span class="p">,</span> <span class="n">Im</span><span class="p">,</span> <span class="n">PreIm</span> <span class="o">=</span> <span class="n">persistent_homology</span><span class="p">(</span><span class="n">local_differentials</span><span class="p">,</span> <span class="n">local_R</span><span class="p">,</span> <span class="n">max_r</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">local_complex</span><span class="p">,</span> <span class="n">local_differentials</span><span class="p">,</span> <span class="n">Hom</span><span class="p">,</span> <span class="n">Im</span><span class="p">,</span> <span class="n">PreIm</span></div>
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Alvaro Torras Casas
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

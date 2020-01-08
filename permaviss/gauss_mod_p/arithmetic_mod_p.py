@@ -8,12 +8,19 @@ import numpy as np
 
 def add_mod_c(a, b, c):
     """
-    Add two integers mod c. 
-    INPUT:
-    -a,b: integers to be added
-    -c: integer to mod out by
-    OUTPUT:
-    -s: a + b (mod c)
+    Integer addition mod c. 
+
+    Parameters
+    ----------
+
+    a,b : int
+        Integers to be added
+    c : int 
+        Integer to mod out by
+
+    Returns
+    -------
+    s : a + b (mod c)
     """
     s = a + b
     return s % c
@@ -21,12 +28,25 @@ def add_mod_c(a, b, c):
 
 def add_arrays_mod_c(A, B, c):
     """
-    Add two arrays mod c. 
-    INPUT:
-    -a,b: integers to be added
-    -c: integer to mod out by
-    OUTPUT:
-    -s: a + b (mod c)
+    Adds two arrays mod c. 
+
+    Parameters
+    ----------
+    a,b : :obj:`Numpy Array(int)`
+        Two integer arrays to be added.
+    c : int
+        Integer to mod out by.
+    
+    Returns
+    -------
+    C : :obj:`Numpy Array(int)`
+        a + b (mod c)
+
+    Raises
+    ------
+    ValueError
+        If `len(a)` != `len(b)`
+
     """
     if len(A) != len(B):
         print("Trying to add two arrays with different lengths!")
@@ -41,16 +61,25 @@ def add_arrays_mod_c(A, B, c):
     return C
 
 
-###############################################################################
-# Inverse mod p
-
 def inv_mod_p(a, p):
     """
     Returns the inverse of a mod p
-    INPUT:
-    -a, p: integers
-    OUTPUT:
-    -m: integer such that m * a = 1 (mod p)
+
+    Parameters
+    ----------
+    a : int
+        Number to compute the inverse mod p
+    p : int(prime)
+
+    Returns
+    -------
+    m : int
+        Integer such that m * a = 1 (mod p)
+        
+    Raises
+    ------
+    ValueError
+        If p is not a prime number
     """
     x0, x1 = 0, 1
     y0, y1 = 1, 0

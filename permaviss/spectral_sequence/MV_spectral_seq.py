@@ -1,10 +1,4 @@
 """
-This should be called PerMaViss
-
-Created on Wed Jul 25 10:35:48 2018
-
-@author: C1736188
-
 This module implements the Mayer-Vietoris spectral sequence management.
 """
 import numpy as np
@@ -36,15 +30,23 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         2) Compute the persistent homology on each cover, intersections, and so on. 
         3) Compute spectral sequence pages until they collapse. 
         4) Solve the extension problem
-    INPUT:
-        - point_cloud: list of lists containing points.
-        - max_r: maximum radius of persistence.
-        - max_dim: maximum dimension of simplexes in Vietoris-Rips complex.
-        - max_div: number of division hypercubes on the dimension with
-            maximum length on point cloud.
-        - overlap: how much different regions should overlap each other.
-    OUTPUT:
-        - MV_ss: spectral_sequence object containing all the information. 
+
+    Parameters
+    ----------
+    point_cloud : Numpy Array
+        Coordinates for given points. Each row corresponds to a point. 
+    max_r : float
+        Maximum radius of persistence.
+    max_dim : int
+        Maximum dimension of simplexes in Vietoris-Rips complex.
+    max_div : int
+        Number of division hypercubes on the dimension with maximum length on point cloud.
+    overlap : float
+        Overlap between adjacent covers. 
+
+    Returns
+    -------
+    MV_ss : :class:`spectral_sequence` object containing all the information. 
     """
     # Divide point cloud using hypercube cover
     # Use points_IN to build Nerve in future more general version
@@ -227,19 +229,38 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
 def local_persistent_homology(nerve_point_cloud, max_r, max_dim, p,  n_dim, spx_idx):
     """
-    This function computes the Vietoris Rips complex and persistent
-        homology  of a cover element. 
+    This function computes the Vietoris Rips complex and persistent homology of a covering region. 
+
     It is meant to be run in parallel.
-    INPUT:
-        - nerve_point_cloud : point clouds indexed by nerve
-        - points_IN : Identification Numbers for points indexed by nerve
-        - max_r : maximum radius for computing 
-        - max_dim : maximum dimension for complexes
-        - n_dim : dimension in nerve
-        - spx_idx : index of current index
-    OUTPUT:
-        - local_complex
-        - Hom, Im, PreIm
+
+    Parameters
+    ----------
+    nerve_point_cloud : :obj:`list(list(Numpy Array))`
+        Local point cloud coordinates indexed by nerve. The first entry contains
+        a list of the point cloud coordinates for each covering region. The second entry
+        contains a list of the point cloud coordinates for each double intersection of
+        covering regions. And so on. 
+    points_IN : :obj:`list(list(Numpy Array))` 
+        Local Identification Numbers (IN) indexed by nerve. That is, this is the 
+        same as `nerve_point_cloud`, but containing IN instead of
+        coordinates for each point. 
+    max_r : `float`
+        Maximum radius for computing persistent homology.  
+    max_dim : int
+        Maximum dimension for complexes
+    n_dim : int
+        Current dimension in Nerve of cover
+    spx_idx : int
+        Index of n_dim simplex of the covering nerve. 
+
+    Returns
+    -------
+    local_complex : :obj:`list(Numpy Array)`
+        See :mod:`permaviss.simplicial_complexes.vietoris_rips`
+    local_differentials : :obj:`list(Numpy Array)`
+        See :mod:`permaviss.simplicial_complexes.differentials`
+    Hom, Im, PreIm : :obj:`list(barcode_basis)`, :obj:`list(barcode_basis)`, :obj:`list(Numpy Array)`
+        See :meth:`permaviss.persistence_algebra.PH_classic.persistent_homology`
     """
     local_point_cloud = nerve_point_cloud[n_dim][spx_idx]
     # Compute local Vietoris Rips complex and differentials

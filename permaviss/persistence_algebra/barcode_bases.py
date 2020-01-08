@@ -6,41 +6,63 @@ import numpy as np
 
 
 class barcode_basis(object):
-    """
-        This class implements barcode bases.
+    """This class implements barcode bases.
+
+    Associated bars and coordinates are given for some barcode base. 
+    Each coordinate is stored in a column, whereas bars are stored on rows.  
+    This generates a barcode basis with all the input data. 
+    There is the exception of broken barcode bases, which come up
+    when solving the extension problem. 
+   
+    Note
+    ---- 
+    Barcode bases are assumed to be well defined in the sense that:
+
+        1)They are linearly independent with respect to boxplus operation
+
+        2)They generate the respective module or submodule.
+
+
+    Parameters
+    ----------
+    bars : :obj:`Numpy Array (dim, 2)` 
+        Each entry is a pair specifiying birth and death radius of a bar.
+    prev_basis : reference to a previously defined :class:`barcode_basis` object. 
+        This will be the basis in which the coordinates are given. 
+    coordinates : :obj:`Numpy Array (dim, prev_basis.dim)`
+        Cooridnates of this basis in terms of `prev_basis`
+    store_well_defined : bool, default is `False`       
+        Whether we want to store the indices of well defined bars.
+        That is, whether we wish to store indices of bars where the 
+        birth radius is strictly smaller than the death radius. 
+    broken_basis : bool, default is `False`
+        Whether the barcode basis is `broken`. This appears when solving 
+        the extension problem. A barcode base is `broken` when it is not natural.
+    broken_differentials : :obj:`Numpy Array (dim, dim)`
+        Matrix of broken differentials.
+        These give coefficients of a barcode generator in term of other
+        generators. This is used when the given generator dies, and we 
+        write it in terms of other generators that are still alive. 
+
+    Returns
+    -------
+    :obj:`barcode_basis` 
+
+    Raises
+    ------
+    ValueError
+        If `prev_coord.dim` is different to the number of rows in `coordinates`
     
-        Barcode bases are assumed to be well defined, that is:
-            -They are linearly independent with respect to boxplus operation
-            -They generate the respective module or submodule.
-        There is the exception of broken barcode bases, which come up
-        when solving the extension problem. 
-        There are a few general functions, followed by more specific functions
-        used by image_kernel.py and spectral_sequence.py
-            
+    ValueError
+        If the number of rows in `bar` is different to the number of columns in `coordinates`.
+        
+    ValueError
+        If `broken_basis = True` but `broken_differentials` is not given.
+        
     """
     def __init__(self, bars, prev_basis=None, coordinates=np.array([[]]), store_well_defined=False, 
                  broken_basis=False, broken_differentials=None):
-        """
-            Associated bars and coordinates are given for some barcode base. 
-            We assume that this is well defined as a basis. 
-            Each coordinate is stored in a column, whereas bars are stored on rows.  
-            This generates a barcode basis with all the input data. 
-            INPUT:
-                - bars: list of pairs specifiying birth and death radius of barcode.
-                - prev_basis : reference to a previously defined barcode basis. 
-                                This will be the basis in which the coordinates are given. 
-                - coordinates : cooridnates of this basis in terms of prev_basis
-                - store_well_defined : store the indices of well defined bars.
-                    That is, whether we wish to store indices of bars where the 
-                    birth radius is strictly smaller than the death radius. 
-                - broken_basis: whether the barcode basis is broken. 
-                               i.e. it is not natural.
-                - broken_differentials: a np.array containing the broken differentials.
-                        These give coefficients of a barcode generator in term of other
-                        generators. This is used when the given generator dies, and we 
-                        write it in terms of other generators that are still alive. 
-            OUTPUT:
-                - Generates a barcode basis object. 
+        """Constructor method
         """
         # When the basis is broken, the death_differentials must be given as an np.array
         if broken_basis and type(broken_differentials) != type(np.array([])):
@@ -90,8 +112,7 @@ class barcode_basis(object):
 
 
     def __str__(self):
-        """
-        Printing function for barcode bases.  
+        """Printing function for barcode bases.  
         """
         print("Barcode basis")
         print(self.barcode)
@@ -216,13 +237,20 @@ class barcode_basis(object):
     # Function updating broken_differentials
 
     def update_broken(self, A, rad):
-        """
-        Updates a matrix A, using the broken differentials of the generators dying at rad.
-        INPUT:
-            -A: np.array whose columns represent coordinates in the barcode_basis.
-            -rad: radius at which we want to update the coordinates using the broken_differentials.
-        OUTPUT:
-            -A: return updated matrix
+        """Updates a matrix A, using the broken differentials of the generators dying at rad.
+
+        Parameters
+        ----------
+        A : :obj:`Numpy Array`
+            columns represent coordinates in the barcode_basis.
+        rad : float
+            Radius at which we want to update the coordinates using the broken_differentials.
+    
+        Returns
+        -------
+        A : :obj:`Numpy Array`
+            return updated matrix
+
         """
         dying_indices = self.death(rad)
         if len(dying_indices) > 0:

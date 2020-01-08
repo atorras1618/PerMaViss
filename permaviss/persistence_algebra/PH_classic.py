@@ -17,12 +17,18 @@ from .barcode_bases import barcode_basis
 
 def _pivot(l):
     """ 
-    Given a 1D array of integers, return the index of the last nonzero entry.  
-    Returns -1 if the list is zero.  
-    INPUT: 
-    -l: list on integers. 
-    OUTPUT: 
-    -index of last nonzero entry. 
+    Compute pivot of a list of integers. 
+
+    Parameters
+    ---------- 
+    l : :obj:`list(int)`  
+
+    Returns
+    ------- 
+    index : int
+        Index of last nonzero entry. 
+        Returns -1 if the list is zero.  
+
     """ 
     l_bool = np.nonzero(l) 
     if len(l_bool[0]) > 0: 
@@ -39,20 +45,35 @@ assert _pivot(np.array([0,0,0]))==-1
 
 def persistent_homology(D, R, max_rad, p):
     """
-    Given the differentials of a simplicial complex we compute their homology.
+    Given the differentials of a filtered simplicial complex `X`, we compute its homology.
+
     In this function, the domain is on the columns and the range on the rows. 
     Coordinates are stored as columns in an array. 
     Barcode ranges are stored as pairs in an array of two columns.
-    INPUT:
-        -D: list of differentials of the simplicial complex.
-        -R: list containing radius of filtration, for each dimension.
-            In dimension 0 we have an empty list.
-        -p: prime number to perform arithmetic mod p
-    OUTPUT:
-        -Hom: cycles mod boundaries of differentials, starting with: birth rad, death rad.
-            If a cycle does not die we put max_rad as death radius.
-        -Im: boundaries of differentials
-        -PreIm: preimage matrices, 'how to go back from boundaries'
+
+    Parameters
+    ---------- 
+    D : :obj:`list(Numpy Array)` 
+        The ith entry stores the ith differential of the simplicial complex.
+    R : :obj:`list(int)`
+        The ith entry contains the radii of filtration for the ith skeleton of `X`.
+        For example, the 1st entry contains, in order, the radii
+        of each edge in `X`. 
+        In dimension 0 we have an empty list.
+    p : int(prime)
+        Choosen prime to perform arithmetic mod `p`.
+    
+    Returns
+    -------
+    Hom : :obj:`list(barcode_bases)`
+        The ith entry contains the ith Persistent Homology classes for `X`.
+        These are stored as :obj:`barcode_bases`. 
+        If a cycle does not die we put max_rad as death radius.
+        Additionally, each entry is ordered according to the standard barcode order. 
+    Im : :obj:`list(barcode_bases)`
+        The ith entry contains the image of the (i+1)th differential as :obj:`barcode_bases`
+    PreIm: :obj:`list(Numpy Array (len(R[*]), Im[*].dim)`
+        Preimage matrices, 'how to go back from boundaries'
     """
     dim = len(D)
     
