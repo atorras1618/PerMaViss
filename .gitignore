@@ -5,3 +5,5 @@ __pycache__
 setup.cfg
 .pytest_cache
 .ipynb_checkpoints
+_build/
+generated/
