@@ -58,10 +58,56 @@ class barcode_basis(object):
         
     ValueError
         If `broken_basis = True` but `broken_differentials` is not given.
+
+    Examples
+    --------
+
+        >>> import numpy as np
+        >>> bars = np.array([[0,2],[0,1],[2,3],[2,2]])
+        >>> base1 = barcode_basis(bars, store_well_defined=True)
+        >>> base1.dim
+        3
+        >>> base1.well_defined
+        array([ True,  True,  True, False], dtype=bool)
+        >>> print(base1)
+        Barcode basis
+        [[0 2]
+         [0 1]
+         [2 3]]
+
         
+        >>> bars = np.array([[0,2],[2,3]])
+        >>> coordinates = np.array([[1,0],
+        ...                         [1,0],
+        ...                         [0,2]])
+        >>> base2 = barcode_basis(bars, prev_basis, coordinates)
+        >>> base2.dim
+        2
+        >>> print(base2)
+        Barcode basis
+        [[0 2]
+         [2 3]]
+        [[1 0]
+         [1 0]
+         [0 2]]
+
+        >>> bars = np.array([[0,2],[0,1],[1,3]])
+        >>> broken_differential = np.array(
+        ... [[0,0,0],
+        ...  [0,0,0],
+        ...  [0,1,0]])
+        >>> base3 = barcode_basis(bars, broken_basis=True, broken_differentials=broken_differential)
+        >>> base3.dim
+        3
+        >>> print(base3)
+        Barcode basis
+        [[0 2]
+         [0 1]
+         [1 3]]
+
+
     """
-    def __init__(self, bars, prev_basis=None, coordinates=np.array([[]]), store_well_defined=False, 
-                 broken_basis=False, broken_differentials=None):
+    def __init__(self, bars, prev_basis=None, coordinates=np.array([[]]), store_well_defined=False, broken_basis=False, broken_differentials=None):
         """Constructor method
         """
         # When the basis is broken, the death_differentials must be given as an np.array
@@ -123,11 +169,46 @@ class barcode_basis(object):
 
 
     def sort(self, precision=7, send_order=False):
-        """
-            Sorts a barcode basis according to the standard order.
-            That is, from smaller birth radius to biger, and from 
-            biger death radius to smaller. 
-            A precision up to n zeros is an optional argument. 
+        """Sorts a barcode basis according to the standard barcode order.
+
+        That is, from smaller birth radius to biger, and from 
+        biger death radius to smaller. A precision up to n zeros is an optional argument. 
+
+        Parameters
+        ----------
+        precision : int, default is 7
+            Number of zeros of precision. 
+        send_order : bool, default is False
+            Whether we want to generate a :obj:`Numpy Array` storing the original order. 
+
+        Returns
+        -------
+        :obj:`Numpy Array`
+            One dimensional array storing original order of barcodes.
+
+        Example
+        -------
+
+            >>> bars = np.array([[1,2],[0,4],[-1,3],[1,4]])
+            >>> base4 = barcode_basis(bars)
+            >>> base4.sort(send_order=True)
+            array([2, 1, 3, 0])
+            >>> base4 = barcode_basis(bars)
+            >>> print(base4)
+            Barcode basis
+            [[ 1  2]
+             [ 0  4]
+             [-1  3]
+             [ 1  4]]
+            >>> base4.sort(send_order=True)
+            array([2, 1, 3, 0])
+            >>> print(base4)
+            Barcode basis
+            [[-1  3]
+             [ 0  4]
+             [ 1  4]
+             [ 1  2]]
+
         """
         
         aux_bars = np.around(self.barcode, decimals = precision)
@@ -148,16 +229,60 @@ class barcode_basis(object):
     # Functions used by Image_kernel:     
 
     def changes_list(self):
-        """
-            Returns an array with the values of changes occouring in the basis.
+        """Returns an array with the values of changes occouring in the basis.
+
+        Returns
+        -------
+        :obj:`Numpy Array`
+            One-dimensional array with radii where either a bar dies or is born in `self`.
+
+        Example
+        -------
+            >>> print(base1)
+            Barcode basis
+            [[0 2]
+             [0 1]
+             [2 3]]
+            >>> base1.changes_list()
+            array([0, 1, 2, 3])
+ 
         """
         l = np.resize(self.barcode, (1, 2 * len(self.barcode)))
         return np.unique(l)
     
     def active(self, rad, start=0, end=-1):
-        """
-            Returns array with active indices at rad.
-            Option to restrict to generators from start to self.dim
+        """Returns array with active indices at rad.
+            
+        Option to restrict to generators from start to self.dim
+        
+        Parameters
+        ----------
+        rad : `float`
+            Radius where we want to check which barcodes are active.
+        start : int, default is 0
+            Generator in `self` from which we start to search.
+        end : int, default is -1
+            Generator in `self` until which we end searching for active generators.
+        
+        Returns
+        -------
+        :obj:`Numpy Array`
+            One-dimensional array with indices of active generators. This is relative
+            to the start index.
+
+        Example
+        -------
+            >>> print(base3)
+            Barcode basis
+            [[0 2]
+             [0 1]
+             [1 3]]
+            >>> base3.active(1.2)
+            array([0, 2])
+            >>> base3.active(0.8, start=1)
+            array([0])
+
+        
         """
         if end == -1:
             end = self.dim

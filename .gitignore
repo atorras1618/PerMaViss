@@ -2,6 +2,10 @@
 __pycache__
 .cache
 *.egg-info
+*_build*
+*_static*
+*_templates*
+*.swp
 setup.cfg
 .pytest_cache
 .ipynb_checkpoints
