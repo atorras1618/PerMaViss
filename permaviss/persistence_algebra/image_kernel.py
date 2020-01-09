@@ -44,17 +44,22 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     This computes basis for the image and kernel of a persistence morphism.
         f: A --> B
 
-    It can also compute relative barcode bases for the image and kernel. The optional argument
-    start_index indicates the minimum index from which we want to compute barcodes
-    relative to the previous generators. That is, given start_index, the function will return 
-    image barcodes for <F[start_dim, ..., A.dim]>  mod <F[0,1,..., start_dim-1]>.
-    Also, it returns ker(f) mod A[0, ..., start_index - 1] 
-    The function first orders the barcode generators from start_index until A.dim.
-    Additionally, it also orders the barcodes from B. Both these preprocessing steps are necessary
-    in order for the algorithm to work properly. At the end the bases for the image and kernel are 
-    returned in terms of the original ordering.  By 'ordered' we mean that
+    This is the algorithm described in https://arxiv.org/abs/1907.05228.
+    Recall that for such an algorithm to work the `A` and `B` must be ordered. 
+    This is why the function first orders the barcode generators from start_index until A.dim.
+    Additionally, it also orders the barcodes from B. By 'ordered' we mean that
     the barcodes are sorted according to the standard order of barcodes.
-    Also, this handles the case for when B is a broken barcode basis. 
+
+    It can also compute relative barcode bases for the image. This is used when computing quotients. The optional argument start_index indicates the minimum index from which we want to compute barcodes
+    relative to the previous generators. That is, given start_index, the function will return 
+    image barcodes for 
+        
+            <F[start_dim, ..., A.dim]>  mod <F[0,1,..., start_dim-1]>.
+
+    At the end the bases for the image and kernel are 
+    returned in terms of the original ordering.  
+
+    Additionally, this handles the case for when B is a broken barcode basis. 
     Notice that in such a case, only the barcode basis of the imate will be computed
 
     Parameters
@@ -82,6 +87,47 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     PreIm : Numpy Array (A.dim, Im.dim)
         Absolute/relative preimage coordinates of f. That is, each column stores the
         sums that generate the corresponding Image barcode. 
+
+    Examples
+    --------
+    
+        >>> import numpy as np
+        >>> from permaviss.persistence_algebra.barcode_bases import barcode_basis
+        >>> A = barcode_basis([[1,8],[1,5],[2,5], [4,8]])
+        >>> B = barcode_basis([[-1,3],[0,4],[0,3.5],[2,5],[2,4],[3,8]])
+        >>> F = np.array([[4,1,1,0],[1,4,1,0],[1,1,4,0],[0,0,1,4],[0,0,4,1],[0,0,0,1]])
+        >>> p = 5
+        >>> Im, Ker, PreIm = image_kernel(A,B,F,p)
+        >>> print(Im)
+        Barcode basis
+        [[ 1.   4. ]
+         [ 1.   3.5]
+         [ 2.   5. ]
+         [ 4.   8. ]]
+        [[ 4.  0.  1.  0.]
+         [ 1.  0.  1.  0.]
+         [ 1.  2.  4.  0.]
+         [ 0.  0.  1.  4.]
+         [ 0.  0.  4.  1.]
+         [ 0.  0.  0.  1.]]
+        >>> print(Ker)
+        Barcode basis
+        [[ 3.5  8. ]
+         [ 4.   5. ]]
+        [[ 1.  0.]
+         [ 1.  4.]
+         [ 0.  0.]
+         [ 0.  0.]]
+        >>> print(PreIm)
+        [[ 1.  1.  0.  0.]
+         [ 0.  1.  0.  0.]
+         [ 0.  0.  1.  0.]
+         [ 0.  0.  0.  1.]]
+
+    Note
+    ----
+    This algorithm will only work if the matrix of the persistence morphism is well defined. That is, 
+    a generator can only map to generators that have been born and have not yet died. 
 
     """
     # If the basis B is not ordered, we order it

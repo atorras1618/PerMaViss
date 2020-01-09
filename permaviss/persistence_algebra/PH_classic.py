@@ -74,6 +74,94 @@ def persistent_homology(D, R, max_rad, p):
         The ith entry contains the image of the (i+1)th differential as :obj:`barcode_bases`
     PreIm: :obj:`list(Numpy Array (len(R[*]), Im[*].dim)`
         Preimage matrices, 'how to go back from boundaries'
+
+    Example
+    -------
+        >>> from permaviss.sample_point_clouds.examples import circle
+        >>> from permaviss.simplicial_complexes.differentials import complex_differentials
+        >>> from permaviss.simplicial_complexes.vietoris_rips import vietoris_rips
+        >>> import scipy.spatial.distance as dist
+        >>> point_cloud = circle(10, 1)
+        >>> max_rad = 1
+        >>> p = 5
+        >>> max_dim = 3
+        >>> Dist = dist.squareform(dist.pdist(point_cloud))
+        >>> compx, R = vietoris_rips(Dist, max_rad, max_dim)
+        >>> differentials = complex_differentials(compx, p)
+        >>> Hom, Im, PreIm = persistent_homology(differentials, R, max_rad, p)
+        >>> print(Hom[0])
+        Barcode basis
+        [[ 0.          1.        ]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]
+         [ 0.          0.61803399]]
+        [[ 1.  1.  0.  0.  0.  0.  0.  0.  0.  0.]
+         [ 0.  4.  1.  0.  0.  0.  0.  0.  0.  0.]
+         [ 0.  0.  4.  1.  0.  0.  0.  0.  0.  0.]
+         [ 0.  0.  0.  4.  1.  0.  0.  0.  0.  0.]
+         [ 0.  0.  0.  0.  4.  0.  0.  1.  0.  0.]
+         [ 0.  0.  0.  0.  0.  1.  0.  4.  0.  0.]
+         [ 0.  0.  0.  0.  0.  4.  0.  0.  1.  0.]
+         [ 0.  0.  0.  0.  0.  0.  1.  0.  4.  0.]
+         [ 0.  0.  0.  0.  0.  0.  4.  0.  0.  1.]
+         [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  4.]]
+        >>> print(Hom[1])
+        Barcode basis
+        [[ 0.61803399  1.        ]]
+        [[ 4.]
+         [ 4.]
+         [ 4.]
+         [ 4.]
+         [ 4.]
+         [ 4.]
+         [ 4.]
+         [ 4.]
+         [ 4.]
+         [ 1.]]
+        >>> print(Im[0])
+        Barcode basis
+        [[ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]
+         [ 0.61803399  1.        ]]
+        [[ 1.  0.  0.  0.  0.  0.  0.  0.  0.]
+         [ 4.  1.  0.  0.  0.  0.  0.  0.  0.]
+         [ 0.  4.  1.  0.  0.  0.  0.  0.  0.]
+         [ 0.  0.  4.  1.  0.  0.  0.  0.  0.]
+         [ 0.  0.  0.  4.  0.  0.  1.  0.  0.]
+         [ 0.  0.  0.  0.  1.  0.  4.  0.  0.]
+         [ 0.  0.  0.  0.  4.  0.  0.  1.  0.]
+         [ 0.  0.  0.  0.  0.  1.  0.  4.  0.]
+         [ 0.  0.  0.  0.  0.  4.  0.  0.  1.]
+         [ 0.  0.  0.  0.  0.  0.  0.  0.  4.]]
+        >>> print(Im[1])
+        Barcode basis
+        []
+        >>> print(PreIm[0])
+        []
+        >>> print(PreIm[1])
+        [[ 1.  0.  0.  0.  0.  0.  0.  0.  0.]
+         [ 0.  1.  0.  0.  0.  0.  0.  0.  0.]
+         [ 0.  0.  1.  0.  0.  0.  0.  0.  0.]
+         [ 0.  0.  0.  1.  0.  0.  0.  0.  0.]
+         [ 0.  0.  0.  0.  1.  0.  0.  0.  0.]
+         [ 0.  0.  0.  0.  0.  1.  0.  0.  0.]
+         [ 0.  0.  0.  0.  0.  0.  1.  0.  0.]
+         [ 0.  0.  0.  0.  0.  0.  0.  1.  0.]
+         [ 0.  0.  0.  0.  0.  0.  0.  0.  1.]
+         [ 0.  0.  0.  0.  0.  0.  0.  0.  0.]]
+
     """
     dim = len(D)
     
