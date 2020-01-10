@@ -83,17 +83,6 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
    
         MV_ss.add_output_first(output, n_dim)
 
-    # # test for double complex well defined
-    # # check for Cech differential to be an actual differential
-    # for deg in range(max_dim):
-    #     for start_n in range(2, nerve_dim):
-    #         for nerve_spx in range(len(nerve[start_n])): 
-    #             
-    #     # end for
-    # # end for
-    # MV_ss.double_complex_check()
-        
-
     # PAGES => 1 
     for current_page in range(1, no_pages):
         # Print page
@@ -140,7 +129,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                     # end if
                 # end while
                 Hom, Im, PreIm = module_persistence_homology(differentials, base, p)
-                MV_ss.add_higher_output(Hom, Im, PreIm, start_n_dim, start_deg, current_page) 
+                MV_ss.add_output_higher(Hom, Im, PreIm, start_n_dim, start_deg, current_page) 
             # end for
         # end for
     # end for

@@ -5,6 +5,13 @@ permaviss.spectral\_sequence.spectral\_sequence\_class
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      add_dictionaries
+      copy_dictionary
+   
    
 
    
