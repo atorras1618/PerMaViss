@@ -224,7 +224,7 @@ class spectral_sequence(object):
             self.Hom[current_page][n_dim][deg] = h
             self.page_dim_matrix[current_page+1, deg, n_dim] = h.dim
             self.Im[current_page][n_dim][deg] = Im[i]
-            deg = start_deg - current_page + 1
+            deg = deg - current_page + 1
             n_dim += current_page
          
 
