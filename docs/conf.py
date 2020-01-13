@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../permaviss'))
+sys.path.insert(0, os.path.abspath('../src/permaviss'))
 
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +22,7 @@ copyright = '2020, Alvaro Torras Casas'
 author = 'Alvaro Torras Casas'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = 'v0.0.1'
 
 
 # -- General configuration ---------------------------------------------------
