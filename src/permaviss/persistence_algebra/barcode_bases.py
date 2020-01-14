@@ -38,7 +38,7 @@ class barcode_basis(object):
     broken_basis : bool, default is `False`
         Whether the barcode basis is `broken`. This appears when solving 
         the extension problem. A barcode base is `broken` when it is not natural.
-    brokhttps://edo.readthedocs.io/en/latest/reference/index.htmlen_differentials : :obj:`Numpy Array (dim, dim)`
+    broken_differentials : :obj:`Numpy Array (dim, dim)`
         Matrix of broken differentials.
         These give coefficients of a barcode generator in term of other
         generators. This is used when the given generator dies, and we 
