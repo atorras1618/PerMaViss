@@ -3,25 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PerMaViss's documentation!
-=====================================
+Welcome to PerMaViss' documentation!
+====================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+PerMaViss is a Python3 library implementing the Persistence Mayer Vietoris spectral sequence.
 
-Module API
-===============
+Suppose that you start from a point cloud in the `n` dimensional real space. Then, PerMaViss 
+creates a cover by hypercubes covering this point cloud. It computes the Persistence Mayer Vietoris 
+spectral sequence associated to this cover, and solves the extension problem. The resulting barcodes will be the same as if we computed persistent homology directly on our data. 
+
+Here you will find examples using this. 
+
 
 .. toctree::
    :maxdepth: 3
+   :caption: Contents
 
-   permaviss/persistence_algebra/index.rst
-   permaviss/gauss_mod_p/index.rst
-   permaviss/sample_point_clouds/index.rst
-   permaviss/simplicial_complexes/index.rst
-   permaviss/covers/index.rst
-   permaviss/spectral_sequence/index.rst
+   about/index.rst
+   install.rst
+   examples/index.rst
+   reference/index.rst
+
 
 
 Indices and tables
