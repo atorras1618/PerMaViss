@@ -26,7 +26,6 @@ PerMaViss requires:
 - Python3
 - NumPy
 - Scipy
-- Math
 
 Optional for examples and notebooks:
 

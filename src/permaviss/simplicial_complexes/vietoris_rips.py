@@ -4,29 +4,31 @@
 
 import numpy as np
 
+
 def _lower_neighbours(G, u):
-    """Given a graph `G` and a vertex `u` in `G`, we return a list with the vertices in `G` that are
-    lower than `u` and are connected to `u` by an edge in `G`. 
+    """ Given a graph `G` and a vertex `u` in `G`, we return a list with the
+    vertices in `G` that are lower than `u` and are connected to `u` by an
+    edge in `G`.
 
     Parameters
     ----------
     G : :obj:`Numpy Array(no. of edges, 2)`
-        Matrix storing the edges of the graph. 
+        Matrix storing the edges of the graph.
     u : int
-        Vertex of the graph. 
+        Vertex of the graph.
 
     Returns
     -------
-    l : :obj:`list`
-        List of lower neighbours of `u` in `G`. 
+    lower_neighbours : :obj:`list`
+        List of lower neighbours of `u` in `G`.
     """
-    l = []  # list of lowest neighbours to be computed.
+    lower_neighbours = []  # list of lowest neighbours to be computed.
     for e in G:
         if e[1] == u:
-            l.append(e[0])
+            lower_neighbours.append(e[0])
 
-    l.sort()
-    return l
+    lower_neighbours.sort()
+    return lower_neighbours
 
 
 def vietoris_rips(Dist, max_r, max_dim):
@@ -45,10 +47,13 @@ def vietoris_rips(Dist, max_r, max_dim):
     Returns
     -------
     C : :obj:`list(Numpy Array)`
-        Vietoris Rips complex generated for the given parameters. 
-        List where the first entry stores the number of vertices, and all other entries contain a :obj:`Numpy Array` with the list of simplices in `C`.     
+        Vietoris Rips complex generated for the given parameters. List where
+        the first entry stores the number of vertices, and all other entries
+        contain a :obj:`Numpy Array` with the list of simplices in `C`.
     R : :obj:`list(Numpy Array)`
-        List with radius of birth for the simplices in `C`. The `i` entry contains a 1D :obj:`Numpy Array` containing each of the birth radii for each `i` simplex in `C`. 
+        List with radius of birth for the simplices in `C`. The `i` entry
+        contains a 1D :obj:`Numpy Array` containing each of the birth radii
+        for each `i` simplex in `C`.
 
     """
     if max_dim < 1:  # at least returns always the neighbourhood graph
@@ -63,7 +68,6 @@ def vietoris_rips(Dist, max_r, max_dim):
     # The zero component contains the number of vertices of C
     C[0] = len(Dist)
     R[0] = np.zeros(len(Dist))
-
     # Start with C[1]
     for i in range(C[0]):
         for j in range(i):
@@ -71,8 +75,7 @@ def vietoris_rips(Dist, max_r, max_dim):
                 C[1].append([j, i])
                 R[1].append(Dist[i][j])
 
-   
-    # Sort edges according to their birth radius 
+    # Sort edges according to their birth radius
     sort_R = np.argsort(R[1])
     R[1], C[1] = np.array(R[1]), np.array(C[1])
     R[1] = R[1][sort_R]
@@ -87,7 +90,7 @@ def vietoris_rips(Dist, max_r, max_dim):
             low_n = _lower_neighbours(C[1], s[0])
             for v in s[1:]:
                 low_n = [n for n in low_n if
-                               n in _lower_neighbours(C[1], v)]
+                         n in _lower_neighbours(C[1], v)]
 
             for n in low_n:
                 simplex_rad = R[d][k]
@@ -98,15 +101,14 @@ def vietoris_rips(Dist, max_r, max_dim):
                 C[d + 1].append(np.insert(s, 0, n))
                 R[d + 1].append(simplex_rad)
 
-        # Sort simplices according to their birth radius 
+        # Sort simplices according to their birth radius
         sort_R = np.argsort(R[d + 1])
         R[d + 1], C[d + 1] = np.array(R[d + 1]), np.array(C[d + 1])
         R[d + 1] = R[d + 1][sort_R]
         C[d + 1] = C[d + 1][sort_R]
-  
-    # store complexes as integers 
+
+    # store complexes as integers
     for c in C[1:]:
         c = c.astype(int)
- 
-    return C, R
 
+    return C, R

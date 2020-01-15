@@ -8,7 +8,6 @@ Check the `notebooks <https://github.com/atorras1618/PerMaViss/tree/master/examp
 Torus
 -----
 
-This example is designed to be a proof of concept. 
 We compute persistent homology through two methods. First we compute persistent homology using the standard method. Then we compute this again using the Persistence Mayer Vietoris spectral sequence. At the end we compare both results and confirm that they coincide. 
 
 First we do all the relevant imports for this example

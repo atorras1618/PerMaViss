@@ -6,17 +6,19 @@ from ..simplicial_complexes import flag_complex as flCpx
 ###############################################################################
 # Jump to next hypercube in cover
 
-def next_hypercube(pos,div):
+
+def next_hypercube(pos, div):
     """Jumps to next hypercube in cubical cover
 
     Parameters
     ----------
     pos : :obj:`list`
-        List of integer values specifying the position of the current hypercube.
-        This is edited to the next hypercube
+        List of integer values specifying the position of the current
+        hypercube. This is edited to the next hypercube.
 
     div : :obj:`list`
-        List of integer values specifying how many hypercubes divide each dimension.
+        List of integer values specifying how many hypercubes divide each
+        dimension.
 
     Example
     -------
@@ -25,24 +27,26 @@ def next_hypercube(pos,div):
         >>> next_hypercube(pos, div)
         >>> pos
         [1, 2, 0]
-    
+
     """
     for i in range(len(pos)):
         if pos[-i-1] < div[-i-1]-1:
             pos[-i-1] += 1
             for k in range(i):
-                pos[-k-1]=0
+                pos[-k-1] = 0
             break
 
 ###############################################################################
 # Generate cubical cover of a point cloud
 
+
 def generate_cover(max_div, overlap, point_cloud):
     """Divides a point cloud into a cubical cover.
 
     Receives a point cloud point_cloud in R^n and returns it divided into cubes
-    and their respective intersections. It also generates the nerve of the covering.
-    
+    and their respective intersections. It also generates the nerve of the
+    covering.
+
     Paramters
     ---------
     max_div : int
@@ -54,15 +58,16 @@ def generate_cover(max_div, overlap, point_cloud):
 
     Returns
     -------
-    divided_point_cloud : :obj:`list(list(Numpy Array 2D))` 
-        Point cloud coordinates indexed by nerve. The ith entry contains the 
-        point cloud coordinates indexed by the ith simplices of the nerve. That is, 
-        the first entry contains the coordinates contained in hypercubes. The second entry
-        the coordinates of points in double intersections of hypercubes. And so on.
-    points_IN : :obj:`list(list(Numpy Array 1D))` 
+    divided_point_cloud : :obj:`list(list(Numpy Array 2D))`
+        Point cloud coordinates indexed by nerve. The ith entry contains the
+        point cloud coordinates indexed by the ith simplices of the nerve.
+        That is, the first entry contains the coordinates contained in
+        hypercubes. The second entry the coordinates of points in double
+        intersections of hypercubes. And so on.
+    points_IN : :obj:`list(list(Numpy Array 1D))`
         Identification Numbers (IN) of points in regions indexed by nerve.
-        That is, this is the same as `divided_point_cloud` but storing IN instead
-        of coordinates.  
+        That is, this is the same as `divided_point_cloud` but storing IN
+        instead of coordinates.
     nerve : :obj:`list(Numpy Array)`
         The nerve of the hypercube cover.
 
@@ -71,7 +76,8 @@ def generate_cover(max_div, overlap, point_cloud):
         >>> point_cloud = circle(5, 1)
         >>> max_div = 2
         >>> overlap = 0.5
-        >>> divided_point_cloud, points_IN, nerve = generate_cover(max_div, overlap, point_cloud)
+        >>> divided_point_cloud, points_IN, nerve = generate_cover(max_div,
+        ... overlap, point_cloud)
         >>> divided_point_cloud[0]
         [array([[-0.80901699, -0.58778525],
                [ 0.30901699, -0.95105652]]), array([[ 0.30901699,  0.95105652],
@@ -79,11 +85,15 @@ def generate_cover(max_div, overlap, point_cloud):
                [ 0.30901699, -0.95105652]]), array([[ 1.        ,  0.        ],
                [ 0.30901699,  0.95105652]])]
         >>> divided_point_cloud[1]
-        [array([], shape=(0, 2), dtype=float64), array([[ 0.30901699, -0.95105652]]), array([], shape=(0, 2), dtype=float64), array([], shape=(0, 2), dtype=float64), array([[ 0.30901699,  0.95105652]]), array([[ 1.,  0.]])]
+        [array([], shape=(0, 2), dtype=float64), array([[ 0.30901699,
+        -0.95105652]]), array([], shape=(0, 2), dtype=float64), array([],
+        shape=(0, 2), dtype=float64), array([[ 0.30901699,  0.95105652]]),
+        array([[ 1.,  0.]])]
         >>> points_IN[0]
         [array([3, 4]), array([1, 2]), array([0, 4]), array([0, 1])]
         >>> points_IN[1]
-        [array([], dtype=float64), array([4]), array([], dtype=float64), array([], dtype=float64), array([1]), array([0])]
+        [array([], dtype=float64), array([4]), array([], dtype=float64),
+        array([], dtype=float64), array([1]), array([0])]
         >>> nerve[0]
         4
         >>> nerve[1]
@@ -103,15 +113,14 @@ def generate_cover(max_div, overlap, point_cloud):
 
 
     """
-    #get the dimension of our dataset
+    # Get the dimension of our dataset
     dim = np.size(point_cloud, 1)
-    #Find the 'corners' of the dataset
+    # Find the 'corners' of the dataset
     min_corner, max_corner = corners_hypercube(point_cloud)
-    #Find the largest coordinate difference between min_corner and max_corner
+    # Find the largest coordinate difference between min_corner and max_corner
     max_length = np.amax(np.absolute(max_corner - min_corner))
-
     side = max_length / max_div  # side of division hypercubes
-    number_hypercubes = 1 
+    number_hypercubes = 1
     div = []  # list containing no of divisions per dimension
     pos = []  # list containing current position
     for d in range(dim):
@@ -129,12 +138,11 @@ def generate_cover(max_div, overlap, point_cloud):
     Now we assign points to each division hypercube.
     Also we compute the underlying graph of the nerve.
     """
-    neighbour_graph = []
     # dist: distance from the center of an hypercube to a face
     dist = overlap / 2. + side / 2.
 
     for i in range(number_hypercubes):
-        #Find two corners and center point of small hypercube
+        # Find two corners and center point of small hypercube
         lcor = np.copy(min_corner)      # lower corner
         ucor = np.copy(min_corner)      # upper corner
         center = np.copy(min_corner)    # center point
@@ -166,14 +174,14 @@ def generate_cover(max_div, overlap, point_cloud):
         divided_point_cloud[i] = np.array(divided_point_cloud[i])
         points_IN[i] = np.array(points_IN[i])
         # advance position of hypercube
-        next_hypercube(pos, div)  
+        next_hypercube(pos, div)
 
     # Compute nerve of the cover
     nerve = nerve_hypercube_cover(div)
 
     # Compute the point cloud and IN for each simplex in Nerve
-    # Return this information so that the function spectral_sequence has less work to do
-    # This can be parallelized
+    # Return this information so that the function spectral_sequence
+    # has less work to do. This can be parallelized
     nerve_point_cloud = [divided_point_cloud]
     nerve_points_IN = [points_IN]
     for k, k_simplices_nerve in enumerate(nerve[1:]):
@@ -184,13 +192,13 @@ def generate_cover(max_div, overlap, point_cloud):
             points_coord_intersection = point_cloud[points_IN_intersection]
             nerve_points_IN[k+1].append(np.array(points_IN_intersection))
             nerve_point_cloud[k+1].append(np.array(points_coord_intersection))
-    
-    return nerve_point_cloud, nerve_points_IN, nerve
 
+    return nerve_point_cloud, nerve_points_IN, nerve
 
 
 ###############################################################################
 # Background functions supporting generate_cover
+
 
 def corners_hypercube(point_cloud):
     """Returns maximum and minimum corners of hypercube containing point_cloud.
@@ -204,7 +212,7 @@ def corners_hypercube(point_cloud):
     -------
     min_corner, max_corner : :obj:`Numpy Array`, :obj:`Numpy Array`
         Minimum and maximum corners of containing hypercube.
-    
+
     Example
     -------
         >>> from permaviss.sample_point_clouds.examples import random_cube
@@ -222,7 +230,6 @@ def corners_hypercube(point_cloud):
         array([ 0.4736051,  0.001455 ])
 
     """
-    dim = np.size(point_cloud, 1)
     min_corner = np.amin(point_cloud, axis=0)
     max_corner = np.amax(point_cloud, axis=0)
 
@@ -231,25 +238,26 @@ def corners_hypercube(point_cloud):
 ###############################################################################
 # Generate the nerve of an hypercube covering
 
+
 def nerve_hypercube_cover(div):
     """Generates the nerve of an hypercube covering.
-    
+
     Given an array of divisions of an hypercube cover, this returns the nerve.
 
     Parameters
     ----------
     div : :obj:`Numpy Array`
         1D array of divisions per dimension.
-    
+
     Returns
     -------
-    nerve : :obj:`list(Numpy Array)` 
+    nerve : :obj:`list(Numpy Array)`
         Nerve associated to hypercube covering.
 
     Example
-    ------- 
-    Nerve for three dimensional covering. There are 6 hypercubes and the divisions
-    per dimension are given as 1 x 3 x 2.
+    -------
+    Nerve for three dimensional covering. There are 6 hypercubes and the
+    divisions per dimension are given as 1 x 3 x 2.
 
         >>> div = [1,3,2]
         >>> nerve = nerve_hypercube_cover(div)
@@ -285,17 +293,17 @@ def nerve_hypercube_cover(div):
     """
     dim = np.size(div)
     # compute number of hypercubes
-    number_hypercubes = 1 
+    number_hypercubes = 1
     for d in range(dim):
-        number_hypercubes *= div[d]  
+        number_hypercubes *= div[d]
 
     nerve_graph = []
     pos = np.zeros(dim)
     for current_index in range(number_hypercubes):
-        neighbour_step = -1 * np.ones(dim) # step on current position to neighbour
+        neighbour_step = -1 * np.ones(dim)  # current step to neighbour
         # Add all the edges to the neighbour graph
         while np.any(neighbour_step < np.zeros(dim)):
-            step = 1  # this step tracks how much we need to move the index for each coordinate
+            step = 1  # how much we need to move the index for each coordinate
             # Initialize and compute the index of the neighbour
             neighbour_index = current_index  # initialize the lower index
             for i in range(dim):
@@ -306,13 +314,14 @@ def nerve_hypercube_cover(div):
                     neighbour_index = -1
                     break
 
-                neighbour_index += neighbour_step[-i - 1] * step  # update lower index
+                neighbour_index += neighbour_step[-i - 1] * step
                 step *= div[-i - 1]  # increase coordinate step
 
-            if (neighbour_index >= 0) & (sorted([neighbour_index, current_index]) not in nerve_graph):
-                """
-                    Include edge (index_neighbour,index_current) to the nerve graph
-                    Only do this whenever this makes sense and the edge is not in the nerve already
+            if (neighbour_index >= 0) & (sorted(
+                    [neighbour_index, current_index]) not in nerve_graph):
+                """Include edge (index_neighbour,index_current) to the nerve
+                graph. Only do this whenever this makes sense and the edge is
+                not in the nerve already.
                 """
                 nerve_graph.append(sorted([neighbour_index, current_index]))
 
@@ -321,35 +330,36 @@ def nerve_hypercube_cover(div):
                 if neighbour_step[-i-1] < 1:
                     neighbour_step[-i-1] += 1
                     for k in range(i):
-                        neighbour_step[-k-1]=-1
+                        neighbour_step[-k-1] = -1
                     break
-        
-        next_hypercube(pos, div) 
- 
-    return flCpx.flag_complex(nerve_graph, number_hypercubes, 2**dim)    
+
+        next_hypercube(pos, div)
+
+    return flCpx.flag_complex(nerve_graph, number_hypercubes, 2**dim)
 
 ###############################################################################
 # Compute the common points on the interesection determined by simplex
+
 
 def intersection_covers(points_IN,  simplex):
     """Computes the points in the intersection specified by a nerve simplex.
 
     Parameters
     ----------
-    points_IN : :obj:`list(list(Numpy Array 1D))` 
+    points_IN : :obj:`list(list(Numpy Array 1D))`
         Identification Numbers (IN) of points in covering hypercubes.
     simplex : :obj:`Numpy Array`
-        Simplex in nerve which specifies intersection between hypercubes. 
+        Simplex in nerve which specifies intersection between hypercubes.
 
     Returns
     -------
     points_IN_intersection : :obj:`list(int)`
-        IN of points in the intersection specified by simplex
+        IN of points in the intersection specified by simplex.
 
     Example
     -------
         >>> import numpy as np
-        >>> points_IN = [np.array([0,3,5]),np.array([0,1]),np.array([1,5])]
+        >>> points_IN = [np.array([0,3,5]),np.array([0,1]), np.array([1,5])]
         >>> simplex = np.array([0,1])
         >>> intersection_covers(points_IN, simplex)
         [0]
@@ -357,10 +367,9 @@ def intersection_covers(points_IN,  simplex):
     """
     points_IN_intersection = points_IN[int(simplex[0])]
 
-    for k in range(1,len(simplex)):
+    for k in range(1, len(simplex)):
         points_IN_intersection = [
                 idx_pt for idx_pt in points_IN_intersection
                 if idx_pt in points_IN[int(simplex[k])]]
 
     return points_IN_intersection
-
