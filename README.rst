@@ -1,5 +1,5 @@
 
-![](https://github.com/atorras1618/permaviss/.github/workflows/test/badge.svg)
+![](https://github.com/atorras1618/permaviss/workflows/test/badge.svg)
 
 PerMaViss 0.0.1
 ***************
