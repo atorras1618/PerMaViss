@@ -1,5 +1,6 @@
 
-![](https://github.com/atorras1618/permaviss/workflows/test/badge.svg)
+.. image:: https://github.com/atorras1618/permaviss/workflows/test/badge.svg
+   :target: https://github.com/atorras1618/PerMaViss/actions?query=workflow%3Atest+branch%3Amaster
 
 PerMaViss 0.0.1
 ***************
