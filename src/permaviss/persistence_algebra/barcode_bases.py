@@ -114,9 +114,8 @@ class barcode_basis(object):
                  broken_differentials=None):
         """Constructor method
         """
-        # When the basis is broken, the death_differentials must be
-        # given as an np.array
-        if broken_basis and isinstance(broken_differentials, np.array):
+        # When the basis is broken, the death_differentials must be given
+        if broken_basis and (broken_differentials is None):
             raise ValueError
 
         self.broken_basis = broken_basis
