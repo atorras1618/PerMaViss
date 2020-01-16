@@ -91,17 +91,19 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     Im : :class:`barcode_basis` object
         Absolute/relative basis of image of f.
     PreIm : Numpy Array (A.dim, Im.dim)
-        Absolute/relative preimage coordinates of f. That is, each column stores the
-        sums that generate the corresponding Image barcode.
+        Absolute/relative preimage coordinates of f. That is, each column
+        stores the sums that generate the corresponding Image barcode.
 
     Examples
     --------
 
         >>> import numpy as np
-        >>> from permaviss.persistence_algebra.barcode_bases import barcode_basis
+        >>> from permaviss.persistence_algebra.barcode_bases import
+        ... barcode_basis
         >>> A = barcode_basis([[1,8],[1,5],[2,5], [4,8]])
         >>> B = barcode_basis([[-1,3],[0,4],[0,3.5],[2,5],[2,4],[3,8]])
-        >>> F = np.array([[4,1,1,0],[1,4,1,0],[1,1,4,0],[0,0,1,4],[0,0,4,1],[0,0,0,1]])
+        >>> F = np.array([[4,1,1,0],[1,4,1,0],[1,1,4,0],[0,0,1,4],[0,0,4,1],
+        ... [0,0,0,1]])
         >>> p = 5
         >>> Im, Ker, PreIm = image_kernel(A,B,F,p)
         >>> print(Im)
@@ -157,14 +159,16 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                                   axis=0).astype(int)
         return_order_A = np.argsort(order)
         F = np.copy(F[:, shifted_order])
-        A = barcode_basis(np.append(A.barcode[:start_index], A_rel.barcode, axis=0))
+        A = barcode_basis(np.append(A.barcode[:start_index], A_rel.barcode,
+                                    axis=0))
 
     # Get sorted radii where changes happen
     a = np.sort(np.unique(np.append(A.changes_list(), B.changes_list())))
     rel_A_dim = A.dim - start_index
     # Save space for Im barcode and coordinates
-    Im_barcode = np.concatenate(([A.barcode[start_index:, 0]], [np.zeros(rel_A_dim)]),
-                                axis=0).T
+    Im_barcode = np.concatenate(
+        ([A.barcode[start_index:, 0]], [np.zeros(rel_A_dim)]),
+        axis=0).T
     Im_rel_coordinates = np.copy(F[:, start_index:])
     # Save space for Ker barcode and coordinates
     Ker_barcode = np.zeros((rel_A_dim, 2))
@@ -227,29 +231,40 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                 # Perform the same reductions on Ker, if Q0 is not empty
                 if np.any(Q0):
                     Ker_coordinates[:, :kernel_dim] = multiply_mod_p(
-                                Ker_coordinates[:, :kernel_dim], Q0, p)
+                        Ker_coordinates[:, :kernel_dim], Q0, p)
                 # Compute the start_index of active barcodes
-                start_index_active = len(active_indices) - len(active_rel_indices)
-                # Look at K0, eliminating linear dependencies and killing barcodes on image
+                start_index_active = len(active_indices) - len(
+                    active_rel_indices)
+                # Look at K0, eliminating linear dependencies and killing
+                # barcodes on image.
                 for j, c in enumerate(K0.T):
-                    # Find pivot in terms of whole basis A, keep also the active pivot
+                    # Find pivot in terms of whole basis A, keep also the
+                    # active pivot.
                     active_pivot = _pivot(c)
                     piv = active_rel_indices[active_pivot]
                     # If the pivot is new and the column is nonzero
                     if (piv not in dead_images) and (active_pivot > -1):
-                        # Add new coordinates to Image, set barcode endpoint, store preimage
-                        A_rel_coord = A.trans_active_coord(c, rad, start=start_index)
-                        image_A_rel = multiply_mod_p(F[:, start_index:],
-                                                     np.transpose([A_rel_coord]), p)[:, 0]
+                        # Add new coordinates to Image, set barcode endpoint,
+                        # store preimage.
+                        A_rel_coord = A.trans_active_coord(
+                            c, rad, start=start_index)
+                        image_A_rel = multiply_mod_p(
+                            F[:, start_index:], np.transpose([A_rel_coord]),
+                            p)[:, 0]
                         Im_rel_coordinates[:, piv] = image_A_rel
-                        Im_coordinates[:, start_index + piv] = np.copy(image_A_rel)
+                        Im_coordinates[
+                            :, start_index + piv] = np.copy(image_A_rel)
                         Im_barcode[piv, 1] = rad
                         PreIm[:, piv] = A_rel_coord
-                        # Set corresponding column in I0 to zero and add piv to dead images
-                        I0[:, active_pivot + start_index_active] = np.zeros(np.size(I0, 0))
+                        # Set corresponding column in I0 to zero and add piv
+                        # to dead images
+                        I0[
+                            :, active_pivot + start_index_active
+                            ] = np.zeros(np.size(I0, 0))
                         dead_images.append(piv)
                     # end if
-                    # If a barcode is dying in the kernel, add death radius to Ker_barcode
+                    # If a barcode is dying in the kernel, add death radius
+                    # to Ker_barcode
                     if (active_pivot == -1) and (j not in dead_kernels):
                         dead_kernels.append(j)
                         Ker_barcode[j, 1] = rad
@@ -257,7 +272,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                 # end for
             # end else
         # end if
-        # Reduce I0, adding new generators to the kernel and adjusting Im_rel_coordinates
+        # Reduce I0, adding new generators to the kernel and adjusting
+        # Im_rel_coordinates.
         if I0.size > 0:
             I0, T0 = gauss_mod_p.gauss_col(I0, p)
             # Adapt T0 to the whole basis A
@@ -272,7 +288,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
             # Then perform the additions in PreIm and Im
             PreIm = multiply_mod_p(PreIm, Q, p)
             Im_rel_coordinates = multiply_mod_p(Im_rel_coordinates, Q, p)
-            # Now, we check for 0 columns in I0, iterating over active_indices >= start_index
+            # Now, we check for 0 columns in I0, iterating over
+            # active_indices >= start_index.
             rel_I0_T = I0.T[active_indices >= start_index]
             start_kernel_dim = kernel_dim
             for j, c in enumerate(rel_I0_T):
@@ -294,7 +311,10 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                 K0, Q0 = gauss_mod_p.gauss_col(K0, p)
                 # Perform the same reductions on Ker, if Q0 is not empty
                 if np.any(Q0):
-                    Ker_coordinates[:, :kernel_dim] = multiply_mod_p(Ker_coordinates[:, :kernel_dim], Q0, p)
+                    Ker_coordinates[
+                        :, :kernel_dim
+                        ] = multiply_mod_p(Ker_coordinates[:, :kernel_dim],
+                                           Q0, p)
                 # Look at K0, eliminating linear dependencies
                 for j, c in enumerate(K0.T):
                     if (_pivot(c) == -1) and (j not in dead_kernels):
@@ -308,7 +328,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
 
     # end for
 
-    # Store the barcode endpoints for the image and kernel generators that are still alive.
+    # Store the barcode endpoints for the image and kernel generators that are
+    # still alive.
     for j in range(rel_A_dim):
         if j not in dead_images:
             Im_barcode[j, 1] = a[-1]
@@ -324,8 +345,10 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     # Return to normal order in A
     PreIm = PreIm[return_order_A]
     Ker_coordinates = Ker_coordinates[return_order_A]
-    # Create barcode basis for image, and adjust PreIm according to well defined barcodes
-    Im_basis = barcode_basis(Im_barcode, B_origin, Im_rel_coordinates, store_well_defined=True)
+    # Create barcode basis for image, and adjust PreIm according to well
+    # defined barcodes.
+    Im_basis = barcode_basis(Im_barcode, B_origin, Im_rel_coordinates,
+                             store_well_defined=True)
     PreIm = PreIm[:, Im_basis.well_defined]
     # Order Im and store the order in PreIm
     order = Im_basis.sort(send_order=True)
@@ -336,9 +359,11 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
 
     # Create a barcode basis for the kernel and sort it.
     if start_index > 0:
-        Ker_basis = barcode_basis(Ker_barcode[:kernel_dim], prev_basis, Ker_coordinates[:, :kernel_dim])
+        Ker_basis = barcode_basis(Ker_barcode[:kernel_dim], prev_basis,
+                                  Ker_coordinates[:, :kernel_dim])
     else:
-        Ker_basis = barcode_basis(Ker_barcode[:kernel_dim], A_origin, Ker_coordinates[:, :kernel_dim])
+        Ker_basis = barcode_basis(Ker_barcode[:kernel_dim], A_origin,
+                                  Ker_coordinates[:, :kernel_dim])
 
     Ker_basis.sort()
 

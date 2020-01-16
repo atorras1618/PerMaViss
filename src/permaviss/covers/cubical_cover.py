@@ -47,8 +47,8 @@ def generate_cover(max_div, overlap, point_cloud):
     and their respective intersections. It also generates the nerve of the
     covering.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     max_div : int
         Number of divisions on the maximum side of point_cloud
     overlap : float
