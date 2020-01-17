@@ -5,33 +5,33 @@ from permaviss.sample_point_clouds.examples import grid
 from permaviss.covers.cubical_cover import *
 
 def test_next_hypercube():
-    pos = [1,1]
-    div = [3,2]
-    next_hypercube(pos,div)
-    assert [2,0]==pos
+    pos = [1, 1]
+    div = [3, 2]
+    next_hypercube(pos, div)
+    assert [2, 0]==pos
 
 
 def test_corners_hypercube():
     assert np.array_equal(
-            np.array([[0,-1,-0.5],[2,1,1]]), 
+            np.array([[0, -1, -0.5], [2, 1, 1]]), 
             np.array(corners_hypercube(
-                np.array([[0,0,0],[0,-1,1],[1,1,0], [2,1,-0.5]])
+                np.array([[0, 0, 0], [0, -1, 1], [1, 1, 0], [2, 1, -0.5]])
                     ))
         )
     assert np.array_equal(
-            np.array([[0,-10],[1,1]]), 
+            np.array([[0, -10], [1, 1]]), 
             np.array(corners_hypercube(
-                np.array([[0,0],[1,1], [1,-10], [0.5,0.5]])
+                np.array([[0, 0], [1, 1], [1, -10], [0.5, 0.5]])
                     ))
        )
 
 def test_nerve_hypercube_cover():
-    div = [2,3]
+    div = [2, 3]
     ### Expected nerve
     expected_nerve = [6,
-        np.array([[0,1],[1,2],[0,3],[1,3],[0,4],
-                  [1,4],[2,4],[3,4],[1,5],[2,5],[4,5]]),
-        np.array([[0,1,3],[0,1,4],[1,2,4],[0,3,4],
+        np.array([[0, 1], [1, 2], [0, 3], [1, 3], [0, 4],
+                  [1, 4], [2, 4], [3, 4], [1, 5], [2, 5], [4, 5]]),
+        np.array([[0, 1, 3], [0, 1, 4], [1, 2, 4], [0, 3,4],
                   [1,3,4],[1,2,5],[1,4,5],[2,4,5]]),
         np.array([[0,1,3,4],[1,2,4,5]]),
         []
@@ -108,7 +108,7 @@ def test_generate_cover():
     ### Expected Nerve
     no_cubes = 4
     double_inter = np.array(
-        [[0.,1.],[0.,2.],[1.,2.],[0.,3.],[1.,3.],[2.,3.]]
+        [[0., 1.], [0.,2.],[1.,2.],[0.,3.],[1.,3.],[2.,3.]]
     )
     triple_inter = np.array(
         [[0.,1.,2.],[0.,1.,3.],[0.,2.,3.],[1.,2.,3.]]
@@ -134,4 +134,3 @@ def test_generate_cover():
     assert expected_nerve[0] == nerve[0]
     for dim, simplices in enumerate(nerve[1:4]):
         assert np.array_equal(simplices, expected_nerve[dim+1])
-

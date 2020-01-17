@@ -59,7 +59,7 @@ class spectral_sequence(object):
         corresponds to an `n_dim` simplex in the nerve. For each such entry,
         we store the number of nontrivial persistent homology classes of
         dimension `dim` in the corresponding cover.
-    Hom : :obj:`list(list(list(list(barcode_basis))), list(list(barcode_basis)),...)`
+    Hom : :obj:`list(...(list(barcode_basis)))`
         Homology for each page of the spectral sequence. Given three integers
         which we denote `n_dim`, `nerv_spx` and `deg` we have that
         `Hom[0][n_dim][nerv_spx][deg]` stores a :obj:`barcode_basis` with the
@@ -69,7 +69,7 @@ class spectral_sequence(object):
         and `deg`, we store in `Hom[k][n_dim][deg]` the :obj:`barcode_basis`
         for the homology on the `(deg, n_dim)` entry in the `k` page of the
         spectral sequence.
-    Im : :obj:`list(list(list(list(barcode_basis))), list(list(barcode_basis)),...)`
+    Im : :obj:`list(...(list(barcode_basis)))`
         Image for each page of the spectral sequence. Given three integers
         which we denote `n_dim`, `nerv_spx` and `deg` we have that
         `Im[0][n_dim][nerv_spx][deg]` stores a :obj:`barcode_basis` for the
@@ -79,7 +79,7 @@ class spectral_sequence(object):
         and `deg`, we store in `Im[k][n_dim][deg]` the :obj:`barcode_basis` for
         the image on the `(deg, n_dim)` entry in the `k` page of the spectral
         sequence.
-    PreIm : :obj:`list(list(list(list(Numpy Array))), list(list(Numpy Array)),...)`
+    PreIm : :obj:`list(...(list(Numpy Array)))`
         Preimages for each page of the spectral sequence. Given three integers
         which we denote `n_dim`, `nerv_spx` and `deg` we have that
         `PreIm[0][n_dim][nerv_spx][deg]` stores a :obj:`Numpy Array` for the
@@ -111,7 +111,8 @@ class spectral_sequence(object):
     place.
 
     """
-    def __init__(self, nerve, nerve_point_cloud, points_IN, max_dim, max_r, no_pages, p):
+    def __init__(self, nerve, nerve_point_cloud, points_IN, max_dim,
+                 max_r, no_pages, p):
         """Construction method
         """
         # dimensions of spectral sequence
@@ -164,8 +165,9 @@ class spectral_sequence(object):
                     self.PreIm[k][n_dim].append([])
 
         # save space for dimension matrices for all pages
-        # the order of variables is for easier printing of the spectral sequence
-        self.page_dim_matrix = np.zeros((no_pages+1, max_dim, self.no_columns)).astype(int)
+        # the order of variables is for printing the spectral sequence
+        self.page_dim_matrix = np.zeros((no_pages+1, max_dim,
+                                         self.no_columns)).astype(int)
 
         # define persistent homology and order of diagonal basis
         self.persistent_homology = []
@@ -205,7 +207,8 @@ class spectral_sequence(object):
             for deg in range(self.no_rows):
                 no_cycles = 0
                 # cumulative dimensions
-                self.cycle_dimensions[n_dim].append(np.zeros(n_spx_number+1).astype(int))
+                self.cycle_dimensions[n_dim].append(
+                    np.zeros(n_spx_number+1).astype(int))
                 for k in range(n_spx_number):
                     # Generate page dim matrix and local_coordinates info
                     cycles_in_cover = self.Hom[0][n_dim][k][deg].dim
@@ -305,7 +308,7 @@ class spectral_sequence(object):
 
         Returns
         -------
-        target_coordinates : :obj:`Numpy Array`, if `lift_sum==False` then returns :obj:`list(dict)`.
+        :obj:`Numpy Array`, if `lift_sum==False` then returns :obj:`list(dict)`
             Coordinates for images. Each column stores the image by the
             `current_page` differential applied to the corresponding column in
             `initial_sum`. These coordinates are given in terms of the basis
@@ -360,6 +363,14 @@ class spectral_sequence(object):
             zero_coordinates = self.cech_differential(zero_coordinates,
                                                       n_dim, deg)
             n_dim -= 1
+            # after this even though the class of zero_coordinates is zero
+            # in current_page, this does not directly imply that these
+            # can be lifted through the vertical differential. We adjust.
+            if k < current_page - 2:
+                self.liftable_0_class(zero_coordinates, R, n_dim, deg,
+                                      current_page, store_reps,
+                                      start_n_dim=start_n_dim,
+                                      start_deg=start_deg)
 
         # Lift back to current_page
         if lift_sum:
@@ -482,7 +493,8 @@ class spectral_sequence(object):
             # end for
         else:
             for i, coord in enumerate(initial_sum.T):
-                R[i] = self.Hom[current_page - 1][n_dim][deg].birth_radius(coord)
+                R[i] = self.Hom[current_page - 1][n_dim][
+                    deg].birth_radius(coord)
             # end for
         # end else
 
@@ -753,7 +765,6 @@ class spectral_sequence(object):
             nerve of the cover.
 
         """
-
         lifted_coordinates = []
         for i, coord in enumerate(start_coordinates):
             lifted_coordinates.append({})
@@ -854,31 +865,9 @@ class spectral_sequence(object):
                 # substract images to representatives, so that we can lift the
                 # vertical differentials.
                 if n_dim > 0:
-                    for page in range(self.no_pages-1, 0, -1):
-                        image_coefficients = self.image_coordinates(
-                            representatives[ext_deg], death_R,
-                            n_dim, deg, page)
-                        # If image in position is nontrivial
-                        if len(image_coefficients) > 0 and np.any(
-                                image_coefficients):
-                            preimages_sums = multiply_mod_p(
-                                image_coefficients, self.PreIm[page][
-                                    n_dim+page][deg-page+1].T, self.p)
-                            # substract images to zero page sums
-                            if np.any(preimages_sums):
-                                images = self.zig_zag(
-                                    n_dim-page, deg+page-1, page,
-                                    lift_sum=False,
-                                    initial_sum=preimages_sums.T)
-                                for i in range(dim_ext):
-                                    representatives[ext_deg][
-                                        i] = add_dictionaries([1, -1], [
-                                            representatives[ext_deg][i],
-                                            images[i]], self.p)
-                                # end for
-                            # end if
-                        # end if
-                    # end for
+                    # substract images of differentials so that we can lift
+                    self.liftable_0_class(representatives[ext_deg], death_R,
+                                          n_dim, deg, self.no_pages - 1, False)
                     # lift through vertical differential the last nontrivial
                     # entry in total complex diagonal.
                     preimages_sums = self.lift_preimage(representatives[
@@ -899,7 +888,80 @@ class spectral_sequence(object):
             deg += 1
             ext_deg += 1
         # end for
+
         return extensions
+
+    ###########################################################################
+    # liftable_0_class
+
+    def liftable_0_class(self, start_coordinates, R, n_dim, deg, target_page,
+                         store_reps, start_n_dim=None, start_deg=None):
+        """ Given cochains on the `0`-page, and assuming that they are zero
+        when lifted to `target_page`, we get representatives that are
+        equivalent on `target_page - 1` and also lift through the vertical
+        differential.
+
+        Parameters
+        ----------
+        start_coordinates : :obj:`list(dict)`
+            These are the cochains on the `(deg, n_dim)` position that we want
+            to lift through the vertical differential. List containing cochains
+            on `(deg, n_dim)`. Each entry contains the coefficients of a
+            cochain as a dictionary indexed by `n_dim` simplices on the nerve
+            of the cover. This is modified so that it can be lifted.
+        R : :obj:`Numpy Array`
+            1D array storing the radii of birth for each cochain stored in
+            `start_coordinates`
+        n_dim : int
+            Column on page
+        deg : int
+            Row on page
+        target_page : int
+            Page of spectral sequence at which the given classes vanish.
+
+        Returns
+        -------
+        liftable_coordinates : :obj:`list(dict)`
+            Cochains on the `(deg, n_dim)` position whose classes on
+            `target_page` are equivalent to those of `start_coordinates`.
+            Furthermore, these can also be lifted through vertical
+            differentials.
+
+        """
+        dim_reps = len(start_coordinates)
+        for page in range(target_page - 1, 0, -1):
+            image_coefficients = self.image_coordinates(start_coordinates, R,
+                                                        n_dim, deg, page)
+            # If image in position is nontrivial
+            if len(image_coefficients) > 0 and np.any(image_coefficients):
+                preimages_sums = multiply_mod_p(
+                    image_coefficients,
+                    self.PreIm[page][n_dim+page][deg-page+1].T,
+                    self.p)
+                # substract images to zero page sums
+                if np.any(preimages_sums):
+                    images = self.zig_zag(
+                        n_dim+page, deg-page+1, page,
+                        lift_sum=False,
+                        initial_sum=preimages_sums.T)
+                    preimage_zeros, _ = self.load_to_zero_page(
+                        preimages_sums.T, n_dim+page, deg-page+1, page)
+                    tot_complex_reps = self.tot_complex_reps[
+                        start_n_dim][start_deg][deg - page + 1 - start_deg]
+                    for i in range(dim_reps):
+                        start_coordinates[i] = add_dictionaries(
+                            [1, -1], [start_coordinates[i], images[i]],
+                            self.p)
+                        if store_reps:
+                            tot_complex_reps[i] = add_dictionaries(
+                                [1, -1],
+                                [tot_complex_reps[i], preimage_zeros[i]],
+                                self.p)
+
+                    # end for
+                # end if
+            # end if
+        # end for
 
     ###########################################################################
     # image_coordinates
@@ -933,7 +995,8 @@ class spectral_sequence(object):
         -------
         image_coordinates : :obj:`Numpy Array`
             Start_coordinates classes in target_page written in terms of
-            image of differential.
+            image of differential. Rows correspond to different vectors
+            and columns correspond to the dimension of the image.
 
         Raises
         ------
@@ -944,6 +1007,7 @@ class spectral_sequence(object):
         # Lift start_coordinates from 0 to target_page
         lifted_sum = self.lift_to_page(start_coordinates, R, n_dim, deg,
                                        target_page)
+
         # If image is trivial, return
         Im_dim = self.Im[target_page][n_dim][deg].dim
         if Im_dim == 0:
@@ -957,8 +1021,8 @@ class spectral_sequence(object):
                 deg].prev_basis.active(rad)]
             if len(active_lifted_sum) > 0:
                 image_coordinates[i, self.Im[target_page][n_dim][
-                                  deg].active(rad)] = solve_mod_p(
-                    Im, active_lifted_sum, self.p)
+                    deg].active(rad)] = solve_mod_p(
+                        Im, active_lifted_sum, self.p)
 
         return image_coordinates
     # end def

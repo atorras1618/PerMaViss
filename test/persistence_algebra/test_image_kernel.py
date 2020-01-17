@@ -236,3 +236,24 @@ def test_image_kernel_8():
     assert np.array_equal(Im_coord, res_Im.coordinates)
 
 
+def test_image_kernel_9():
+    # Test for dying dependent classes in Kernel after adding them
+    # through the image reduction. 
+    A = barcode_basis([[1,8],[2,8],[3,5]])
+    B = barcode_basis([[0,5],[1,8],[2,5]])
+    F = np.array([[1,0,-1], [1, -1, 0], [0, 1, -1]])
+    res_Im, res_Ker, res_PreIm = image_kernel(A,B,F,5)
+    # expected results
+    Im_barcode = np.array([[1.,8.],[2.,5.]])
+    Im_coord = np.array([[1.,1.],[1.,0.],[0.,1.]])
+    Ker_barcode = np.array([[3.,8.]])
+    Ker_coord = np.array([[1.],[1.],[1.]])
+    PreIm = np.array([[1.,1.],[0.,1.],[0.,0.]])
+    print(res_Im)
+    print(res_Ker)
+    print(res_PreIm)
+    assert np.array_equal(Im_barcode, res_Im.barcode)
+    assert np.array_equal(Im_coord, res_Im.coordinates)
+    assert np.array_equal(Ker_barcode, res_Ker.barcode)
+    assert np.array_equal(Ker_coord, res_Ker.coordinates)
+    assert np.array_equal(res_PreIm, PreIm)
