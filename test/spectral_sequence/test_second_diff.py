@@ -1,10 +1,7 @@
 import numpy as np
 import scipy.spatial.distance as dist
 
-from permaviss.sample_point_clouds.examples import random_cube, take_sample
 from permaviss.spectral_sequence.MV_spectral_seq import create_MV_ss
-from permaviss.spectral_sequence.spectral_sequence_class import (
-    add_dictionaries)
 
 from permaviss.simplicial_complexes.vietoris_rips import vietoris_rips
 from permaviss.simplicial_complexes.differentials import complex_differentials
