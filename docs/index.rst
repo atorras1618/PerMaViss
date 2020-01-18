@@ -15,7 +15,7 @@ This implementation is more of a `prototype` than a finished program. As such, i
 Also, it would be great to have more examples for different covers. Additionally, it would be interesting to also have an implementation for cubical, alpha, and other complexes. Any collaboration or suggestion will be welcome!
 
 
-.. image:: examples/3Dextension.png
+.. image:: examples/3Dextension1.png
    :width: 700 
    :align: center
 

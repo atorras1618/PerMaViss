@@ -2,10 +2,10 @@
 .. image:: https://github.com/atorras1618/permaviss/workflows/test/badge.svg
    :target: https://github.com/atorras1618/PerMaViss/actions?query=workflow%3Atest+branch%3Amaster
 
-PerMaViss 0.0.1
-***************
+PerMaViss
+*********
 
-Welcome to PerMaViss 0.0.1! This is a Python3 implementation of the Persistence Mayer Vietoris spectral sequence. 
+Welcome to PerMaViss! This is a Python3 implementation of the Persistence Mayer Vietoris spectral sequence. 
 For a mathematical description of the procedure, see `Distributing Persistent Homology via Spectral Sequences <https://arxiv.org/abs/1907.05228>`_. 
 
 In a nutshell, this library is intended to be a `proof of concept` for persistence homology parallelization. That is, one can divide a point cloud into covering regions, compute persistent homology on each part, and combine all results to obtain the global persistent homology again. This is done by means of the Persistence Mayer Vietoris spectral sequence. Here we present two examples, the torus and random point clouds in three dimensions. Both of these are divided into `8` mutually overlapping regions, and the spectral sequence is computed with respect to this cover. The resulting barcodes coincide with that which would be obtained by computing persistent homology directly.
@@ -13,7 +13,7 @@ In a nutshell, this library is intended to be a `proof of concept` for persisten
 This implementation is more of a `prototype` than a finished program. As such, it still needs to be optimized. Also, it would be great to have more examples for different covers. Additionally, it would be interesting to also have an implementation for cubical, alpha, and other complexes. Any collaboration or suggestion will be welcome!
 
 
-.. image:: docs/examples/3Dextension.png
+.. image:: docs/examples/3Dextension1.png
    :width: 700 
    :align: center
    
@@ -128,6 +128,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.**
+
+How to cite
+===========
+
+Álvaro Torras Casas (18 January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1)
 
 Reference
 =========
