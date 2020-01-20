@@ -1,10 +1,16 @@
 
-.. image:: https://github.com/atorras1618/permaviss/workflows/test/badge.svg
-   :target: https://github.com/atorras1618/PerMaViss/actions?query=workflow%3Atest+branch%3Amaster
+.. image:: https://github.com/atorras1618/permaviss/workflows/CI/CD/badge.svg
+   :target: https://github.com/atorras1618/PerMaViss/actions?query=workflow%3ACI%2FCD+branch%3Amaster
 
 .. image:: https://readthedocs.org/projects/permaviss/badge/?version=latest
    :target: https://permaviss.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+
+.. image:: https://travis-ci.org/atorras1618/PerMaViss.svg?branch=master
+    :target: https://travis-ci.org/atorras1618/PerMaViss
+
+.. image:: https://coveralls.io/repos/github/atorras1618/PerMaViss/badge.svg?branch=master
+   :target: https://coveralls.io/github/atorras1618/PerMaViss?branch=master
 
 .. image:: https://zenodo.org/badge/222728935.svg
    :target: https://zenodo.org/badge/latestdoi/222728935
