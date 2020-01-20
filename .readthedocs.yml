@@ -23,5 +23,5 @@ python:
    install:
       - requirements: docs/requirements.txt
       - method: setuptools
-        path: PerMaViss
+        path: .
    system_packages: true
