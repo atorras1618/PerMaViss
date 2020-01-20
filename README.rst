@@ -2,6 +2,10 @@
 .. image:: https://github.com/atorras1618/permaviss/workflows/test/badge.svg
    :target: https://github.com/atorras1618/PerMaViss/actions?query=workflow%3Atest+branch%3Amaster
 
+.. image:: https://readthedocs.org/projects/permaviss/badge/?version=latest
+   :target: https://permaviss.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 .. image:: https://zenodo.org/badge/222728935.svg
    :target: https://zenodo.org/badge/latestdoi/222728935
 
@@ -39,10 +43,15 @@ Optional for examples and notebooks:
 Installation
 ============
 
-Permaviss is built on Python 3, and relies only on `NumPy <http://www.numpy.org/>`_, `Math <https://docs.python.org/2/library/math.html>`_ and `Scipy <https://www.scipy.org/>`_. 
-Additionally, Matplotlib and mpl_toolkits are used for the tutorials. 
+Permaviss is built on Python 3, and relies only on `NumPy <http://www.numpy.org/>`_  and `Scipy <https://www.scipy.org/>`_. 
 
-To install, clone from GitHub repository and install::
+Additionally, `Matplotlib <https://matplotlib.org/>`_ and `mpl_toolkits <https://matplotlib.org/mpl_toolkits/>`_ are used for the tutorials. 
+
+To install using :code:`pip3`::
+
+    $ pip3 install permaviss
+
+If you prefer to install from source, clone from GitHub repository::
 
     $ git clone https://github.com/atorras1618/PerMaViss
     $ cd PerMaViss
@@ -135,7 +144,7 @@ SOFTWARE.**
 How to cite
 ===========
 
-Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1)
+Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1). Zenodo. http://doi.org/10.5281/zenodo.3613423 
 
 Reference
 =========

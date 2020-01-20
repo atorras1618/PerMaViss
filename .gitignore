@@ -1,14 +1,16 @@
 # Python3 dev files
-__pycache__
-.cache
-*.egg-info
-*_build*
-*_static*
-*_templates*
-*.swp
-*coverage*
-setup.cfg
-.pytest_cache
-.ipynb_checkpoints
 _build/
+*_build*
+build/
+.cache
+*coverage*
+dist
+*.egg-info
 generated/
+.ipynb_checkpoints
+__pycache__
+.pytest_cache
+setup.cfg
+*_static*
+*.swp
+*_templates*

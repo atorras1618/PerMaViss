@@ -72,7 +72,7 @@ Notice that in this case, there was no need to solve the extension problem. See 
 How to cite
 ===========
 
-Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1)
+Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1). Zenodo. http://doi.org/10.5281/zenodo.3613423
 
 
 Reference

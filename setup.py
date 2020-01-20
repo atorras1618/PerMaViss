@@ -15,6 +15,8 @@ setup(
     long_description_content_type="text/x-rst",
     author_email="atorras1618@gmail.com",
     author="Alvaro Torras Casas",
+    url="https://github.com/atorras1618/PerMaViss",
+    download_url="https://github.com/atorras1618/PerMaViss/tarball/v0.0.1",
     licence="MIT",
     keywords=["spectral sequence", "persistent homology", "Mayer Vietoris"],
     packages=find_packages("src"),

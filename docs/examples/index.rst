@@ -251,17 +251,19 @@ Here we look at the extension information on one dimensional persistence classes
     >>>         for k in range(diag + 1):
     >>>             if k == diag and current_rad == b[0]:
     >>>                 break
-    >>>             for i, rad in enumerate(MV_ss.Hom[
-    >>>                     MV_ss.no_pages - 1][diag - k][k].barcode[:,0]):
-    >>>                 if np.allclose(rad, current_rad):
-    >>>                     next_rad = MV_ss.Hom[
-    >>>                         MV_ss.no_pages - 1][diag - k][k].barcode[i,1]
-    >>>                     ax.fill([current_rad, next_rad, next_rad, current_rad],
-    >>>                             [y_coord,y_coord,y_coord+step,y_coord+step],
-    >>>                             c=colors[k + no_diag - diag - 1])
-    >>>                     current_rad = next_rad
-    >>>                 # end if
-    >>>             # end for
+    >>>             if len(MV_ss.Hom[MV_ss.no_pages - 1][diag - k][k]) != 0:
+    >>>                 for i, rad in enumerate(MV_ss.Hom[
+    >>>                         MV_ss.no_pages - 1][diag - k][k].barcode[:,0]):
+    >>>                     if np.allclose(rad, current_rad):
+    >>>                         next_rad = MV_ss.Hom[
+    >>>                             MV_ss.no_pages - 1][diag - k][k].barcode[i,1]
+    >>>                         ax.fill([current_rad, next_rad, next_rad, current_rad],
+    >>>                                 [y_coord,y_coord,y_coord+step,y_coord+step],
+    >>>                                 c=colors[k + no_diag - diag - 1])
+    >>>                         current_rad = next_rad
+    >>>                     # end if
+    >>>                 # end for
+    >>>             # end if
     >>> 
     >>>         # end for
     >>>         if current_rad < b[1]:
