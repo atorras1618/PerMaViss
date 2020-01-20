@@ -12,7 +12,7 @@ install:
     - pip install coveralls
     - pip install pytest-cov
 script:
-    - pytest --cov=permaviss tests
+    - pytest --cov=permaviss test
     - pip uninstall -y permaviss
     - pip install permaviss
 after_success: coveralls
