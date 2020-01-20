@@ -10,5 +10,6 @@ build:
   image: latest
 
 python:
-  version: 3.6
-  setup_py_install: true
+  version: 3.7
+  install:
+    - requirements: requirements.txt
