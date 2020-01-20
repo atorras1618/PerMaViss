@@ -2,6 +2,9 @@
 .. image:: https://github.com/atorras1618/permaviss/workflows/test/badge.svg
    :target: https://github.com/atorras1618/PerMaViss/actions?query=workflow%3Atest+branch%3Amaster
 
+.. image:: https://zenodo.org/badge/222728935.svg
+   :target: https://zenodo.org/badge/latestdoi/222728935
+
 PerMaViss
 *********
 
