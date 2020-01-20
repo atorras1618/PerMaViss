@@ -231,7 +231,7 @@ class spectral_sequence(object):
 
             `(end_n_dim, end_deg)`
 
-        comming from
+        coming from
 
             `(end_n_dim + current_page, end_deg - current_page + 1)`
 
@@ -296,7 +296,7 @@ class spectral_sequence(object):
             Current page in spectral sequence
         lift_sum : bool, default is True
             Whether we return a lifted sum on current_page or we return an
-            expresion on the 0 page instead.
+            expression on the 0 page instead.
         initial_sum : :obj:`list`, default is []
             Expression for which we want to compute zig-zag. Coordinates are
             stored on each column and are given in terms of the basis stored in
@@ -525,7 +525,7 @@ class spectral_sequence(object):
         Returns
         -------
         target_coordinates : :obj:`list(dict)`
-            Cech differential images of `start_coordinates`. Tese are stored
+            Cech differential images of `start_coordinates`. These are stored
             as a list of cochains in `(n_dim-1, deg)` with the same format as
             `start_coordinates`
 
@@ -656,7 +656,7 @@ class spectral_sequence(object):
                                        self.page_dim_matrix[1, deg, n_dim]))
         for i, coord in enumerate(start_coordinates):
             for nerve_spx_index in iter(coord):
-                # solve (Im|Hom) localy
+                # solve (Im|Hom) locally
                 # This is with respect to the active coordinates at R[i]
                 Hom_dim = self.Hom[0][n_dim][nerve_spx_index][deg].dim
                 if Hom_dim > 0:
@@ -696,7 +696,7 @@ class spectral_sequence(object):
             target_coordinates = np.zeros((
                 len(start_coordinates), self.page_dim_matrix[k+1, deg, n_dim]))
             for i, coord in enumerate(prev_target_coordinates):
-                # solve (Im|Hom) localy
+                # solve (Im|Hom) locally
                 Hom_dim = self.Hom[k][n_dim][deg].dim
                 if Hom_dim > 0:
                     Hom = self.Hom[k][n_dim][deg].active_coordinates(R[i])
@@ -851,7 +851,7 @@ class spectral_sequence(object):
                 # change total chain representatives accordingly
                 current_representatives = self.tot_complex_reps[n_dim][deg]
                 for i in range(dim_ext):
-                    # substract sum of coefficients along all total complex,
+                    # subtract sum of coefficients along all total complex,
                     # starting at n_dim, deg.
                     for k, rep in enumerate(current_representatives):
                         substractor = add_dictionaries(
@@ -862,10 +862,10 @@ class spectral_sequence(object):
                             self.p)
                     # end for
                 # end for
-                # substract images to representatives, so that we can lift the
+                # subtract images to representatives, so that we can lift the
                 # vertical differentials.
                 if n_dim > 0:
-                    # substract images of differentials so that we can lift
+                    # subtract images of differentials so that we can lift
                     self.liftable_0_class(representatives[ext_deg], death_R,
                                           n_dim, deg, self.no_pages - 1, False)
                     # lift through vertical differential the last nontrivial
@@ -876,7 +876,7 @@ class spectral_sequence(object):
                     # compute the cech differential for preimage_sums
                     cech_images = self.cech_differential(preimages_sums, n_dim,
                                                          deg + 1)
-                    # substract cech differential of preimage
+                    # subtract cech differential of preimage
                     for i in range(dim_ext):
                         representatives[ext_deg + 1][i] = add_dictionaries([
                             1, 1], [representatives[ext_deg + 1][i],
@@ -938,7 +938,7 @@ class spectral_sequence(object):
                     image_coefficients,
                     self.PreIm[page][n_dim+page][deg-page+1].T,
                     self.p)
-                # substract images to zero page sums
+                # subtract images to zero page sums
                 if np.any(preimages_sums):
                     images = self.zig_zag(
                         n_dim+page, deg-page+1, page,

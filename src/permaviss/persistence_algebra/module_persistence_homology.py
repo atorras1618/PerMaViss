@@ -44,7 +44,7 @@ assert _pivot(np.array([0, 0, 0])) == -1
 
 def quotient(M, N, p):
     """Assuming that N generates a submodule of M, we compute
-    a barcode basis for the qoutient M / N.
+    a barcode basis for the quotient M / N.
 
     Parameters
     ----------

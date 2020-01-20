@@ -69,6 +69,12 @@ Notice that in this case, there was no need to solve the extension problem. See 
 
 .. include:: ../../DISCLAIMER.rst
 
+How to cite
+===========
+
+Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1)
+
+
 Reference
 =========
 

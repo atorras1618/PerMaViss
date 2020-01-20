@@ -18,7 +18,7 @@ First we do all the relevant imports for this example
     >>> from permaviss.simplicial_complexes.differentials import complex_differentials
     >>> from permaviss.spectral_sequence.MV_spectral_seq import create_MV_ss
 
-We start by taking a sample of 1300 points from a torus of section radius 1 and radius from center to section center 3. Since this sample is too big, we take a subsample of 150 points by using a minmax method. We store it in `point_cloud`.
+We start by taking a sample of 1300 points from a torus of section radius 1 and radius from centre to section centre 3. Since this sample is too big, we take a subsample of 150 points by using a minmax method. We store it in `point_cloud`.
 
     >>> X = torus_3D(1300,3)
     >>> point_cloud = take_sample(X,150)
@@ -99,7 +99,7 @@ Now, we compare the computed persistent homology barcodes by both methods. Unles
 .. image:: TorusBarcode2.png
    :width: 500
 
-Here we look at the extension information on one dimensional persistence classes. For this we exploit the extra information stored in `MV_ss`. What we do is plot the one dimensional barcodes, highlighting those bars from the ``(0,1)`` position in the infinity page in red. Also, we highlight in blue when these bars are extended by a bar in the ``(1,0)`` position on the infinity page. All the black bars are only comming from classes in the ``(1,0)`` position on the infinity page.  
+Here we look at the extension information on one dimensional persistence classes. For this we exploit the extra information stored in `MV_ss`. What we do is plot the one dimensional barcodes, highlighting those bars from the ``(0,1)`` position in the infinity page in red. Also, we highlight in blue when these bars are extended by a bar in the ``(1,0)`` position on the infinity page. All the black bars are only coming from classes in the ``(1,0)`` position on the infinity page.  
 
     >>> PH = MV_ss.persistent_homology
     >>> start_rad = min(PH[1].barcode[:,0])
@@ -231,7 +231,7 @@ Now, we compare the computed persistent homology barcodes by both methods. Unles
 .. image:: 3Dbarcode2.png
    :width: 500
 
-Here we look at the extension information on one dimensional persistence classes. For this we exploit the extra information stored in `MV_ss`. What we do is plot the one dimensional barcodes, highlighting those bars from the ``(0,1)`` position in the infinity page in red. Also, we highlight in blue when these bars are extended by a bar in the ``(1,0)`` position on the infinity page. All the black bars are only comming from classes in the ``(1,0)`` position on the infinity page. Similarly, we also highlight the bars on the second diagonal positions ``(2,0)``, ``(1,1)``, ``(0,2)`` by colors yellow, read and blue respectively. If a bar is not extended we write it in black (bars which are not extended are completely contained in ``(0,2)``
+Here we look at the extension information on one dimensional persistence classes. For this we exploit the extra information stored in `MV_ss`. What we do is plot the one dimensional barcodes, highlighting those bars from the ``(0,1)`` position in the infinity page in red. Also, we highlight in blue when these bars are extended by a bar in the ``(1,0)`` position on the infinity page. All the black bars are only coming from classes in the ``(1,0)`` position on the infinity page. Similarly, we also highlight the bars on the second diagonal positions ``(2,0)``, ``(1,1)``, ``(0,2)`` by colours yellow, read and blue respectively. If a bar is not extended we write it in black (bars which are not extended are completely contained in ``(0,2)``
 
     >>> PH = MV_ss.persistent_homology
     >>> no_diag = 3

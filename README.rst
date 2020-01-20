@@ -132,7 +132,7 @@ SOFTWARE.**
 How to cite
 ===========
 
-Álvaro Torras Casas (18 January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1)
+Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1)
 
 Reference
 =========

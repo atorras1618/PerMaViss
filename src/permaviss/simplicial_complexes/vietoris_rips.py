@@ -81,7 +81,7 @@ def vietoris_rips(Dist, max_r, max_dim):
     R[1] = R[1][sort_R]
     C[1] = C[1][sort_R]
 
-    # Build VR-complex inductivelly
+    # Build VR-complex inductively
     for d in range(1, max_dim):
         # Assume that C[d] is already defined, then we compute C[d+1]
         for k, s in enumerate(C[d]):

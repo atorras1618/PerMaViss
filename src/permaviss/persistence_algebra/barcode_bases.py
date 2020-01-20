@@ -26,7 +26,7 @@ class barcode_basis(object):
     Parameters
     ----------
     bars : :obj:`Numpy Array (dim, 2)`
-        Each entry is a pair specifiying birth and death radius of a bar.
+        Each entry is a pair specifying birth and death radius of a bar.
     prev_basis : reference to a previously defined :class:`barcode_basis`.
         This will be the basis in which the coordinates are given.
     coordinates : :obj:`Numpy Array (dim, prev_basis.dim)`
@@ -175,8 +175,8 @@ class barcode_basis(object):
     def sort(self, precision=7, send_order=False):
         """Sorts a barcode basis according to the standard barcode order.
 
-        That is, from smaller birth radius to biger, and from
-        biger death radius to smaller. A precision up to n zeros is an
+        That is, from smaller birth radius to bigger, and from
+        bigger death radius to smaller. A precision up to n zeros is an
         optional argument.
 
         Parameters
@@ -235,7 +235,7 @@ class barcode_basis(object):
     # Functions used by Image_kernel:
 
     def changes_list(self):
-        """Returns an array with the values of changes occouring in the basis.
+        """Returns an array with the values of changes occurring in the basis.
 
         Returns
         -------
@@ -320,7 +320,7 @@ class barcode_basis(object):
         start : int, default is 0
             We ignore the indices smaller than this. Notice that `coord`
             as well as the produced absolute coordinates will be adjusted
-            appropiately.
+            appropriately.
 
         Returns
         -------
@@ -352,7 +352,7 @@ class barcode_basis(object):
         Parameters
         ----------
         rad : float
-            Radious at which generators might be dying
+            Radius at which generators might be dying
         start : int, default is 0
 
 

@@ -59,8 +59,8 @@ def generate_cover(max_div, overlap, point_cloud):
     Returns
     -------
     divided_point_cloud : :obj:`list(list(Numpy Array 2D))`
-        Point cloud coordinates indexed by nerve. The ith entry contains the
-        point cloud coordinates indexed by the ith simplices of the nerve.
+        Point cloud coordinates indexed by nerve. The `i` entry contains the
+        point cloud coordinates indexed by the `i` simplices of the nerve.
         That is, the first entry contains the coordinates contained in
         hypercubes. The second entry the coordinates of points in double
         intersections of hypercubes. And so on.
@@ -325,7 +325,7 @@ def nerve_hypercube_cover(div):
                 """
                 nerve_graph.append(sorted([neighbour_index, current_index]))
 
-            # advance to next neigbhour step
+            # advance to next neighbour step
             for i in range(dim):
                 if neighbour_step[-i-1] < 1:
                     neighbour_step[-i-1] += 1
@@ -338,7 +338,7 @@ def nerve_hypercube_cover(div):
     return flCpx.flag_complex(nerve_graph, number_hypercubes, 2**dim)
 
 ###############################################################################
-# Compute the common points on the interesection determined by simplex
+# Compute the common points on the intersection determined by simplex
 
 
 def intersection_covers(points_IN,  simplex):

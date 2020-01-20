@@ -70,7 +70,7 @@ def flag_complex(G, no_vertices, max_dim):
 
     fl_cpx[1] = np.copy(G)
 
-    # Build flag commplex inductivelly
+    # Build flag complex inductively
     for d in range(1, max_dim):
         for simplex in fl_cpx[d]:
             N = _lower_neighbours(fl_cpx[1], simplex[0])

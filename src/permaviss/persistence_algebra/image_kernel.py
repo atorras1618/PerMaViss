@@ -65,7 +65,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     returned in terms of the original ordering.
 
     Additionally, this handles the case for when B is a broken barcode basis.
-    Notice that in such a case, only the barcode basis of the imate will be
+    Notice that in such a case, only the barcode basis of the image will be
     computed
 
     Parameters

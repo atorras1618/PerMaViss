@@ -23,7 +23,7 @@ from .spectral_sequence_class import spectral_sequence
 
 
 def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
-    """ This function creates a mayer Vietoris spectral sequence with the
+    """ This function creates a Mayer Vietoris spectral sequence with the
     given parameters. The procedure has four main steps:
 
     1) Obtain a cover and a nerve associated to it.

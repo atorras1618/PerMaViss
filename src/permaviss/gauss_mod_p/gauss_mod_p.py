@@ -1,6 +1,6 @@
 """gauss_mod_p.py
 
-This module implements gaussian elimination by columns modulo a prime
+This module implements Gaussian elimination by columns modulo a prime
 number p.
 """
 import numpy as np
@@ -38,7 +38,7 @@ assert _index_pivot(np.array([0, 0, 0])) == -1
 
 
 def gauss_col(A, p):
-    """This function implements the gaussian elimination by columns.
+    """This function implements the Gaussian elimination by columns.
 
     A is reduced by left to right column additions. The reduced matrix has
     unique column pivots.
@@ -75,7 +75,7 @@ def gauss_col(A, p):
             reduced = True
             # look for previous columns to j
             for k in range(j):
-                # if the pivots coincide, substract column k to column j
+                # if the pivots coincide, subtract column k to column j
                 # multiplied by a suitable coefficient q
                 if _index_pivot(R[k]) == pivot:
                     q = (R[j][pivot] * inv_mod_p(R[k][pivot], p)) % p

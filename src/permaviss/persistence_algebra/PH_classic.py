@@ -63,17 +63,17 @@ def persistent_homology(D, R, max_rad, p):
         of `X`. For example, the 1st entry contains, in order, the radii
         of each edge in `X`. In dimension 0 we have an empty list.
     p : int(prime)
-        Choosen prime to perform arithmetic mod `p`.
+        Chosen prime to perform arithmetic mod `p`.
 
     Returns
     -------
     Hom : :obj:`list(barcode_bases)`
-        The ith entry contains the ith Persistent Homology classes for `X`.
+        The `i` entry contains the `i` Persistent Homology classes for `X`.
         These are stored as :obj:`barcode_bases`. If a cycle does not die
         we put max_rad as death radius. Additionally, each entry is ordered
         according to the standard barcode order.
     Im : :obj:`list(barcode_bases)`
-        The ith entry contains the image of the (i+1)th differential as
+        The `i` entry contains the image of the `i+1` differential as
         :obj:`barcode_bases`.
     PreIm: :obj:`list(Numpy Array (len(R[*]), Im[*].dim)`
         Preimage matrices, 'how to go back from boundaries'
@@ -188,7 +188,7 @@ def persistent_homology(D, R, max_rad, p):
     Hom_bars[dim - 1] = np.zeros((domain_dim, 2))
     Hom_coord[dim - 1] = np.zeros((domain_dim, domain_dim))
     Hom_dim_next = 0
-    # Perform gaussian eliminations, starting from D[dim-1] and ending on D[1].
+    # Perform Gaussian eliminations, starting from D[dim-1] and ending on D[1].
     pivots = []
     for d in range(dim - 1, 0, -1):
         # Compute dimensions for domain and range of D[d]
@@ -206,7 +206,7 @@ def persistent_homology(D, R, max_rad, p):
         Im_bars[d - 1] = np.zeros((len(non_pivots), 2))
         Im_coord[d - 1] = np.zeros((range_dim, len(non_pivots)))
         PreIm[d] = np.zeros((domain_dim, len(non_pivots)))
-        # Perform gaussian reduction by left to right column additions mod p
+        # Perform Gaussian reduction by left to right column additions mod p
         Im_aux, T = gauss_mod_p.gauss_col(Daux, p)
         # Reset dimension variables
         Hom_dim_current = Hom_dim_next
