@@ -7,7 +7,7 @@ DISCLAIMER
 **This does not pretend to be an optimal library. Also, it does not parallelize the computations of persistent homology after the first page. Thus, this is slower than most other persistent homology computations.**
 
 **This library is still on development and is still highly undertested. If you notice any issues, please email
-atorras1618@gmail.com**
+TorrasCasasA@cardiff.ac.uk**
 
 **This library is published under the standard MIT licence. Thus:
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR

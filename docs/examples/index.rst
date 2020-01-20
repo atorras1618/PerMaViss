@@ -251,7 +251,7 @@ Here we look at the extension information on one dimensional persistence classes
     >>>         for k in range(diag + 1):
     >>>             if k == diag and current_rad == b[0]:
     >>>                 break
-    >>>             if len(MV_ss.Hom[MV_ss.no_pages - 1][diag - k][k]) != 0:
+    >>>             if len(MV_ss.Hom[MV_ss.no_pages - 1][diag - k][k].barcode) != 0:
     >>>                 for i, rad in enumerate(MV_ss.Hom[
     >>>                         MV_ss.no_pages - 1][diag - k][k].barcode[:,0]):
     >>>                     if np.allclose(rad, current_rad):

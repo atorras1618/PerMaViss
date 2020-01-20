@@ -1,0 +1,17 @@
+{
+  "title": "PerMaViss: Persistence Mayer Vietoris spectral sequence",
+  "description": "This is an implementation of the Persistence Mayer Vietoris spectral sequence for computing persistent homology. For complete documentation, see <a href=\"https://permaviss.readthedocs.io/en/latest/\"> permaviss.readthedocs.io</a>.",
+  "creators": [
+    {
+      "affiliation": "Cardiff University",
+      "name": "Álvaro Torras Casas"
+    }
+  ],
+  "keywords": [
+    "Persistence Mayer-Vietoris spectral sequence",
+    "Persistent Homology",
+    "Topological Data Analysis"
+  ],
+  "license": "mit-license",
+  "upload_type": "software"
+}
