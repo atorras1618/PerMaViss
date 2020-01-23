@@ -23,7 +23,7 @@ copyright = '2020, Alvaro Torras Casas'
 author = 'Alvaro Torras Casas'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.0.1'
+release = 'v0.0.2'
 
 
 # -- General configuration ---------------------------------------------------

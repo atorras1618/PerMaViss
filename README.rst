@@ -19,6 +19,7 @@ PerMaViss
 *********
 
 Welcome to PerMaViss! This is a Python3 implementation of the Persistence Mayer Vietoris spectral sequence. 
+For full documentation, visit `this page <https://permaviss.readthedocs.io/en/latest/?badge=latest>`_. 
 For a mathematical description of the procedure, see `Distributing Persistent Homology via Spectral Sequences <https://arxiv.org/abs/1907.05228>`_. 
 
 In a nutshell, this library is intended to be a `proof of concept` for persistence homology parallelization. That is, one can divide a point cloud into covering regions, compute persistent homology on each part, and combine all results to obtain the global persistent homology again. This is done by means of the Persistence Mayer Vietoris spectral sequence. Here we present two examples, the torus and random point clouds in three dimensions. Both of these are divided into `8` mutually overlapping regions, and the spectral sequence is computed with respect to this cover. The resulting barcodes coincide with that which would be obtained by computing persistent homology directly.
@@ -150,7 +151,7 @@ SOFTWARE.**
 How to cite
 ===========
 
-Álvaro Torras Casas (20th of January 2020). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version 0.0.1). Zenodo. http://doi.org/10.5281/zenodo.3613423 
+Álvaro Torras Casas. (2020, January 20). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version v0.0.2). Zenodo. http://doi.org/10.5281/zenodo.3613870
 
 Reference
 =========
