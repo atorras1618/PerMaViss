@@ -132,6 +132,96 @@ Here we look at the extension information on one dimensional persistence classes
 .. image:: TorusExtension.png
   :width: 500
 
+We can also study the representatives associated to these barcodes. In the following, we go through 
+all possible extended bars. In red, we plot representatives of a class from ``(1,0)``. These are
+extended to representatives from ``(0,1)`` that we plot in dashed yellow lines. 
+
+    >>> extension_indices = [i for i, x in enumerate(
+    >>>     np.any(MV_ss.extensions[1][0][1], axis=0)) if x]
+    >>> 
+    >>> for idx_cycle in extension_indices:
+    >>>     # initialize plot
+    >>>     fig = plt.figure()
+    >>>     ax = fig.add_subplot(111, projection='3d')
+    >>>     # plot simplicial complex
+    >>>     # plot edges
+    >>>     for edge in C[1]:
+    >>>         start_point = point_cloud[edge[0]]
+    >>>         end_point = point_cloud[edge[1]]
+    >>>         ax.plot([start_point[0], end_point[0]],
+    >>>                 [start_point[1], end_point[1]],
+    >>>                 [start_point[2], end_point[2]], 
+    >>>                 color="#031926",
+    >>>                 alpha=0.5*((max_r-Dist[edge[0],edge[1]])/max_r))
+    >>>     
+    >>>     # plot vertices
+    >>>     poly3d = []
+    >>>     for face in C[2]:
+    >>>         triangles = []
+    >>>         for pt in face:
+    >>>             triangles.append(point_cloud[pt])
+    >>>         
+    >>>         poly3d.append(triangles)
+    >>>         
+    >>>     ax.add_collection3d(Poly3DCollection(poly3d, linewidths=1, 
+    >>>                                          alpha=0.1, color='#468189'))
+    >>>     # plot red cycle, that is, a cycle in (1,0)
+    >>>     cycle = MV_ss.tot_complex_reps[1][0][1][idx_cycle]
+    >>>     for cover_idx in iter(cycle):
+    >>>         if len(cycle[cover_idx]) > 0 and np.any(cycle[cover_idx]):
+    >>>             for l in np.nonzero(cycle[cover_idx])[0]:
+    >>>                 start_pt = MV_ss.nerve_point_cloud[0][cover_idx][
+    >>>                     MV_ss.subcomplexes[0][cover_idx][1][int(l)][0]]
+    >>>                 end_pt = MV_ss.nerve_point_cloud[0][cover_idx][
+    >>>                     MV_ss.subcomplexes[0][cover_idx][1][int(l)][1]]
+    >>>                 plt.plot(
+    >>>                     [start_pt[0], end_pt[0]], [start_pt[1],end_pt[1]],
+    >>>                     [start_pt[2], end_pt[2]], c="#bc4b51", linewidth=5)
+    >>>         # end if 
+    >>>     # end for
+    >>>     # Plot yellow cycles from (0,1) that extend the red cycle
+    >>>     for idx, cycle in enumerate(MV_ss.tot_complex_reps[0][1][0]):
+    >>>         # if it extends the cycle in (1,0)
+    >>>         if MV_ss.extensions[1][0][1][idx, idx_cycle] != 0:
+    >>>             for cover_idx in iter(cycle):
+    >>>                 if len(cycle[cover_idx]) > 0 and np.any(
+    >>>                         cycle[cover_idx]):
+    >>>                     for l in np.nonzero(cycle[cover_idx])[0]:
+    >>>                         start_pt = MV_ss.nerve_point_cloud[0][
+    >>>                             cover_idx][MV_ss.subcomplexes[0][
+    >>>                                 cover_idx][1][int(l)][0]]
+    >>>                         end_pt = MV_ss.nerve_point_cloud[0][cover_idx][
+    >>>                             MV_ss.subcomplexes[0][cover_idx][
+    >>>                                 1][int(l)][1]]
+    >>>                         plt.plot([start_pt[0], end_pt[0]],
+    >>>                                  [start_pt[1],end_pt[1]],
+    >>>                                  [start_pt[2], end_pt[2]], 
+    >>>                                  '--', c='#f7cd6c', linewidth=2)
+    >>>                 # end if 
+    >>>             # end for
+    >>>         # end if
+    >>>     # end for
+    >>>     # Then we show the figure
+    >>>     ax.grid(False)
+    >>>     ax.set_axis_off()
+    >>>     plt.show()
+    >>>     plt.close(fig)
+
+.. image:: torusRep0.png
+  :width: 300
+
+.. image:: torusRep1.png
+  :width: 300
+
+.. image:: torusRep2.png
+  :width: 300
+
+.. image:: torusRep3.png
+  :width: 300
+
+.. image:: torusRep4.png
+  :width: 300
+
 Random 3D point cloud
 ---------------------
 

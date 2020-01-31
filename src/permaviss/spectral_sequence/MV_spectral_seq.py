@@ -221,12 +221,13 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             for start_n_dim in range(1, min(deg+1, MV_ss.no_columns)):
                 if MV_ss.page_dim_matrix[no_pages-1][
                         start_deg, start_n_dim] > 0:
-                    extensions = MV_ss.extension(start_n_dim, start_deg)
+                    MV_ss.extension(start_n_dim, start_deg)
+                    extensions = MV_ss.extensions[start_n_dim][start_deg]
                     column_range = ext_mat[:, dim_PH[start_n_dim]: dim_PH[
                         start_n_dim+1]]
                     for i, blk in enumerate(extensions):
                         column_range[dim_PH[start_n_dim - i]: dim_PH[
-                            start_n_dim + 1 - i]] = extensions[i]
+                            start_n_dim + 1 - i]] = np.copy(extensions[i])
                     # end for
                 # end if
                 start_deg -= 1

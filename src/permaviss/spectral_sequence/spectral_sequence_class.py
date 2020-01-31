@@ -103,6 +103,9 @@ class spectral_sequence(object):
     order_diagonal_basis : `list`
         This intends to store the original order of `persistent_homology`
         before applying the standard order.
+    extensions : :obj:`list(list(list(Numpy Array)))`
+        Nested lists, where the first two indices are for the column and row.
+        The last index indicates the corresponding extension matrix.
 
     Notes
     -----
@@ -139,6 +142,8 @@ class spectral_sequence(object):
         self.cycle_dimensions = []
         # vectors that translate local indices to global
         self.tot_complex_reps = []
+        # store extension matrices
+        self.extensions = []
         for n_dim in range(len(nerve)):
             self.Hom[0].append([])
             self.Im[0].append([])
@@ -147,8 +152,10 @@ class spectral_sequence(object):
             self.zero_differentials.append([])
             self.cycle_dimensions.append([])
             self.tot_complex_reps.append([])
+            self.extensions.append([])
             for deg in range(self.no_rows):
                 self.tot_complex_reps[n_dim].append([])
+                self.extensions[n_dim].append([])
 
         # make lists to store information in higher pages
         for k in range(1, no_pages):
@@ -802,9 +809,9 @@ class spectral_sequence(object):
         start_deg : int
             Row on page where we want to compute the extension coefficients.
 
-        Returns
-        -------
-        extension : :obj:`list(Numpy Array)`
+        Stores
+        ------
+        extensions : :obj:`list(Numpy Array)`
             Extension matrices for the basis contained at `(start_deg,
             start_n_dim)` of the infinity page. More precisely, given an
             integer `ext_dim`, the entry `extension[ext_dim]` stores a
@@ -821,7 +828,7 @@ class spectral_sequence(object):
             page_dim_matrix.
 
         """
-        extensions = []
+        extensions = self.extensions[start_n_dim][start_deg]
         death_R = self.Hom[self.no_pages-1][start_n_dim][
             start_deg].barcode[:, 1]
         dim_domain = self.Hom[self.no_pages-1][start_n_dim][start_deg].dim
@@ -888,8 +895,6 @@ class spectral_sequence(object):
             deg += 1
             ext_deg += 1
         # end for
-
-        return extensions
 
     ###########################################################################
     # liftable_0_class

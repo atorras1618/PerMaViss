@@ -27,9 +27,25 @@ In a nutshell, this library is intended to be a `proof of concept` for persisten
 This implementation is more of a `prototype` than a finished program. As such, it still needs to be optimized. Also, it would be great to have more examples for different covers. Additionally, it would be interesting to also have an implementation for cubical, alpha, and other complexes. Any collaboration or suggestion will be welcome!
 
 
-.. image:: docs/examples/3Dextension1.png
+.. image:: docs/examples/TorusExtension.png
    :width: 700 
    :align: center
+
+.. image:: docs/examples/torusRep0.png
+  :width: 250
+
+.. image:: docs/examples/torusRep1.png
+  :width: 250
+
+.. image:: docs/examples/torusRep2.png
+  :width: 250
+
+.. image:: docs/examples/torusRep3.png
+  :width: 250
+
+.. image:: docs/examples/torusRep4.png
+  :width: 250
+
    
 
 Dependencies
