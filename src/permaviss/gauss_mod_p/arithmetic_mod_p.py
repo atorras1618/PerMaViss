@@ -43,23 +43,8 @@ def add_arrays_mod_c(A, B, c):
     C : :obj:`Numpy Array(int)`
         a + b (mod c)
 
-    Raises
-    ------
-    ValueError
-        If `len(a)` != `len(b)`
-
     """
-    if len(A) != len(B):
-        print("Trying to add two arrays with different lengths!")
-        raise ValueError
-
-    N = len(A)
-    C = np.zeros(N)
-    # C = (A + B) % np.array(c)
-    for i in range(N):
-        C[i] = add_mod_c(A[i], B[i], c)
-
-    return C
+    return np.mod(A + B, c)
 
 
 def inv_mod_p(a, p):
