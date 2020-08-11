@@ -1,11 +1,12 @@
 """ Setup script. """
+import io
 
 from setuptools import setup, find_packages
 
 from src.permaviss.version import __version__
 
-with open("README.rst", "r") as readme_file:
-    README = readme_file.read()
+with io.open("README.rst", "r", encoding="utf-8") as readme_file:
+     README = readme_file.read() Get
 
 setup(
     name="permaviss",

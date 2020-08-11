@@ -227,6 +227,45 @@ class spectral_sequence(object):
         # end if
 
     ###########################################################################
+    # change total_representatives
+
+    def change_representatives(self, current_page):
+        """
+        Changes representative on all pages.
+        Current version only changes on first page.
+        Leads to images of differentials, plus total complex reps
+        """
+        # for loop over n_dim, deg
+        # recover zero coordinates of positions
+        # Compute zigzag for the zero_page expression
+        zero_coordinates = self.cech_differential(zero_coordinates, n_dim, deg)
+        # in parallel, run local equation methods
+        # recover preimages from stored data
+        coefficients, lift = solve_local(self, cell_coordinates, n_dim, deg)
+        # modify total complex accordingly (include lift entry)
+        # run higher equation methods
+        coefficients, lift_coefficients = solve_higher(self, coordinates, n_dim, deg)
+        # modify total complex accordingly
+
+
+    ###########################################################################
+    # solve local linear equations
+    # parallelization should be included here
+    def solve_local(self, cell_coordinates, n_dim, deg):
+        # need a gaussian elimination of (Hom | cell coordinates)
+        # this reduces up to a column in Hom, depending on
+        # initial radius a_\alpha
+        # Notice that if b_\beta < a_\alpha, pivots cannot coincide (check,
+        # perhaps this is not true)
+
+        return coefficients, lift
+    ###########################################################################
+    # solve higher page equations
+    def solve_higher(self, coordinates, n_dim, deg):
+
+        return coefficients, lift_coefficients
+
+    ###########################################################################
     # add higher page contents
 
     def add_output_higher(self, Hom, Im, PreIm, end_n_dim, end_deg,
