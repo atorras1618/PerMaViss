@@ -227,9 +227,83 @@ class spectral_sequence(object):
         # end if
 
     ###########################################################################
+    # localize_coordinates
+
+    def localize_coordinates(self, initial_coordinates, n_dim, deg):
+        """
+        Transforms matrix of coordinates in first page to a pair
+        of references and local coordinates on the 0 page
+        """
+        reference = []
+        local_coordinates = []
+        prev = 0
+        for k, dim_next in enumerate(self.cycle_dimensions[n_dim][deg][:-1]):
+            print("K:{}  dim_next:{}".format(k, dim_next))
+            local_hom_coord = initial_coordinates[:, prev:dim_next]
+            prev = dim_next
+            reference.append(np.nonzero(local_hom_coord)[0])
+            local_coordinates.append(multiply_mod_p(
+                self.Hom[0][n_dim][k][deg].coordinates,
+                local_hom_coord[reference[-1]].T, self.p).T)
+        # end for
+        return reference, local_coordinates
+
+        ###########################################################################
+        # solve local linear equations
+        # parallelization should be included here
+        def solve_local(self, local_coordinates, n_dim, deg, R):
+            # Lifts to first page, returns homology class and lift
+            # need a gaussian elimination of (Im | Hom | cell coordinates)
+            # Lift from 0 to 1 page
+            # Create space for first page coefficients
+            first_page_coeff = np.zeros((len(cell_coordinates),
+                                    self.page_dim_matrix[1, deg, n_dim])
+                                    )
+
+
+
+# OLD LOCALIZE_coordinates
+#        """
+#        Receives a list of dictionaries.
+#        Returns localized representation of coordinates, as a
+#        reference list, plus list of local Coordinates
+#        """
+#        reference_list = []
+#        for chain in cell_coordinates:
+#            reference_list.append(list(chain.keys()))
+#        # end for
+#        bool_reference = np.array((len(cell_coordinates), self.nerve[n_dim]),
+#                                  dtype=bool)
+#        for i, ref in enumerate(reference_list):
+#            if len(ref) > 0:
+#                bool_reference[i][ref] = np.ones(len(ref), dtype=bool)
+#        # end for
+#        bool_reference = bool_reference.T
+#        reference_list = []
+#        for _, ref in enumerate(bool_reference):
+#            reference_list.append(
+#                np.array(range(len(ref)))[ref]
+#            )
+#        # end for
+#        # Next, put together local coordinates looking into references
+#        local_coordinates = []
+#        for nerve_spx_index, ref in enumerate(reference_list):
+#            local_coordinates.append(
+#                np.array((len(ref),
+#                         len(self.subcomplexes[n_dim][nerve_spx_index]))
+#                         )
+#            )
+#            for i, coord_idx in ref:
+#                local_coordinates[-1][i] = cell_coordinates[coord_idx]
+#            # end for
+#        # end for
+#        return local_coordinates, reference_list
+
+
+    ###########################################################################
     # change total_representatives
 
-    def change_representatives(self, current_page):
+    def change_representatives(self, start_coordinates, current_page):
         """
         Changes representative on all pages.
         Current version only changes on first page.
@@ -237,6 +311,7 @@ class spectral_sequence(object):
         """
         # for loop over n_dim, deg
         # recover zero coordinates of positions
+        zero_coordinates = self.localize_coordinates(start_coordinates)
         # Compute zigzag for the zero_page expression
         zero_coordinates = self.cech_differential(zero_coordinates, n_dim, deg)
         # in parallel, run local equation methods
@@ -251,8 +326,59 @@ class spectral_sequence(object):
     ###########################################################################
     # solve local linear equations
     # parallelization should be included here
-    def solve_local(self, cell_coordinates, n_dim, deg):
-        # need a gaussian elimination of (Hom | cell coordinates)
+    def solve_local(self, cell_coordinates, n_dim, deg, R):
+        # need a gaussian elimination of (Im | Hom | cell coordinates)
+        # Lift from 0 to 1 page
+        # Create space for first page coefficients
+        first_page_coeff = np.zeros((len(cell_coordinates),
+                                       self.page_dim_matrix[1, deg, n_dim])
+                                       )
+        # create space for vertical lifts
+        preimages = []
+        for i, _ in enumerate(cell_coordinates):
+            preimages.append({})
+        # this for will be run in parallel
+        for nerve_spx_index in iter(self.nerve[n_dim]):
+            for i, coord in enumerate(cell_coordinates):
+                if nerve_spx_index in coord:
+                     coefficients.append(coord[nerve_spx_index])
+                     references.append(i)
+            # end for
+            # solve (Im|Hom) locally
+
+            # for this use barcode_basis method for sorting columns
+            # This is with respect to the active coordinates at R[i]
+            Hom_dim = self.Hom[0][n_dim][nerve_spx_index][deg].dim
+            if Hom_dim > 0:
+                Hom = self.Hom[0][n_dim][nerve_spx_index][
+                    deg].active_domain(R[i])
+            Im_dim = self.Im[0][n_dim][nerve_spx_index][deg].dim
+            if Hom_dim > 0 and len(Hom) > 0:
+                if Im_dim > 0:
+                    Im = self.Im[0][n_dim][nerve_spx_index][
+                        deg].active_domain(R[i])
+                    Im_dim = np.size(Im, 1)
+                    Im_Hom = np.append(Im, Hom, axis=1)
+
+                else:
+                    Im_Hom = Hom
+                # end else
+
+                active_coordinates = solve_mod_p(
+                    Im_Hom, coord[nerve_spx_index], self.p)[Im_dim:]
+                # Save resulting coordinates as 1 page coordinates
+                local_lifted_coordinates = np.zeros(self.cycle_dimensions[
+                    n_dim][deg][nerve_spx_index] - self.cycle_dimensions[
+                        n_dim][deg][nerve_spx_index-1])
+                local_active = self.Hom[0][n_dim][nerve_spx_index][
+                    deg].active(R[i])
+                local_lifted_coordinates[local_active] = active_coordinates
+                target_coordinates[i, self.cycle_dimensions[n_dim][deg][
+                    nerve_spx_index-1]:self.cycle_dimensions[n_dim][deg][
+                        nerve_spx_index]] = local_lifted_coordinates
+            # end if
+            # Now put results in target coordinates matrix
+        # end for
         # this reduces up to a column in Hom, depending on
         # initial radius a_\alpha
         # Notice that if b_\beta < a_\alpha, pivots cannot coincide (check,
@@ -359,7 +485,7 @@ class spectral_sequence(object):
             `current_page` differential applied to the corresponding column in
             `initial_sum`. These coordinates are given in terms of the basis
             stored in `Hom` for the position `(deg, n_dim)` for the page
-            `current_page -1`. If `lift_sum` is set up to False, then this is a
+            `current_page - 1`. If `lift_sum` is set up to False, then this is a
             :obj:`list` where each entry stores a cochain. Each cochain is a
             dictionary :obj:`dict`, where entries are indexed by covering
             simplices, and these contain the local coordinates.
@@ -547,7 +673,7 @@ class spectral_sequence(object):
         return target_coordinates, R
 
     ###########################################################################
-    # cech_differential
+    # cech_differential (copy of original method)
 
     def cech_differential(self, start_coordinates, n_dim, deg):
         """Computes the Cech Differential of various cochains.
@@ -579,6 +705,117 @@ class spectral_sequence(object):
 
         target_coordinates = []
         deg_sign = (-1)**deg
+        # go through all dictionaries in input
+        for i, coordinates in enumerate(start_coordinates):
+            cech_image = {}
+            # look at each nerve simplex on each dictionary
+            for nerve_spx_index in iter(coordinates):
+                points_IN = np.copy(self.points_IN[n_dim][nerve_spx_index])
+                # Iterate over simplices in boundary of nerve simplex
+                nerv_boundary_indx = np.nonzero(self.nerve_differentials[
+                    n_dim][:, nerve_spx_index])[0]
+                nerv_boundary_coeff = self.nerve_differentials[n_dim][
+                    :, nerve_spx_index][nerv_boundary_indx]
+                # go through all faces for each simplex in nerve
+                for nerve_face_index, nerve_coeff in zip(
+                        nerv_boundary_indx, nerv_boundary_coeff):
+                    if deg == 0:
+                        # inclusions for points
+                        # Preallocate space
+                        if nerve_face_index not in cech_image:
+                            cech_image[nerve_face_index] = np.zeros(
+                                self.subcomplexes[n_dim - 1][
+                                    nerve_face_index][0])
+                        # end if
+                        for point_idx, point_coeff in enumerate(coordinates[
+                                nerve_spx_index]):
+                            if point_coeff != 0:
+                                face_point_idx = np.argmax(self.points_IN[
+                                    n_dim-1][nerve_face_index] == points_IN[
+                                        point_idx])
+                                cech_image[nerve_face_index][
+                                    face_point_idx
+                                    ] += nerve_coeff * point_coeff * deg_sign
+                                cech_image[nerve_face_index][
+                                    face_point_idx] %= self.p
+                            # end if
+                        # end for
+                    else:
+                        # inclusions for edges, 2-simplices and higher
+                        # simplices. Preallocate space as well.
+                        if nerve_face_index not in cech_image:
+                            cech_image[nerve_face_index] = np.zeros(len(
+                                self.subcomplexes[n_dim - 1][nerve_face_index][
+                                    deg]))
+                        # end if
+                        # Iterate over nontrivial local simplices in domain
+                        spx_indices = np.nonzero(coordinates[
+                            nerve_spx_index])[0]
+                        spx_coefficients = coordinates[nerve_spx_index][
+                            spx_indices]
+                        for spx_index, spx_coeff in zip(
+                                spx_indices, spx_coefficients):
+                            # Obtain IN for vertices of simplex
+                            vertices_spx = points_IN[self.subcomplexes[n_dim][
+                                nerve_spx_index][deg][spx_index]]
+                            # Iterate over simplices in range to see which
+                            # one has vertices_spx as vertices.
+                            for im_indx, im_spx in enumerate(
+                                    self.subcomplexes[n_dim-1][
+                                        nerve_face_index][deg]):
+                                vertices_face = self.points_IN[n_dim-1][
+                                    nerve_face_index][im_spx.astype(int)]
+                                # When the vertices coincide, break the loop
+                                if len(np.intersect1d(
+                                        vertices_spx,
+                                        vertices_face)) == deg + 1:
+                                    cech_image[nerve_face_index][im_indx] += \
+                                        spx_coeff * nerve_coeff * deg_sign
+                                    cech_image[nerve_face_index][im_indx] %= \
+                                        self.p
+                                    break
+                                # end if
+                            # end for
+                        # end for
+                    # end else
+                # end for
+            # end for
+            target_coordinates.append(cech_image)
+        # end for
+
+        return target_coordinates
+
+    ###########################################################################
+    # cech_differential (new parallel method)
+
+    def cech_differential_new(self, local_coordinates, reference_list, n_dim, deg):
+        """Computes the Cech Differential of various cochains.
+
+        That is, given a few cochains on the position `(deg, n_dim)` of the
+        `0` page, we compute the Cech differential. This leads to cochains on
+        `(deg, n_dim - 1)`.
+
+        Parameters
+        ----------
+        start_coordinates : localized coordinates + refs
+        n_dim : int
+            Column on page
+        deg : int
+            Row on page
+
+        Returns
+        -------
+        target_coordinates : localized coordinates + refs
+
+        """
+
+        target_coordinates = []
+        deg_sign = (-1)**deg
+        # go through covers on codomain of cech differentials
+        # do this step in parallel
+        for nerve_spx_index in range(len(self.nerve[n_dim-1])):
+            call
+        # end for
         # go through all dictionaries in input
         for i, coordinates in enumerate(start_coordinates):
             cech_image = {}
