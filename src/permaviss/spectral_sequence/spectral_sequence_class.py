@@ -248,17 +248,53 @@ class spectral_sequence(object):
         # end for
         return reference, local_coordinates
 
-        ###########################################################################
-        # solve local linear equations
-        # parallelization should be included here
-        def solve_local(self, local_coordinates, n_dim, deg, R):
-            # Lifts to first page, returns homology class and lift
-            # need a gaussian elimination of (Im | Hom | cell coordinates)
-            # Lift from 0 to 1 page
-            # Create space for first page coefficients
-            first_page_coeff = np.zeros((len(cell_coordinates),
-                                    self.page_dim_matrix[1, deg, n_dim])
-                                    )
+    #######################################################################
+    # Cech chain plus lift of preimage
+    def cech_diff_and_lift(self, R, reference, local_coordinates, n_dim,
+                           deg):
+        for nerv_spx_index in range(len(nerve[n_dim])):
+            for coface_index, coeff in enumerate(nerve_differentials[n_dim+1
+                    ][nerv_spx_index]):
+
+                # look to generate boundary matrices
+                boundary = np.zeros((
+                    len(S.subcomplexes[n_dim][nerve_spx_index][deg]),
+                    len(S.subcomplexes[n_dim+1][coface_index][deg]))
+                # now look for coefficients for boundary (two cases)
+                # case of deg > 0
+
+                # case of deg = 0
+
+                # image of cech complex
+                new_local = np.matmult(
+                    local_coordinates[nerv_spx_index],
+                    boundary)
+                # local lifts
+
+            # end for
+        # end for
+
+    ###########################################################################
+    # solve local linear equations, this is a parallel function
+    def solve_local(self, R, reference, local_coordinates,
+                    n_dim, deg):
+        # Lifts to first page, returns homology class and lift
+        # need a gaussian elimination of (Im | Hom | cell coordinates)
+        # Lift from 0 to 1 page
+        # Create space for first page coefficients
+        first_page_coeff = np.zeros(
+            len(R), self.page_dim_matrix[1, deg, n_dim])
+        for k, ref in enumerate(reference):
+            # create Im_Hom Matrix
+            Im_Hom = np.append(Im[0][n_dim][k][deg].coordinates,
+                              Hom[0][n_dim][k][deg].coordinates,
+                              axis=1)
+            eqn = np.append(Im_Hom, local_coordinates[k].T,
+                            axis = 1)
+            # TO DO, pass the vector of radii
+            R, T = gauss_col_rad(eqn, local_coordinates[k].T, p)
+
+
 
 
 

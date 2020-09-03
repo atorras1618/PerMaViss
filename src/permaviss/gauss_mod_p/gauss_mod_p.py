@@ -94,9 +94,9 @@ def gauss_col(A, p):
     # end for
     return np.transpose(R), np.transpose(T)
 
-def local_equations(A, R, start_index, p):
+def gauss_col_rad(A, R, start_index, p):
     """This function implements the Gaussian elimination by columns,
-    but specialized for the local equations to be solved.
+    but specialized for columns with radius.
 
     A is reduced by left to right column additions starting
     from  start_index. Only columns from a lower index are
@@ -130,32 +130,34 @@ def local_equations(A, R, start_index, p):
     N = np.size(A, 1)
     # copy of matrix to be reduced
     # The matrix is transposed for more computational efficiency
-    R = np.copy(np.transpose(A))
-    T = np.zeros((start_index, N-start_index))
+    Red = np.copy(np.transpose(A))
+    T = np.identity(N)
     # iterate over all columns
     for j in range(start_index, N):
-        pivot = _index_pivot(R[j])
+        pivot = _index_pivot(Red[j])
         # Assume that the j-column is not reduced
         reduced = False
         while (pivot > -1) & (not reduced):
             reduced = True
             # look for previous columns to j
             for k in range(j):
-                # check that
-                # if the pivots coincide, subtract column k to column j
-                # multiplied by a suitable coefficient q
-                if _index_pivot(R[k]) == pivot:
-                    q = (R[j][pivot] * inv_mod_p(R[k][pivot], p)) % p
-                    R[j] = add_arrays_mod_c(R[j], -q * R[k], p)
-                    T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
-                    # reset pivot
-                    if np.any(R[j]):
-                        pivot = _index_pivot(R[j])
-                        reduced = False
-
-                    break
+                # check the radius
+                if R[k] <= R[j]:
+                    # if the pivots coincide, subtract column k to column j
+                    # multiplied by a suitable coefficient q
+                    if _index_pivot(Red[k]) == pivot:
+                        q = (Red[j][pivot] * inv_mod_p(Red[k][pivot], p)) % p
+                        Red[j] = add_arrays_mod_c(Red[j], -q * Red[k], p)
+                        T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
+                        # reset pivot and check for nullity
+                        if np.any(Red[j]):
+                            pivot = _index_pivot(Red[j])
+                            reduced = False
+                            break
+                        # end if
+                    # end if
                 # end if
             # end for
         # end while
     # end for
-    return np.transpose(R), np.transpose(T)
+    return np.transpose(Red), np.transpose(T)
