@@ -6,6 +6,7 @@ import numpy as np
 
 from ..simplicial_complexes.differentials import complex_differentials
 from ..gauss_mod_p.functions import solve_mod_p, multiply_mod_p
+from ..gauss_mod_p.gauss_mod_p import gauss_col_rad
 
 
 class spectral_sequence(object):
@@ -248,57 +249,110 @@ class spectral_sequence(object):
         # end for
         return reference, local_coordinates
 
+    ############################################################################
+    # local boundary matrix
+    def local_boundary_matrix(self, n_dim, deg, nerve_spx_index,
+                              nerve_face_index, nerve_coeff):
+        # save space for boundary matrix
+        deg_sign = (-1)**deg
+        boundary = np.zeros((
+            len(self.subcomplexes[n_dim-1][nerve_face_index][deg]),
+            len(self.subcomplexes[n_dim][nerve_spx_index][deg])))
+        if deg == 0:
+            # inclusions for points
+            for point_idx in range(
+                    self.subcomplexes[n_dim][nerve_spx_index][0]):
+                face_point_idx = np.argmax(self.points_IN[
+                    n_dim-1][nerve_face_index] == self.points_IN[n_dim][
+                        nerve_spx_index][point_idx])
+                boundary[face_point_idx, point_idx] = nerve_coeff * deg_sign
+                boundary[face_point_idx, point_idx] %= self.p
+            # end for
+        else:
+            # inclusions for edges, 2-simplices and higher
+            # Iterate over nontrivial local simplices in domain
+            for spx_index, simplex in enumerate(
+                    self.subcomplexes[n_dim][nerve_spx_index][deg]):
+                # Obtain IN for vertices of simplex
+                vertices_spx = self.points_IN[n_dim][nerve_spx_index][simplex]
+                for im_index, im_spx in enumerate(
+                        self.subcomplexes[n_dim-1][
+                            nerve_face_index][deg]):
+                    vertices_face = self.points_IN[n_dim-1][
+                        nerve_face_index][im_spx.astype(int)]
+                    # When the vertices coincide, break the loop
+                    if len(np.intersect1d(
+                            vertices_spx,
+                            vertices_face)) == deg + 1:
+                        boundary[im_index, spx_index] = nerve_coeff * deg_sign
+                        boundary[im_index, spx_index] %= self.p
+                        break
+                    # end if
+                # end for
+            # end for
+        # end else
+        return boundary
+
+
     #######################################################################
     # Cech chain plus lift of preimage
     def cech_diff_and_lift(self, R, reference, local_coordinates, n_dim,
                            deg):
-        for nerv_spx_index in range(len(nerve[n_dim])):
-            for coface_index, coeff in enumerate(nerve_differentials[n_dim+1
-                    ][nerv_spx_index]):
+        print("n_dim:{}, deg:{}".format(n_dim, deg))
 
-                # look to generate boundary matrices
-                boundary = np.zeros((
-                    len(S.subcomplexes[n_dim][nerve_spx_index][deg]),
-                    len(S.subcomplexes[n_dim+1][coface_index][deg]))
-                # now look for coefficients for boundary (two cases)
-                # case of deg > 0
-
-                # case of deg = 0
-
+        for nerve_spx_index, coboundary in enumerate(self.nerve_differentials[
+                n_dim+1]):
+            print("nerve_spx_index:{}".format(nerve_spx_index))
+            if deg == 0:
+                print("Local Cpx dim:{}".format(self.subcomplexes[n_dim][nerve_spx_index][deg]))
+            else:
+                print("Local Cpx dim:{}".format(len(self.subcomplexes[n_dim][
+                    nerve_spx_index][deg])))
+            cofaces = np.nonzero(coboundary)[0]
+            coefficients = coboundary[cofaces]
+            for coface, nerve_coeff in zip(cofaces, coefficients):
+                # generate boundary matrix
+                boundary = self.local_boundary_matrix(
+                    n_dim+1, deg, coface, nerve_spx_index,
+                    nerve_coeff)
                 # image of cech complex
-                new_local = np.matmult(
-                    local_coordinates[nerv_spx_index],
-                    boundary)
+                new_local = np.matmul(
+                    boundary, local_coordinates[nerve_spx_index].T)
                 # local lifts
+                # notice that new_local is transposed, which will be convenient
+                # for these local lifts
+
+                # need a gaussian elimination of (Im | Hom | cell coordinates)
+                first_page_coeff = np.zeros(
+                    len(R), self.page_dim_matrix[1, deg, n_dim])
+                prev = 0
+                for k, ref in enumerate(reference):
+                    next = self.cycle_dimensions[n_dim][deg][nerv_spx_index]
+                    # create Im_Hom Matrix
+                    Im_Hom = np.append(self.Im[0][n_dim][k][deg].coordinates,
+                                      self.Hom[0][n_dim][k][deg].coordinates,
+                                      axis=1)
+                    start_index = np.size(Im_Hom,1)
+                    eqn = np.append(Im_Hom, new_local,axis = 1)
+                    print("start_index:{}".format(start_index))
+                    print("Im_Hom:({}, {})".format(np.size(Im_Hom,0),
+                        np.size(Im_Hom,1)))
+                    print("new_local:({}, {})".format(np.size(new_local,0),
+                        np.size(new_local,1)))
+                    print("eqn size:({}, {})".format(np.size(eqn,0),
+                        np.size(eqn,1)))
+                    print("Hom:{}".format(self.Hom[0][n_dim][k][deg].barcode[:,0]))
+                    print("Im:{}".format(self.Im[0][n_dim][k][deg].barcode[:,0]))
+                    print("Radii")
+                    print("R:{}".format(R[prev:next]))
+                    # TO DO, pass the vector of radii
+                    R, T = gauss_col_rad(eqn, R, start_index, self.p)
 
             # end for
         # end for
 
-    ###########################################################################
-    # solve local linear equations, this is a parallel function
-    def solve_local(self, R, reference, local_coordinates,
-                    n_dim, deg):
-        # Lifts to first page, returns homology class and lift
-        # need a gaussian elimination of (Im | Hom | cell coordinates)
-        # Lift from 0 to 1 page
-        # Create space for first page coefficients
-        first_page_coeff = np.zeros(
-            len(R), self.page_dim_matrix[1, deg, n_dim])
-        for k, ref in enumerate(reference):
-            # create Im_Hom Matrix
-            Im_Hom = np.append(Im[0][n_dim][k][deg].coordinates,
-                              Hom[0][n_dim][k][deg].coordinates,
-                              axis=1)
-            eqn = np.append(Im_Hom, local_coordinates[k].T,
-                            axis = 1)
-            # TO DO, pass the vector of radii
-            R, T = gauss_col_rad(eqn, local_coordinates[k].T, p)
 
-
-
-
-
-# OLD LOCALIZE_coordinates
+# OLDLOCALIZE_coordinates
 #        """
 #        Receives a list of dictionaries.
 #        Returns localized representation of coordinates, as a
