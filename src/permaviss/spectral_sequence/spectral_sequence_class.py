@@ -296,61 +296,68 @@ class spectral_sequence(object):
 
     #######################################################################
     # Cech chain plus lift of preimage
-    def cech_diff_and_lift(self, R, reference, local_coordinates, n_dim,
+    def cech_diff_and_lift(self, R, reference_preimage, local_preimage, n_dim,
                            deg):
         print("n_dim:{}, deg:{}".format(n_dim, deg))
-
         for nerve_spx_index, coboundary in enumerate(self.nerve_differentials[
                 n_dim+1]):
-            print("nerve_spx_index:{}".format(nerve_spx_index))
             if deg == 0:
-                print("Local Cpx dim:{}".format(self.subcomplexes[n_dim][nerve_spx_index][deg]))
+                cpx_size = self.subcomplexes[n_dim][nerve_spx_index][deg]
+                print("Local Cpx dim:{}".format(cpx_size))
             else:
-                print("Local Cpx dim:{}".format(len(self.subcomplexes[n_dim][
-                    nerve_spx_index][deg])))
+                cpx_size = len(self.subcomplexes[n_dim][nerve_spx_index][deg])
+                print("Local Cpx dim:{}".format(cpx_size))
+            # coafaces and coefficients on cech differential
             cofaces = np.nonzero(coboundary)[0]
             coefficients = coboundary[cofaces]
-            for coface, nerve_coeff in zip(cofaces, coefficients):
+            # indices of generators that are nontrivial by cech diff
+            generators = reference_preimage[cofaces[0]]
+            for coface_index in cofaces[0:]:
+                generators = np.append(generators, reference_preimage[
+                    coface_index])
+            # end for
+            generators = np.unique(generators)
+            local_chains = np.zeros((cpx_size, len(generators)))
+            # now run through all cofaces adding to local_chain
+            print(reference_preimage)
+            for coface_index, nerve_coeff in zip(cofaces, coefficients):
                 # generate boundary matrix
                 boundary = self.local_boundary_matrix(
-                    n_dim+1, deg, coface, nerve_spx_index,
-                    nerve_coeff)
+                    n_dim+1, deg, coface_index, nerve_spx_index, nerve_coeff
+                    )
+                print(np.where(np.in1d(generators, reference_preimage[coface_index])))
+                active_generators = np.where(np.in1d(
+                    generators, reference_preimage[coface_index])
+                    )[0]
                 # image of cech complex
-                new_local = np.matmul(
-                    boundary, local_coordinates[nerve_spx_index].T)
-                # local lifts
-                # notice that new_local is transposed, which will be convenient
-                # for these local lifts
-
-                # need a gaussian elimination of (Im | Hom | cell coordinates)
-                first_page_coeff = np.zeros(
-                    len(R), self.page_dim_matrix[1, deg, n_dim])
-                prev = 0
-                for k, ref in enumerate(reference):
-                    next = self.cycle_dimensions[n_dim][deg][nerv_spx_index]
-                    # create Im_Hom Matrix
-                    Im_Hom = np.append(self.Im[0][n_dim][k][deg].coordinates,
-                                      self.Hom[0][n_dim][k][deg].coordinates,
-                                      axis=1)
-                    start_index = np.size(Im_Hom,1)
-                    eqn = np.append(Im_Hom, new_local,axis = 1)
-                    print("start_index:{}".format(start_index))
-                    print("Im_Hom:({}, {})".format(np.size(Im_Hom,0),
-                        np.size(Im_Hom,1)))
-                    print("new_local:({}, {})".format(np.size(new_local,0),
-                        np.size(new_local,1)))
-                    print("eqn size:({}, {})".format(np.size(eqn,0),
-                        np.size(eqn,1)))
-                    print("Hom:{}".format(self.Hom[0][n_dim][k][deg].barcode[:,0]))
-                    print("Im:{}".format(self.Im[0][n_dim][k][deg].barcode[:,0]))
-                    print("Radii")
-                    print("R:{}".format(R[prev:next]))
-                    # TO DO, pass the vector of radii
-                    R, T = gauss_col_rad(eqn, R, start_index, self.p)
-
+                print("sizes")
+                print("{},{}".format(np.size(local_chains[:, active_generators],0),
+                    np.size(local_chains[:, active_generators],1)))
+                print("{},{}".format(np.size(boundary,0), np.size(boundary,1)))
+                print("{},{}".format(np.size(local_preimage[nerve_spx_index].T,0),
+                    np.size(local_preimage[nerve_spx_index].T,1)))
+                local_chains[:, active_generators] += np.matmul(
+                    boundary, local_preimage[nerve_spx_index].T
+                    )
             # end for
+            # First page lift
+            # Gaussian elimination of (Im | Hom | local_chains)
+            first_page_coeff = np.zeros(
+                len(generators), self.page_dim_matrix[1, deg, n_dim]
+                )
+            # create Im_Hom Matrix
+            Im_Hom = np.append(
+                self.Im[0][n_dim][k][deg].coordinates,
+                self.Hom[0][n_dim][k][deg].coordinates,
+                axis=1)
+            start_index = np.size(Im_Hom,1)
+            eqn = np.append(Im_Hom, local_chains, axis = 1)
+            print("generators:".format(generators))
+            print("R[generators]:".format(R[generators]))
+            # TO DO, pass the vector of radii
+            R, T = gauss_col_rad(eqn, R[generators], start_index, self.p)
         # end for
-
+    # end cech_diff_and_lift
 
 # OLDLOCALIZE_coordinates
 #        """

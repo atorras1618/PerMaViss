@@ -30,7 +30,6 @@ if __name__=='__main__':
     n_dim = 1
     deg = 1
 
-    print("no_classes:{}".format(S.page_dim_matrix[current_page, deg, n_dim]))
     initial_sum = np.identity(S.page_dim_matrix[current_page, deg, n_dim])
     reference, local_coordinates = S.localize_coordinates(
         initial_sum, n_dim, deg)
