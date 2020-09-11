@@ -251,7 +251,7 @@ class spectral_sequence(object):
 
     ############################################################################
     # local boundary matrix
-    def local_boundary_matrix(self, n_dim, deg, nerve_spx_index,
+    def local_cech_matrix(self, n_dim, deg, nerve_spx_index,
                               nerve_face_index, nerve_coeff):
         # save space for boundary matrix
         deg_sign = (-1)**deg
@@ -298,64 +298,70 @@ class spectral_sequence(object):
     # Cech chain plus lift of preimage
     def cech_diff_and_lift(self, R, reference_preimage, local_preimage, n_dim,
                            deg):
-        print("n_dim:{}, deg:{}".format(n_dim, deg))
+        image_references = []
+        image_coordinates = []
         for nerve_spx_index, coboundary in enumerate(self.nerve_differentials[
                 n_dim+1]):
+            # size of local complex
             if deg == 0:
                 cpx_size = self.subcomplexes[n_dim][nerve_spx_index][deg]
-                print("Local Cpx dim:{}".format(cpx_size))
             else:
                 cpx_size = len(self.subcomplexes[n_dim][nerve_spx_index][deg])
-                print("Local Cpx dim:{}".format(cpx_size))
             # coafaces and coefficients on cech differential
             cofaces = np.nonzero(coboundary)[0]
             coefficients = coboundary[cofaces]
             # indices of generators that are nontrivial by cech diff
             generators = reference_preimage[cofaces[0]]
-            for coface_index in cofaces[0:]:
+            for coface_index in cofaces[1:]:
                 generators = np.append(generators, reference_preimage[
                     coface_index])
             # end for
             generators = np.unique(generators)
-            local_chains = np.zeros((cpx_size, len(generators)))
-            # now run through all cofaces adding to local_chain
-            print(reference_preimage)
-            for coface_index, nerve_coeff in zip(cofaces, coefficients):
-                # generate boundary matrix
-                boundary = self.local_boundary_matrix(
-                    n_dim+1, deg, coface_index, nerve_spx_index, nerve_coeff
+            image_references.append(generators)
+            if len(generators) > 0:
+                local_chains = np.zeros((cpx_size, len(generators)))
+                # IMAGE OF CECH DIFFERENTIAL #############################
+                for coface_index, nerve_coeff in zip(cofaces, coefficients):
+                    # generate boundary matrix
+                    cech_local = self.local_cech_matrix(
+                        n_dim+1, deg, coface_index, nerve_spx_index, nerve_coeff
+                        )
+                    active_generators = np.where(np.in1d(
+                        generators, reference_preimage[coface_index])
+                        )[0]
+                    # image of cech complex
+                    local_chains[:, active_generators] += np.matmul(
+                        cech_local, local_preimage[coface_index].T
+                        )
+                # end for
+                # FIRST PAGE LIFT ######################################
+                # Save space for coordinates on first page
+                first_page_coeff = np.zeros(
+                    len(generators), self.page_dim_matrix[1, deg, n_dim]
                     )
-                print(np.where(np.in1d(generators, reference_preimage[coface_index])))
-                active_generators = np.where(np.in1d(
-                    generators, reference_preimage[coface_index])
-                    )[0]
-                # image of cech complex
-                print("sizes")
-                print("{},{}".format(np.size(local_chains[:, active_generators],0),
-                    np.size(local_chains[:, active_generators],1)))
-                print("{},{}".format(np.size(boundary,0), np.size(boundary,1)))
-                print("{},{}".format(np.size(local_preimage[nerve_spx_index].T,0),
-                    np.size(local_preimage[nerve_spx_index].T,1)))
-                local_chains[:, active_generators] += np.matmul(
-                    boundary, local_preimage[nerve_spx_index].T
+                # create Im_Hom Matrix
+                Im_Hom = np.append(
+                    self.Im[0][n_dim][nerve_spx_index][deg].coordinates,
+                    self.Hom[0][n_dim][nerve_spx_index][deg].coordinates,
+                    axis=1)
+                start_index = np.size(Im_Hom,1)
+                # Gaussian elimination of  M = (Im | Hom | local_chains)
+                M = np.append(Im_Hom, local_chains, axis = 1)
+                # R_M : vector of birth radii of columns in M
+                R_M = self.Im[0][n_dim][nerve_spx_index][deg].barcode[:,0]
+                R_M = np.concatenate([
+                    R_M, self.Hom[0][n_dim][nerve_spx_index][
+                    deg].barcode[:,0]], axis=None
                     )
-            # end for
-            # First page lift
-            # Gaussian elimination of (Im | Hom | local_chains)
-            first_page_coeff = np.zeros(
-                len(generators), self.page_dim_matrix[1, deg, n_dim]
-                )
-            # create Im_Hom Matrix
-            Im_Hom = np.append(
-                self.Im[0][n_dim][k][deg].coordinates,
-                self.Hom[0][n_dim][k][deg].coordinates,
-                axis=1)
-            start_index = np.size(Im_Hom,1)
-            eqn = np.append(Im_Hom, local_chains, axis = 1)
-            print("generators:".format(generators))
-            print("R[generators]:".format(R[generators]))
-            # TO DO, pass the vector of radii
-            R, T = gauss_col_rad(eqn, R[generators], start_index, self.p)
+                R_M = np.concatenate([R_M, R[generators]], axis=None)
+                _, T = gauss_col_rad(M, R_M, start_index, self.p)
+                gammas = T[:, 0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
+                betas = T[:, self.Im[0][n_dim][nerve_spx_index][
+                    deg].dim :self.Hom[0][n_dim][nerve_spx_index][deg].dim]
+                print("done")
+                image_coordinates.append(local_chains)
+
+            # end if
         # end for
     # end cech_diff_and_lift
 
