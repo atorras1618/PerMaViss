@@ -19,7 +19,7 @@ from ..persistence_algebra.module_persistence_homology import (
      module_persistence_homology)
 from ..persistence_algebra.barcode_bases import barcode_basis
 
-from .spectral_sequence_class import spectral_sequence
+from .spectral_sequence_class import spectral_sequence, add_local_coordinates
 
 
 def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
@@ -147,23 +147,8 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                     # Generate barcode bases for sending to
                     # module_persistence_homology
                     if current_page == 1:
-                        if MV_ss.page_dim_matrix[1][deg][n_dim] == 0:
-                            barcode = []
-                        else:
-                            barcode = np.zeros((MV_ss.page_dim_matrix[
-                                1][deg][n_dim], 2))
-                            prev_cycle_dim = 0
-                            for nerv_spx_index, cycle_dim in enumerate(
-                                    MV_ss.cycle_dimensions[n_dim][deg]):
-                                if cycle_dim - prev_cycle_dim > 0:
-                                    barcode[prev_cycle_dim: cycle_dim] = \
-                                        MV_ss.Hom[0][n_dim][nerv_spx_index][
-                                            deg].barcode
-                                # end if
-                                prev_cycle_dim = cycle_dim
-                            # end for
-                        # end else
-                        base.append(barcode_basis(barcode))
+                        base.append(barcode_basis(MV_ss.first_page_barcodes[
+                            n_dim][deg]))
                     else:
                         if type(MV_ss.Hom[current_page - 1][n_dim][
                                 deg]) == list:

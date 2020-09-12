@@ -141,8 +141,11 @@ class spectral_sequence(object):
         self.subcomplexes = []
         self.zero_differentials = []
         self.cycle_dimensions = []
+        self.first_page_barcodes = []
         # vectors that translate local indices to global
         self.tot_complex_reps = []
+        # higher page representatives
+        self.optimal_reps = [[]]
         # store extension matrices
         self.extensions = []
         for n_dim in range(len(nerve)):
@@ -152,9 +155,11 @@ class spectral_sequence(object):
             self.subcomplexes.append([])
             self.zero_differentials.append([])
             self.cycle_dimensions.append([])
+            self.first_page_barcodes.append([])
             self.tot_complex_reps.append([])
             self.extensions.append([])
             for deg in range(self.no_rows):
+                self.first_page_barcodes[n_dim].append([])
                 self.tot_complex_reps[n_dim].append([])
                 self.extensions[n_dim].append([])
 
@@ -163,14 +168,17 @@ class spectral_sequence(object):
             self.Hom.append([])
             self.Im.append([])
             self.PreIm.append([])
+            self.optimal_reps.append([])
             for n_dim in range(self.no_columns):
                 self.Hom[k].append([])
                 self.Im[k].append([])
                 self.PreIm[k].append([])
+                self.optimal_reps[k].append([[]])
                 for deg in range(self.no_rows):
                     self.Hom[k][n_dim].append([])
                     self.Im[k][n_dim].append([])
                     self.PreIm[k][n_dim].append([])
+                    self.optimal_reps[k][n_dim].append([])
 
         # save space for dimension matrices for all pages
         # the order of variables is for printing the spectral sequence
@@ -224,8 +232,24 @@ class spectral_sequence(object):
                     self.cycle_dimensions[n_dim][deg][k] = no_cycles
                 # end for
                 self.page_dim_matrix[1, deg, n_dim] = no_cycles
+                # put together first page barcodes
+                if no_cycles == 0:
+                    self.first_page_barcodes[n_dim][deg] = []
+                else:
+                    self.first_page_barcodes[n_dim][deg] = np.zeros((
+                    no_cycles, 2))
+                    prev = 0
+                    for k in range(n_spx_number):
+                        # Generate page dim matrix and local_coordinates info
+                        next = self.cycle_dimensions[n_dim][deg][k]
+                        self.first_page_barcodes[n_dim][deg][prev:next] = self.Hom[
+                            0][n_dim][k][deg].barcode
+                        prev = next
+                    # end for
+                # end else
             # end for
         # end if
+
 
     ###########################################################################
     # localize_coordinates
@@ -248,6 +272,7 @@ class spectral_sequence(object):
                 local_hom_coord[reference[-1]].T, self.p).T)
         # end for
         return reference, local_coordinates
+
 
     ############################################################################
     # local boundary matrix
@@ -377,34 +402,52 @@ class spectral_sequence(object):
         return first_page_image, lift_references, lift_coordinates
     # end cech_diff_and_lift
 
-
     ###########################################################################
-    # change total_representatives
-
-    def change_representatives(self, start_coordinates, current_page):
-        """
-        Changes representative on all pages.
-        Current version only changes on first page.
-        Leads to images of differentials, plus total complex reps
-        """
-        # for loop over n_dim, deg
-        # recover zero coordinates of positions
-        zero_coordinates = self.localize_coordinates(start_coordinates)
-        # Compute zigzag for the zero_page expression
-        zero_coordinates = self.cech_differential(zero_coordinates, n_dim, deg)
-        # in parallel, run local equation methods
-        # recover preimages from stored data
-        coefficients, lift = solve_local(self, cell_coordinates, n_dim, deg)
-        # modify total complex accordingly (include lift entry)
-        # run higher equation methods
-        coefficients, lift_coefficients = solve_higher(self, coordinates, n_dim, deg)
-        # modify total complex accordingly
+    # self.optimal reps method for obtaining modified representatives
 
 
     ###########################################################################
     # solve higher page equations
-    def solve_higher(self, coordinates, n_dim, deg):
+    def solve_higher(self, first_page_coord, target_page, n_dim, deg):
+        """Takes an array of coordinates on first page and lifts to target_page
+        Returns arrays of preimage gamma coefficients
+        """
+        for k in range(1, target_page):
+            prev_target_coordinates = target_coordinates
+            # use image_kernel here
+            #target_coordinates = np.zeros((
+            #    len(start_coordinates), self.page_dim_matrix[k+1, deg, n_dim]))
+            #for i, coord in enumerate(prev_target_coordinates):
+            #    # solve (Im|Hom) locally
+            #    Hom_dim = self.Hom[k][n_dim][deg].dim
+            #    if Hom_dim > 0:
+            #        Hom = self.Hom[k][n_dim][deg].active_coordinates(R[i])
 
+            #    Im_dim = self.Im[k][n_dim][deg].dim
+            #    if Hom_dim > 0 and len(Hom) > 0:
+            #        if Im_dim > 0:
+            #            Im = self.Im[k][n_dim][deg].active_coordinates(R[i])
+            #            Im_dim = np.size(Im, 1)
+            #            Im_Hom = np.append(Im, Hom, axis=1)
+            #        else:
+            #            Im_Hom = Hom
+            #        # end else
+            #        lifted_coordinates = np.zeros(self.Hom[k][n_dim][deg].dim)
+            #        if np.size(Im_Hom, 1) > 0:
+            #            prev_active_coordinates = prev_target_coordinates[i][
+            #                self.Hom[k][n_dim][deg].prev_basis.active(R[i])]
+            #            if np.any(prev_active_coordinates):
+            #                active_coordinates = solve_mod_p(
+            #                    Im_Hom, prev_active_coordinates,
+            #                    self.p)[Im_dim:]
+            #                lifted_coordinates[self.Hom[k][n_dim][deg].active(
+            #                    R[i])] = active_coordinates
+            #            # end if
+            #        # end if
+            #        target_coordinates[i] = lifted_coordinates
+            #    # end if
+            ## end for
+        # end for
         return coefficients, lift_coefficients
 
 
@@ -1405,3 +1448,16 @@ def copy_dictionary(original):
         copy[spx_idx] = np.copy(original[spx_idx])
 
     return copy
+
+###############################################################################
+# add local_coordinates
+#
+
+def add_local_coordinates(A_ref, A_coord, B_ref, B_coord):
+    """Obtains local coordinate representation for A + B, given local coordinate
+    representations of A and B
+    """
+    if len(A_ref != B_ref):
+        raise ValueError
+
+    return sum_ref, sum_coord
