@@ -293,15 +293,19 @@ class spectral_sequence(object):
         # end else
         return boundary
 
-
     #######################################################################
     # Cech chain plus lift of preimage
     def cech_diff_and_lift(self, R, reference_preimage, local_preimage, n_dim,
                            deg):
-        image_references = []
-        image_coordinates = []
+        lift_references = []
+        lift_coordinates = []
+        first_page_image = np.zeros((len(R),
+                                     self.page_dim_matrix[1, deg, n_dim]))
+        prev = 0
         for nerve_spx_index, coboundary in enumerate(self.nerve_differentials[
                 n_dim+1]):
+            # used for storing first_page_image
+            next = self.cycle_dimensions[n_dim][deg][nerve_spx_index]
             # size of local complex
             if deg == 0:
                 cpx_size = self.subcomplexes[n_dim][nerve_spx_index][deg]
@@ -317,7 +321,7 @@ class spectral_sequence(object):
                     coface_index])
             # end for
             generators = np.unique(generators)
-            image_references.append(generators)
+            lift_references.append(generators)
             if len(generators) > 0:
                 local_chains = np.zeros((cpx_size, len(generators)))
                 # IMAGE OF CECH DIFFERENTIAL #############################
@@ -355,52 +359,23 @@ class spectral_sequence(object):
                     )
                 R_M = np.concatenate([R_M, R[generators]], axis=None)
                 _, T = gauss_col_rad(M, R_M, start_index, self.p)
-                gammas = T[:, 0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
-                betas = T[:, self.Im[0][n_dim][nerve_spx_index][
-                    deg].dim :self.Hom[0][n_dim][nerve_spx_index][deg].dim]
-                print("done")
-                image_coordinates.append(local_chains)
-
+                # look at reductions on generators
+                T = T[:, start_index:]
+                # compute vertical preimage and store
+                gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
+                lift_coordinates.append(np.matmul(
+                    self.PreIm[0][n_dim][nerve_spx_index][deg+1], gammas
+                    ))
+                # store first page coefficients
+                betas = T[self.Im[0][n_dim][nerve_spx_index][
+                    deg].dim : start_index]
+                first_page_image[generators, prev:next] += betas.T
             # end if
+            prev = next
         # end for
+        # lift_references coincide with image_references
+        return first_page_image, lift_references, lift_coordinates
     # end cech_diff_and_lift
-
-# OLDLOCALIZE_coordinates
-#        """
-#        Receives a list of dictionaries.
-#        Returns localized representation of coordinates, as a
-#        reference list, plus list of local Coordinates
-#        """
-#        reference_list = []
-#        for chain in cell_coordinates:
-#            reference_list.append(list(chain.keys()))
-#        # end for
-#        bool_reference = np.array((len(cell_coordinates), self.nerve[n_dim]),
-#                                  dtype=bool)
-#        for i, ref in enumerate(reference_list):
-#            if len(ref) > 0:
-#                bool_reference[i][ref] = np.ones(len(ref), dtype=bool)
-#        # end for
-#        bool_reference = bool_reference.T
-#        reference_list = []
-#        for _, ref in enumerate(bool_reference):
-#            reference_list.append(
-#                np.array(range(len(ref)))[ref]
-#            )
-#        # end for
-#        # Next, put together local coordinates looking into references
-#        local_coordinates = []
-#        for nerve_spx_index, ref in enumerate(reference_list):
-#            local_coordinates.append(
-#                np.array((len(ref),
-#                         len(self.subcomplexes[n_dim][nerve_spx_index]))
-#                         )
-#            )
-#            for i, coord_idx in ref:
-#                local_coordinates[-1][i] = cell_coordinates[coord_idx]
-#            # end for
-#        # end for
-#        return local_coordinates, reference_list
 
 
     ###########################################################################
@@ -427,72 +402,11 @@ class spectral_sequence(object):
 
 
     ###########################################################################
-    # solve local linear equations
-    # parallelization should be included here
-    def solve_local(self, cell_coordinates, n_dim, deg, R):
-        # need a gaussian elimination of (Im | Hom | cell coordinates)
-        # Lift from 0 to 1 page
-        # Create space for first page coefficients
-        first_page_coeff = np.zeros((len(cell_coordinates),
-                                       self.page_dim_matrix[1, deg, n_dim])
-                                       )
-        # create space for vertical lifts
-        preimages = []
-        for i, _ in enumerate(cell_coordinates):
-            preimages.append({})
-        # this for will be run in parallel
-        for nerve_spx_index in iter(self.nerve[n_dim]):
-            for i, coord in enumerate(cell_coordinates):
-                if nerve_spx_index in coord:
-                     coefficients.append(coord[nerve_spx_index])
-                     references.append(i)
-            # end for
-            # solve (Im|Hom) locally
-
-            # for this use barcode_basis method for sorting columns
-            # This is with respect to the active coordinates at R[i]
-            Hom_dim = self.Hom[0][n_dim][nerve_spx_index][deg].dim
-            if Hom_dim > 0:
-                Hom = self.Hom[0][n_dim][nerve_spx_index][
-                    deg].active_domain(R[i])
-            Im_dim = self.Im[0][n_dim][nerve_spx_index][deg].dim
-            if Hom_dim > 0 and len(Hom) > 0:
-                if Im_dim > 0:
-                    Im = self.Im[0][n_dim][nerve_spx_index][
-                        deg].active_domain(R[i])
-                    Im_dim = np.size(Im, 1)
-                    Im_Hom = np.append(Im, Hom, axis=1)
-
-                else:
-                    Im_Hom = Hom
-                # end else
-
-                active_coordinates = solve_mod_p(
-                    Im_Hom, coord[nerve_spx_index], self.p)[Im_dim:]
-                # Save resulting coordinates as 1 page coordinates
-                local_lifted_coordinates = np.zeros(self.cycle_dimensions[
-                    n_dim][deg][nerve_spx_index] - self.cycle_dimensions[
-                        n_dim][deg][nerve_spx_index-1])
-                local_active = self.Hom[0][n_dim][nerve_spx_index][
-                    deg].active(R[i])
-                local_lifted_coordinates[local_active] = active_coordinates
-                target_coordinates[i, self.cycle_dimensions[n_dim][deg][
-                    nerve_spx_index-1]:self.cycle_dimensions[n_dim][deg][
-                        nerve_spx_index]] = local_lifted_coordinates
-            # end if
-            # Now put results in target coordinates matrix
-        # end for
-        # this reduces up to a column in Hom, depending on
-        # initial radius a_\alpha
-        # Notice that if b_\beta < a_\alpha, pivots cannot coincide (check,
-        # perhaps this is not true)
-
-        return coefficients, lift
-    ###########################################################################
     # solve higher page equations
     def solve_higher(self, coordinates, n_dim, deg):
 
         return coefficients, lift_coefficients
+
 
     ###########################################################################
     # add higher page contents
