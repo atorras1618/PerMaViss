@@ -140,7 +140,7 @@ def gauss_col_rad(A, R, start_index, p):
         while (pivot > -1) & (not reduced):
             reduced = True
             # look for previous columns to j
-            for k in range(j):
+            for k in range(start_index):
                 # check the radius
                 if R[k] <= R[j]:
                     # if the pivots coincide, subtract column k to column j
@@ -152,6 +152,81 @@ def gauss_col_rad(A, R, start_index, p):
                         # reset pivot and check for nullity
                         if np.any(Red[j]):
                             pivot = _index_pivot(Red[j])
+                            reduced = False
+                            break
+                        # end if
+                    # end if
+                # end if
+            # end for
+        # end while
+    # end for
+    return np.transpose(Red), np.transpose(T)
+
+def gauss_col_row_rad(A, death_row_R, col_barcode, start_index, p):
+    """This function implements the Gaussian elimination by columns,
+    but specialized for columns with radius.
+
+    A is reduced by left to right column additions starting
+    from  start_index. Only columns from a lower index are
+    added to columns with a higher index.
+
+
+    Parameters
+    ----------
+    A : :obj:`Numpy Array`
+        Matrix to be reduced
+    row_R: :obj:`Numpy Array`
+        Vector with radius of rows
+    col_R: :obj:`Numpy Array`
+        Vector with radius of columns
+    start_index:`int`
+        Index at which reduction starts
+    p : `int(prime)`
+        Prime number. The corresponding field will be Z mod p.
+
+    Returns
+    -------
+    T : :obj:`Numpy Array`
+        Matrix recording additions performed, so that
+        we obtain the lifts and coefficients.
+
+    Raises
+    ------
+    ValueError
+        If reduced columns do not vanish.
+    """
+    # TO DO: check that trivial matrices are not sent here.
+    # number of columns in A
+    N = np.size(A, 1)
+    # copy of matrix to be reduced
+    # The matrix is transposed for more computational efficiency
+    Red = np.copy(np.transpose(A))
+    T = np.identity(N)
+    # iterate over all columns
+    for j in range(start_index, N):
+        active_rows = np.array(range(len(birth_row_R)))[
+            death_row_R >= death_col_R[j]]
+        active_pivot = _index_pivot(Red[j][active_rows])
+        real_pivot = active_rows[active_pivot]
+        # Assume that the j-column is not reduced
+        reduced = False
+        while (pivot > -1) & (not reduced):
+            reduced = True
+            # look for previous columns to j
+            for k in range(start_index):
+                # check the radius
+                if birth_col_R[k] <= birth_col_R[j]:
+                    # if the pivots coincide, subtract column k to column j
+                    # multiplied by a suitable coefficient q
+                    if _index_pivot(Red[k][active_rows]) == active_pivot:
+                        q = (Red[j][real_pivot] * inv_mod_p(
+                            Red[k][real_pivot], p)) % p
+                        Red[j] = add_arrays_mod_c(Red[j], -q * Red[k], p)
+                        T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
+                        # reset pivot and check for nullity
+                        if np.any(Red[j][active_rows]):
+                            active_pivot = _index_pivot(Red[j][active_rows])
+                            real_pivot = active_rows[active_pivot]
                             reduced = False
                             break
                         # end if

@@ -139,6 +139,10 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     been born and have not yet died.
 
     """
+    # Throw ValueError if dimensions of A, B and F do not fit
+    if B.dim != np.size(F,0) or A.dim != np.size(F,1):
+        print("ImageKernel error: dimensions of bases and differential do not fit")
+        raise ValueError
     # If the basis B is not ordered, we order it
     B_origin = B
     return_order_B = range(B.dim)

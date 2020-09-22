@@ -161,8 +161,8 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                     deg += 1 - current_page
                     n_dim += current_page
                     if deg >= 0 and n_dim < nerve_dim:
-                        differentials.append(MV_ss.zig_zag(n_dim, deg,
-                                                           current_page).T)
+                        differentials.append(MV_ss.compute_differential(n_dim,
+                            deg, current_page).T)
                     # end if
                 # end while
                 Hom, Im, PreIm = module_persistence_homology(differentials,
