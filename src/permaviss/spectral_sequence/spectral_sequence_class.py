@@ -4,6 +4,9 @@
 
 import numpy as np
 
+from multiprocessing import Pool
+from functools import partial
+
 from ..simplicial_complexes.differentials import complex_differentials
 from ..gauss_mod_p.functions import solve_mod_p, multiply_mod_p
 from ..gauss_mod_p.gauss_mod_p import gauss_col_rad
@@ -327,89 +330,102 @@ class spectral_sequence(object):
 
     #######################################################################
     # Cech chain plus lift of preimage
-    def cech_diff_and_lift(self, R, reference_preimage, local_preimage, n_dim,
-                           deg):
-        lift_references = []
-        lift_coordinates = []
-        first_page_image = np.zeros((len(R),
-                                     self.page_dim_matrix[1, deg, n_dim]))
-        prev = 0
-        for nerve_spx_index, coboundary in enumerate(self.nerve_differentials[
-                n_dim+1]):
-            # used for storing first_page_image
-            next = self.cycle_dimensions[n_dim][deg][nerve_spx_index]
-            # size of local complex
-            if deg == 0:
-                cpx_size = self.subcomplexes[n_dim][nerve_spx_index][deg]
-            else:
-                cpx_size = len(self.subcomplexes[n_dim][nerve_spx_index][deg])
-            # coafaces and coefficients on cech differential
-            cofaces = np.nonzero(coboundary)[0]
-            coefficients = coboundary[cofaces]
-            # indices of generators that are nontrivial by cech diff
-            generators = reference_preimage[cofaces[0]]
-            for coface_index in cofaces[1:]:
-                generators = np.append(generators, reference_preimage[
-                    coface_index])
-            # end for
-            generators = np.unique(generators)
-            lift_references.append(generators)
-            if len(generators) > 0:
-                local_chains = np.zeros((cpx_size, len(generators)))
-                # IMAGE OF CECH DIFFERENTIAL #############################
-                for coface_index, nerve_coeff in zip(cofaces, coefficients):
-                    # check local preimage is non-trivial
-                    if self.Hom[0][n_dim+1][coface_index][deg].dim > 0:
-                        # generate boundary matrix
-                        cech_local = self.local_cech_matrix(
-                            n_dim+1, deg, coface_index, nerve_spx_index,
-                            nerve_coeff)
-                        active_generators = np.where(np.in1d(
-                            generators, reference_preimage[coface_index])
-                            )[0]
-                            # image of cech complex
-                        local_chains[:, active_generators] += np.matmul(
-                            cech_local, local_preimage[coface_index].T
-                            )
-                    # end if
-                # end for
-                # FIRST PAGE LIFT ######################################
-                # Save space for coordinates on first page
-                first_page_coeff = np.zeros(
-                    len(generators), self.page_dim_matrix[1, deg, n_dim]
-                    )
-                # create Im_Hom Matrix
-                Im_Hom = np.append(
-                    self.Im[0][n_dim][nerve_spx_index][deg].coordinates,
-                    self.Hom[0][n_dim][nerve_spx_index][deg].coordinates,
-                    axis=1)
-                start_index = np.size(Im_Hom,1)
-                # Gaussian elimination of  M = (Im | Hom | local_chains)
-                M = np.append(Im_Hom, local_chains, axis = 1)
-                # R_M : vector of birth radii of columns in M
-                R_M = self.Im[0][n_dim][nerve_spx_index][deg].barcode[:,0]
-                R_M = np.concatenate([
-                    R_M, self.Hom[0][n_dim][nerve_spx_index][
-                    deg].barcode[:,0]], axis=None
-                    )
-                R_M = np.concatenate([R_M, R[generators]], axis=None)
-                _, T = gauss_col_rad(M, R_M, start_index, self.p)
-                # look at reductions on generators
-                T = T[:, start_index:]
-                # compute vertical preimage and store
-                gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
-                lift_coordinates.append(np.matmul(
-                    self.PreIm[0][n_dim][nerve_spx_index][deg+1], gammas
-                    ))
-                # store first page coefficients
-                betas = T[self.Im[0][n_dim][nerve_spx_index][
-                    deg].dim : start_index]
-                first_page_image[generators, prev:next] += betas.T
-            # end if
-            prev = next
+    def cech_diff_and_lift(
+            self, R, reference_preimage, local_preimage, n_dim, deg,
+            lift_references, lift_coordinates, first_page_image,
+            nerve_spx_index
+            ):
+        # if nerve_spx_index==0, then prev=0
+        prev = self.cycle_dimensions[n_dim][deg][nerve_spx_index-1]
+        next = self.cycle_dimensions[n_dim][deg][nerve_spx_index]
+        # if trivial cover skip
+        if prev == next:
+            return
+        coboundary = self.nerve_differentials[n_dim+1][nerve_spx_index]
+        # coafaces and coefficients on cech differential
+        cofaces = np.nonzero(coboundary)[0]
+        coefficients = coboundary[cofaces]
+        # indices of generators that are nontrivial by cech diff
+        generators = reference_preimage[cofaces[0]]
+        for coface_index in cofaces[1:]:
+            generators = np.append(generators, reference_preimage[
+                coface_index]).astype(int)
         # end for
-        # lift_references coincide with image_references
-        return first_page_image, lift_references, lift_coordinates
+        generators = np.unique(generators)
+        lift_references[nerve_spx_index] = generators
+        #if there are no images to compute, return
+        if len(generators) == 0:
+            return
+        # size of local complex
+        if deg == 0:
+            cpx_size = self.subcomplexes[n_dim][nerve_spx_index][deg]
+        else:
+            cpx_size = len(self.subcomplexes[n_dim][nerve_spx_index][deg])
+
+        local_chains = np.zeros((cpx_size, len(generators)))
+        # IMAGE OF CECH DIFFERENTIAL #############################
+        for coface_index, nerve_coeff in zip(cofaces, coefficients):
+            # check local preimage is non-trivial
+            if self.Hom[0][n_dim+1][coface_index][deg].dim > 0:
+                # generate boundary matrix
+                cech_local = self.local_cech_matrix(
+                    n_dim+1, deg, coface_index, nerve_spx_index,
+                    nerve_coeff)
+                active_generators = np.where(np.in1d(
+                    generators, reference_preimage[coface_index])
+                    )[0]
+                    # image of cech complex
+                local_chains[:, active_generators] += np.matmul(
+                    cech_local, local_preimage[coface_index].T
+                    )
+            # end if
+        # end for
+        # FIRST PAGE LIFT ######################################
+        # create Im_Hom Matrix
+        Im_Hom = np.append(
+            self.Im[0][n_dim][nerve_spx_index][deg].coordinates,
+            self.Hom[0][n_dim][nerve_spx_index][deg].coordinates,
+            axis=1)
+
+        print("im:{}, hom:{}".format(
+            self.Im[0][n_dim][nerve_spx_index][deg].dim,
+            self.Hom[0][n_dim][nerve_spx_index][deg].dim
+            ))
+        start_index = np.size(Im_Hom,1)
+        # Gaussian elimination of  M = (Im | Hom | local_chains)
+        M = np.append(Im_Hom, local_chains, axis = 1)
+        # R_M : vector of birth radii of columns in M
+        R_M = self.Im[0][n_dim][nerve_spx_index][deg].barcode[:,0]
+        R_M = np.concatenate([
+            R_M, self.Hom[0][n_dim][nerve_spx_index][deg].barcode[:,0]],
+            axis=None
+            )
+        R_M = np.concatenate([R_M, R[generators]], axis=None)
+        _, T = gauss_col_rad(M, R_M, start_index, self.p)
+        # look at reductions on generators
+        T = T[:, start_index:]
+        # compute vertical preimage and store
+        gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
+        lift_coordinates[nerve_spx_index] = np.matmul(
+            self.PreIm[0][n_dim][nerve_spx_index][deg+1], gammas
+            )
+        # store first page coefficients
+        betas = T[self.Im[0][n_dim][nerve_spx_index][
+            deg].dim : start_index]
+
+        betas_aux = np.zeros((len(R), next-prev))
+        print(np.size(betas,0))
+        print(np.size(betas,1))
+        betas_aux[generators] = np.transpose(betas)
+        print(betas_aux)
+        print(np.size(betas_aux,0))
+        print(np.size(betas_aux,1))
+        print("start_index:{}".format(start_index))
+        print("generators:{}".format(generators))
+        print("prev:{}, next:{}".format(prev, next))
+        print(np.size(first_page_image[prev:next],0))
+        print(np.size(first_page_image[prev:next],1))
+        first_page_image[:, prev:next] = betas_aux
     # end cech_diff_and_lift
 
     ###########################################################################
@@ -452,12 +468,33 @@ class spectral_sequence(object):
                 self.Hom[current_page-1][n_dim][deg].coordinates.T,
                 self.optimal_reps[current_page-1][d_dim][deg])
 
-        # TO DO: parallelize here
-        first_page_image, lift_ref, lift_coord = self.cech_diff_and_lift(
-            R, total_complex_chain[-1][0], total_complex_chain[-1][1], n_dim-1,
-            deg)
+        # number of simplices to parallelize over
+        if n_dim == 1:
+            n_spx_number = self.nerve[0]
+        else:
+            n_spx_number = len(self.nerve[n_dim-1])
 
-        total_complex_chain.append([lift_ref, lift_coord])
+        # store space for preimages
+        lift_references = []
+        lift_coordinates = []
+        for nerve_spx_index in range(n_spx_number):
+            lift_references.append([])
+            lift_coordinates.append([])
+
+        first_page_image = np.zeros((
+            len(R), self.page_dim_matrix[1, deg, n_dim]))
+        partial_cech_diff_and_lift = partial(
+            self.cech_diff_and_lift, R, total_complex_chain[-1][0],
+            total_complex_chain[-1][1], n_dim-1, deg,
+            lift_references, lift_coordinates, first_page_image
+        )
+        for idx in range(n_spx_number):
+            partial_cech_diff_and_lift(idx)
+        #workers_pool = Pool()
+        #workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
+        #workers_pool.close()
+
+        total_complex_chain.append([lift_references, lift_coordinates])
         betas = first_page_image.T
         # lift to higher pages, modifying total complex chains
         for k in range(1, current_page):
