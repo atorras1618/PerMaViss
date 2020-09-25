@@ -387,10 +387,6 @@ class spectral_sequence(object):
             self.Hom[0][n_dim][nerve_spx_index][deg].coordinates,
             axis=1)
 
-        print("im:{}, hom:{}".format(
-            self.Im[0][n_dim][nerve_spx_index][deg].dim,
-            self.Hom[0][n_dim][nerve_spx_index][deg].dim
-            ))
         start_index = np.size(Im_Hom,1)
         # Gaussian elimination of  M = (Im | Hom | local_chains)
         M = np.append(Im_Hom, local_chains, axis = 1)
@@ -408,23 +404,13 @@ class spectral_sequence(object):
         gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
         lift_coordinates[nerve_spx_index] = np.matmul(
             self.PreIm[0][n_dim][nerve_spx_index][deg+1], gammas
-            )
+            ).T
         # store first page coefficients
         betas = T[self.Im[0][n_dim][nerve_spx_index][
             deg].dim : start_index]
 
         betas_aux = np.zeros((len(R), next-prev))
-        print(np.size(betas,0))
-        print(np.size(betas,1))
         betas_aux[generators] = np.transpose(betas)
-        print(betas_aux)
-        print(np.size(betas_aux,0))
-        print(np.size(betas_aux,1))
-        print("start_index:{}".format(start_index))
-        print("generators:{}".format(generators))
-        print("prev:{}, next:{}".format(prev, next))
-        print(np.size(first_page_image[prev:next],0))
-        print(np.size(first_page_image[prev:next],1))
         first_page_image[:, prev:next] = betas_aux
     # end cech_diff_and_lift
 
@@ -464,10 +450,19 @@ class spectral_sequence(object):
         else:
             # compute coordinates of homology class
             R = self.Hom[current_page-1][n_dim][deg].barcode[:,0]
-            total_complex_chain = add_local_coordinates(
+            total_complex_chain = local_sums(
+                self.optimal_reps[current_page-1][n_dim][deg],
                 self.Hom[current_page-1][n_dim][deg].coordinates.T,
-                self.optimal_reps[current_page-1][d_dim][deg])
+                )
+            for idx_local, ref in enumerate(total_complex_chain[-1][0]):
+                print("ref")
+                print(ref)
+                print("local_coord")
+                print(total_complex_chain[-1][1][idx_local])
 
+            if len(total_complex_chain[-1][0]) != len(self.nerve[
+                n_dim - current_page + 1]):
+                raise ValueError
         # number of simplices to parallelize over
         if n_dim == 1:
             n_spx_number = self.nerve[0]
@@ -482,19 +477,31 @@ class spectral_sequence(object):
             lift_coordinates.append([])
 
         first_page_image = np.zeros((
-            len(R), self.page_dim_matrix[1, deg, n_dim]))
+            len(R), self.page_dim_matrix[1, deg, n_dim-1]))
         partial_cech_diff_and_lift = partial(
             self.cech_diff_and_lift, R, total_complex_chain[-1][0],
-            total_complex_chain[-1][1], n_dim-1, deg,
-            lift_references, lift_coordinates, first_page_image
+            total_complex_chain[-1][1], n_dim - current_page + 1,
+            deg + current_page - 1, lift_references, lift_coordinates,
+            first_page_image
         )
+
         for idx in range(n_spx_number):
             partial_cech_diff_and_lift(idx)
-        #workers_pool = Pool()
-        #workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
-        #workers_pool.close()
+        # workers_pool = Pool()
+        # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
+        # workers_pool.close()
 
         total_complex_chain.append([lift_references, lift_coordinates])
+        for local in total_complex_chain:
+            refs = local[0]
+            chains = local[1]
+            for loc_idx, ref in enumerate(refs):
+                if len(ref) != len(chains[loc_idx]):
+                    print(len(ref))
+                    print(np.size(chains[loc_idx],0))
+                    print(np.size(chains[loc_idx],1))
+                    raise ValueError
+
         betas = first_page_image.T
         # lift to higher pages, modifying total complex chains
         for k in range(1, current_page):
@@ -530,6 +537,18 @@ class spectral_sequence(object):
             # next page coefficients
             betas = T[Im_dim:start_index]
         # end for
+        # store optimal reps
+        self.optimal_reps[current_page][n_dim][deg] = total_complex_chain
+        for local in total_complex_chain:
+            refs = local[0]
+            chains = local[1]
+            for loc_idx, ref in enumerate(refs):
+                if len(ref) != len(chains[loc_idx]):
+                    print(len(ref))
+                    print(np.size(chains[loc_idx],0))
+                    print(np.size(chains[loc_idx],1))
+                    raise ValueError
+
         return betas.T
     # end compute_differential
 
@@ -1589,26 +1608,48 @@ def copy_dictionary(original):
 ###############################################################################
 # add local_coordinates
 #
-
-def add_local_coordinates(A_ref, A_coord, B_ref, B_coord):
-    """Obtains local coordinate representation for A + B, given local coordinate
-    representations of A and B
-    """
-    if len(A_ref != B_ref):
-        raise ValueError
-
-    return sum_ref, sum_coord
+#
+#def add_local_coordinates(A_ref, A_coord, B_ref, B_coord):
+#    """Obtains local coordinate representation for A + B, given local coordinate
+#    representations of A and B
+#    """
+#    if len(A_ref != B_ref):
+#        raise ValueError
+#
+#    return sum_ref, sum_coord
 
 ###############################################################################
 # local_sums
 #
 
-#def local_sum(ref, chains, sums):
-#    """Sums and chains given in rows
-#    """
-#    no_sums = np.size(sums, axis=0)
-#    no_coor = np.size(chains, axis=1)
-#    new_ref = []
-#    new_coord = np.zeros((no_sums, )
-#    for i, sum in enumerate(sums):
-#        pass
+def local_sums(local_chains, sums):
+    """Sum local_chains as indicated by "sums"
+    """
+    no_sums = np.size(sums, axis=0)
+    no_generators = np.size(sums, 1)
+    new_chains = []
+    for pair in local_chains:
+        old_ref = pair[0]
+        old_coord = pair[1]
+        new_ref = []
+        new_coord = []
+        for local_idx, ref in enumerate(old_ref):
+            new_ref.append([])
+            new_coord.append([])
+            for idx_sum, sum in enumerate(sums):
+                generators = np.nonzero(sum)[0]
+                active_local_generators = np.where(np.in1d(
+                    ref, generators,))[0]
+                if np.any(active_local_generators):
+                    coefficients = np.array([sum[active_local_generators]])
+                    new_ref[local_idx].append(idx_sum)
+                    new_coord[local_idx].append(np.matmul(
+                        coefficients, old_coord[local_idx][
+                            active_local_generators])[0]) # 2d array to 1d array
+                # end if
+            # end for
+            new_coord[local_idx] = np.array(new_coord[local_idx])
+        # end for
+        new_chains.append([new_ref, new_coord])
+    # end for
+    return new_chains

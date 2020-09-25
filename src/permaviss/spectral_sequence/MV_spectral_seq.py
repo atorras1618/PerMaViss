@@ -19,7 +19,7 @@ from ..persistence_algebra.module_persistence_homology import (
      module_persistence_homology)
 from ..persistence_algebra.barcode_bases import barcode_basis
 
-from .spectral_sequence_class import spectral_sequence, add_local_coordinates
+from .spectral_sequence_class import spectral_sequence
 
 
 def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
