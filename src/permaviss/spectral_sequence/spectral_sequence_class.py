@@ -284,6 +284,9 @@ class spectral_sequence(object):
     def local_cech_matrix(self, n_dim, deg, nerve_spx_index,
                               nerve_face_index, nerve_coeff):
 
+        """
+         (subcpx[n_dim-1], sbcpx[n_dim]) matrix
+        """
         deg_sign = (-1)**deg
         if deg == 0:
             # save space for boundary matrix
@@ -342,7 +345,7 @@ class spectral_sequence(object):
         if prev == next:
             return
         coboundary = self.nerve_differentials[n_dim+1][nerve_spx_index]
-        # coafaces and coefficients on cech differential
+        # cofaces and coefficients on cech differential
         cofaces = np.nonzero(coboundary)[0]
         coefficients = coboundary[cofaces]
         # indices of generators that are nontrivial by cech diff
@@ -352,7 +355,6 @@ class spectral_sequence(object):
                 coface_index]).astype(int)
         # end for
         generators = np.unique(generators)
-        lift_references[nerve_spx_index] = generators
         #if there are no images to compute, return
         if len(generators) == 0:
             return
@@ -375,6 +377,10 @@ class spectral_sequence(object):
                     generators, reference_preimage[coface_index])
                     )[0]
                     # image of cech complex
+                # print("cech_local")
+                # print(cech_local)
+                # print("local_preimage[coface_index].T")
+                # print(local_preimage[coface_index].T)
                 local_chains[:, active_generators] += np.matmul(
                     cech_local, local_preimage[coface_index].T
                     )
@@ -402,13 +408,17 @@ class spectral_sequence(object):
         T = T[:, start_index:]
         # compute vertical preimage and store
         gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
-        lift_coordinates[nerve_spx_index] = np.matmul(
-            self.PreIm[0][n_dim][nerve_spx_index][deg+1], gammas
-            ).T
+        # look for indices of nonzero columns
+        preimages = np.matmul(self.PreIm[0][n_dim][nerve_spx_index][deg+1],
+                              gammas).T
+        nonzero_idx = np.where(gammas.any(axis=0))[0]
+        if np.any(nonzero_idx):
+            lift_coordinates[nerve_spx_index] = preimages[nonzero_idx]
+            lift_references[nerve_spx_index] = generators[nonzero_idx]
+
         # store first page coefficients
         betas = T[self.Im[0][n_dim][nerve_spx_index][
             deg].dim : start_index]
-
         betas_aux = np.zeros((len(R), next-prev))
         betas_aux[generators] = np.transpose(betas)
         first_page_image[:, prev:next] = betas_aux
@@ -447,109 +457,130 @@ class spectral_sequence(object):
                 prev = no_cycles
             # end for
             total_complex_chain = [[references, local_coordinates]]
+            active_ref = range(self.page_dim_matrix[1, deg, n_dim])
         else:
             # compute coordinates of homology class
             R = self.Hom[current_page-1][n_dim][deg].barcode[:,0]
+            print("R")
+            print(R)
+            print("Optimal Reps")
+            print(self.optimal_reps[current_page-1][n_dim][deg][-1][0])
+            print(self.optimal_reps[current_page-1][n_dim][deg][-1][1])
+            print("Hom")
+            print(self.Hom[current_page-1][n_dim][deg].coordinates.T)
+
             total_complex_chain = local_sums(
                 self.optimal_reps[current_page-1][n_dim][deg],
                 self.Hom[current_page-1][n_dim][deg].coordinates.T,
                 )
-            for idx_local, ref in enumerate(total_complex_chain[-1][0]):
-                print("ref")
-                print(ref)
-                print("local_coord")
-                print(total_complex_chain[-1][1][idx_local])
 
+            active_ref = np.array([])
+            for idx_local, ref in enumerate(total_complex_chain[-1][0]):
+                np.concatenate([active_ref, ref], axis=None)
+
+            print("active_ref")
+            print(active_ref)
             if len(total_complex_chain[-1][0]) != len(self.nerve[
-                n_dim - current_page + 1]):
+                    n_dim - current_page + 1]):
                 raise ValueError
+
         # number of simplices to parallelize over
         if n_dim == 1:
             n_spx_number = self.nerve[0]
         else:
             n_spx_number = len(self.nerve[n_dim-1])
 
+        first_page_image = np.zeros((
+            len(active_ref), self.page_dim_matrix[1, deg, n_dim-1]
+            ))
         # store space for preimages
         lift_references = []
         lift_coordinates = []
-        for nerve_spx_index in range(n_spx_number):
-            lift_references.append([])
-            lift_coordinates.append([])
+        Betas = np.zeros((
+            len(R), self.page_dim_matrix[current_page, deg, n_dim-1]
+            ))
+        if np.any(active_ref):
+            for nerve_spx_index in range(n_spx_number):
+                lift_references.append([])
+                lift_coordinates.append([])
 
-        first_page_image = np.zeros((
-            len(R), self.page_dim_matrix[1, deg, n_dim-1]))
-        partial_cech_diff_and_lift = partial(
-            self.cech_diff_and_lift, R, total_complex_chain[-1][0],
-            total_complex_chain[-1][1], n_dim - current_page + 1,
-            deg + current_page - 1, lift_references, lift_coordinates,
-            first_page_image
-        )
+            partial_cech_diff_and_lift = partial(
+                self.cech_diff_and_lift, R[active_ref], total_complex_chain[-1][0],
+                total_complex_chain[-1][1], n_dim - current_page,
+                deg + current_page - 1, lift_references, lift_coordinates,
+                first_page_image
+            )
+            for idx in range(n_spx_number):
+                partial_cech_diff_and_lift(idx)
+            # workers_pool = Pool()
+            # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
+            # workers_pool.close()
+            betas = first_page_image.T
+            # lift to higher pages, modifying total complex chains
+            for k in range(1, current_page):
+                Im = self.Im[k][n_dim][deg]
+                Im_dim = self.Im[k][n_dim][deg].dim
+                Hom = self.Hom[k][n_dim][deg]
+                Hom_dim = self.Hom[k][n_dim][deg].dim
+                if Im_dim > 0 and Hom_dim > 0:
+                    Im_Hom = np.append(Im, Hom, axis=1)
+                    barcode_col = np.append(Im.barcode, Hom.barcode, axis=0)
+                elif Im_dim > 0:
+                    Im_Hom = Im
+                    barcode_col = Im.barcode
+                elif Hom_dim > 0:
+                    Im_Hom = Hom
+                    barcode_col = Im.barcode
+                else:
+                    break
 
-        for idx in range(n_spx_number):
-            partial_cech_diff_and_lift(idx)
-        # workers_pool = Pool()
-        # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
-        # workers_pool.close()
+                start_index = Im_dim + Hom_dim
+                # add radii coordinates and radii
+                barcode_col = np.append(barcode_col, coord_R, axis=0)
+                A = np.append(Im_Hom, betas, axis=1)
+                # gaussian reduction
+                death_row = self.Hom[k][n_dim][deg].prev_basis.barcode[:,1]
+                _, T = gauss_col_row_rad(A, death_row, barcode_col[:,0],
+                                         barcode_col[:,1], start_index, p)
+                T = T[:, start_index:]
+                # use preimage coefficients to modify total_representatives
+                gammas = T[:Im_dim]
+                #### TO DO, modify total complex reps
 
+                # next page coefficients
+                betas = T[Im_dim:start_index]
+            # end for over pages
+            # store optimal reps
+            self.optimal_reps[current_page][n_dim][deg] = total_complex_chain
+            for local in total_complex_chain:
+                refs = local[0]
+                chains = local[1]
+                for loc_idx, ref in enumerate(refs):
+                    if len(ref) != len(chains[loc_idx]):
+                        print(len(ref))
+                        print(np.size(chains[loc_idx],0))
+                        print(np.size(chains[loc_idx],1))
+                        raise ValueError
+                    # end if
+                # end for
+            # end for
+            Betas[active_ref] = betas.T
+        # end if
         total_complex_chain.append([lift_references, lift_coordinates])
-        for local in total_complex_chain:
-            refs = local[0]
-            chains = local[1]
-            for loc_idx, ref in enumerate(refs):
-                if len(ref) != len(chains[loc_idx]):
-                    print(len(ref))
-                    print(np.size(chains[loc_idx],0))
-                    print(np.size(chains[loc_idx],1))
-                    raise ValueError
-
-        betas = first_page_image.T
-        # lift to higher pages, modifying total complex chains
-        for k in range(1, current_page):
-            Im = self.Im[k][n_dim][deg]
-            Im_dim = self.Im[k][n_dim][deg].dim
-            Hom = self.Hom[k][n_dim][deg]
-            Hom_dim = self.Hom[k][n_dim][deg].dim
-            if Im_dim > 0 and Hom_dim > 0:
-                Im_Hom = np.append(Im, Hom, axis=1)
-                barcode_col = np.append(Im.barcode, Hom.barcode, axis=0)
-            elif Im_dim > 0:
-                Im_Hom = Im
-                barcode_col = Im.barcode
-            elif Hom_dim > 0:
-                Im_Hom = Hom
-                barcode_col = Im.barcode
-            else:
-                break
-
-            start_index = Im_dim + Hom_dim
-            # add radii coordinates and radii
-            barcode_col = np.append(barcode_col, coord_R, axis=0)
-            A = np.append(Im_Hom, betas, axis=1)
-            # gaussian reduction
-            death_row = self.Hom[k][n_dim][deg].prev_basis.barcode[:,1]
-            _, T = gauss_col_row_rad(A, death_row, barcode_col[:,0],
-                                     barcode_col[:,1], start_index, p)
-            T = T[:, start_index:]
-            # use preimage coefficients to modify total_representatives
-            gammas = T[:Im_dim]
-            #### TO DO, modify total complex reps
-
-            # next page coefficients
-            betas = T[Im_dim:start_index]
-        # end for
-        # store optimal reps
-        self.optimal_reps[current_page][n_dim][deg] = total_complex_chain
-        for local in total_complex_chain:
-            refs = local[0]
-            chains = local[1]
-            for loc_idx, ref in enumerate(refs):
-                if len(ref) != len(chains[loc_idx]):
-                    print(len(ref))
-                    print(np.size(chains[loc_idx],0))
-                    print(np.size(chains[loc_idx],1))
-                    raise ValueError
-
-        return betas.T
+        refs = total_complex_chain[-1][0]
+        chains = total_complex_chain[-1][1]
+        for loc_idx, ref in enumerate(refs):
+            # print("loc_idx:{}".format(loc_idx))
+            # print("refs")
+            # print(ref)
+            # print("chains")
+            # print(chains[loc_idx])
+            if len(ref) != len(chains[loc_idx]):
+                print(len(ref))
+                print(np.size(chains[loc_idx],0))
+                print(np.size(chains[loc_idx],1))
+                raise ValueError
+        return Betas
     # end compute_differential
 
 
