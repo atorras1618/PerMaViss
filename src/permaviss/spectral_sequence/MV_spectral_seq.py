@@ -125,6 +125,9 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
         MV_ss.add_output_first(output, n_dim)
 
+    # test for cech differential
+    MV_ss.test_local_cech_matrix()
+    assert False
     # PAGES => 1
     for current_page in range(1, no_pages):
         # Print page

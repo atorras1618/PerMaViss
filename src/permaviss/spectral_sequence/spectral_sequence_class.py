@@ -256,6 +256,7 @@ class spectral_sequence(object):
         # end if
 
 
+
     ###########################################################################
     # localize_coordinates
 
@@ -282,10 +283,16 @@ class spectral_sequence(object):
     ############################################################################
     # local boundary matrix
     def local_cech_matrix(self, n_dim, deg, nerve_spx_index,
-                              nerve_face_index, nerve_coeff):
+                          nerve_face_index, nerve_coeff):
 
         """
-         (subcpx[n_dim-1], sbcpx[n_dim]) matrix
+        Returns matrix of Cech differential in (n_dim, deg) restricted
+        on component (nerve_face_index, nerve_spx_index).
+        nerve_coeff stores the sign of the nerve differential in position
+        (nerve_face_index, nerve_spx_index).
+        Returns a matrix of size:
+         (subcpx[n_dim-1][nerve_face_index][deg],
+          subcpx[n_dim][nerve_spx_index][deg])
         """
         deg_sign = (-1)**deg
         if deg == 0:
@@ -331,6 +338,112 @@ class spectral_sequence(object):
         # end else
         return boundary
 
+
+    ###########################################################################
+    # test local_cech_matrix
+
+    def test_local_cech_matrix(self):
+        """Iterate over test_local_cech_matrix"""
+        for n_dim in range(2, self.no_columns):
+            for deg in range(self.no_rows):
+                if self.page_dim_matrix[1][deg][n_dim] > 0:
+                    self.test_cech_differential(n_dim, deg)
+
+    def test_cech_differential(self, n_dim, deg):
+        """ Check that the local check matrices add up to form a
+        cech differential. Check this on generators starting in position
+        (n_dim, deg)  from first page.
+
+        We assume that the given position is not trivial.
+        """
+        # compute coordinates for all generators in positoin (n_dim, deg)
+        ref_preim = []
+        coord_preim = []
+        prev = 0
+        for nerv_idx, no_cycles in enumerate(self.cycle_dimensions[
+                n_dim][deg][:-1]):
+            if prev < no_cycles:
+                ref_preim.append(range(prev, no_cycles))
+                coord_preim.append(self.Hom[0][n_dim][nerv_idx][
+                    deg].coordinates.T)
+            else:
+                ref_preim.append(np.array([]))
+                coord_preim.append(np.array([]))
+            # end if else
+            prev = no_cycles
+        # end for
+        # IMAGE OF CECH DIFFERENTIAL twice #############################
+        for k in [1,2]:
+            ref_im = []
+            coord_im = []
+            for nerve_face_index, coboundary in enumerate(
+                    self.nerve_differentials[n_dim-k+1]):
+                self.cech_differential_loc(
+                    ref_preim, coord_preim, ref_im, coord_im, n_dim-k,
+                    deg, nerve_face_index, coboundary
+                )
+            # end for
+            ref_preim = ref_im
+            coord_preim = coord_im
+        # twice cech differential
+        # Check that images are zero
+        for _, A in enumerate(coord_im):
+            assert np.any(A) == False
+        # end for
+
+    def cech_differential_loc(self, ref_preim, coord_preim, ref_im, coord_im,
+                              n_dim, deg, nerve_face_index, coboundary):
+        """
+        Given preimage references and coordinates, computes the image of the
+        Cech differential restricted to nerve_face_index component.
+        Coboundary stores the simplices in the coboundary of nerve_face_index,
+        together with the differential coefficients.
+        Results are stored in ref_im and coord_im which are assumed to be
+        given as empty lists []
+
+        Returns im_matrix.T
+        """
+        # size of local complex
+        if deg == 0:
+            cpx_size = self.subcomplexes[n_dim][nerve_face_index][deg]
+        else:
+            cpx_size = len(self.subcomplexes[n_dim][nerve_face_index][deg])
+
+        cofaces = np.nonzero(coboundary)[0]
+        coefficients = coboundary[cofaces]
+        # indices of generators that are nontrivial by cech diff
+        generators = ref_preim[cofaces[0]]
+        for coface_index in cofaces[1:]:
+            generators = np.append(generators, ref_preim[
+                coface_index]).astype(int)
+        # end for
+        generators = np.unique(generators)
+        # store references and space for Coordinates
+        ref_im.append(generators)
+        im_matrix = np.zeros((cpx_size, len(generators)))
+        # compute cech
+        for coface_index, nerve_coeff in zip(cofaces, coefficients):
+            # check non-trivial
+            if self.Hom[0][n_dim+1][coface_index][deg].dim > 0:
+                # generate boundary matrix
+                cech_local = self.local_cech_matrix(
+                    n_dim+1, deg, coface_index, nerve_face_index,
+                    nerve_coeff)
+                active_generators = np.where(np.in1d(
+                    generators, ref_preim[coface_index])
+                    )[0]
+                if np.any(active_generators):
+                    im_matrix[:, active_generators] += np.matmul(
+                        cech_local, coord_preim[coface_index].T
+                        )
+                    im_matrix = im_matrix % self.p
+                # end if
+            # end if
+        # end for cofaces
+        coord_im.append(im_matrix.T)
+
+
+
     #######################################################################
     # Cech chain plus lift of preimage
     def cech_diff_and_lift(
@@ -350,6 +463,7 @@ class spectral_sequence(object):
         coefficients = coboundary[cofaces]
         # indices of generators that are nontrivial by cech diff
         generators = reference_preimage[cofaces[0]]
+
         for coface_index in cofaces[1:]:
             generators = np.append(generators, reference_preimage[
                 coface_index]).astype(int)
@@ -373,6 +487,8 @@ class spectral_sequence(object):
                 cech_local = self.local_cech_matrix(
                     n_dim+1, deg, coface_index, nerve_spx_index,
                     nerve_coeff)
+                if n_dim==1 and deg==0:
+                    print(cech_local)
                 active_generators = np.where(np.in1d(
                     generators, reference_preimage[coface_index])
                     )[0]
@@ -515,6 +631,15 @@ class spectral_sequence(object):
             # workers_pool = Pool()
             # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
             # workers_pool.close()
+
+            if n_dim==2 and deg==0:
+                print("current_page:{}".format(current_page))
+                print("lift_references")
+                print(lift_references)
+                print("lift_coordinates")
+                print(lift_coordinates)
+                exit()
+
             betas = first_page_image.T
             # lift to higher pages, modifying total complex chains
             for k in range(1, current_page):
@@ -567,6 +692,7 @@ class spectral_sequence(object):
             Betas[active_ref] = betas.T
         # end if
         total_complex_chain.append([lift_references, lift_coordinates])
+
         refs = total_complex_chain[-1][0]
         chains = total_complex_chain[-1][1]
         for loc_idx, ref in enumerate(refs):
