@@ -106,7 +106,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     MV_ss = spectral_sequence(nerve, nerve_point_cloud, points_IN, max_dim,
                               max_r, no_pages, p)
 
-    # 0 PAGE
+    # 0 PAGE ###################################################################
 
     for n_dim in range(0, nerve_dim):
         if n_dim > 0:
@@ -126,15 +126,49 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         MV_ss.add_output_first(output, n_dim)
 
     # test for cech differential
-    MV_ss.test_local_cech_matrix()
-    assert False
-    # PAGES => 1
-    for current_page in range(1, no_pages):
+    # MV_ss.test_local_cech_matrix()
+
+    # 1 PAGE ###################################################################
+
+    # Print page
+    print("PAGE: 1")
+    flip = np.array(range(MV_ss.no_rows))
+    flip = -flip
+    print(MV_ss.page_dim_matrix[1][np.argsort(flip)])
+    # Loop through all rows of spectral sequence
+    for deg in range(max_dim):
+        base = [barcode_basis(MV_ss.first_page_barcodes[0][deg])]
+        differentials = [0]
+        for n_dim in range(1, nerve_dim):
+            base.append(barcode_basis(MV_ss.first_page_barcodes[n_dim][deg]))
+            differentials.append((MV_ss.compute_differential(n_dim, deg, 1)).T)
+        # end for
+        Hom, Im, PreIm = module_persistence_homology(differentials, base, p)
+        if deg == 0:
+            if not np.any(differentials[1]):
+                raise(RuntimeError)
+            print("Hom_dim0:{}".format(Hom[0].dim))
+            print("Hom_dim1:{}".format(Hom[1].dim))
+        MV_ss.add_output_higher(Hom, Im, PreIm, 0, deg, 1)
+        # adjust reps of Hom
+        for n_dim in range(1, nerve_dim):
+            if MV_ss.Hom[1][n_dim][deg].dim > 0:
+                MV_ss.compute_total_representatives(n_dim, deg, 1)
+            # end if
+        # end for
+    # end for
+
+
+    # PAGES => 2 ###############################################################
+
+    for current_page in range(2, no_pages):
         # Print page
         print("PAGE: {}".format(current_page))
         flip = np.array(range(MV_ss.no_rows))
         flip = -flip
         print(MV_ss.page_dim_matrix[current_page][np.argsort(flip)])
+
+        raise(RuntimeError)
         # Loop through sequences of differentials ending in the first
         # current_page columns
         for start_n_dim in range(current_page):
@@ -172,6 +206,18 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                                                              base, p)
                 MV_ss.add_output_higher(Hom, Im, PreIm, start_n_dim, start_deg,
                                         current_page)
+
+                # adjust reps of im and create reps for next hom
+                deg = start_deg
+                n_dim = start_n_dim
+                for diff_mat in differentials:
+                    MV_ss.residual_adjustment(
+                        self, n_dim, deg, current_page, diff_mat)
+                    # Advance to differential domain and compute differential
+                    deg += 1 - current_page
+                    n_dim += current_page
+                    # end if
+                # end while
             # end for
         # end for
     # end for

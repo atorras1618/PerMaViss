@@ -77,6 +77,8 @@ def persistent_homology(D, R, max_rad, p):
         :obj:`barcode_bases`.
     PreIm: :obj:`list(Numpy Array (len(R[*]), Im[*].dim)`
         Preimage matrices, 'how to go back from boundaries'
+    CycleKill: :obj:`list(Numpy Array (len(R[*]), Hom[*].dim)`
+        Boundaries that killed homology cycles.
 
     Example
     -------
@@ -176,12 +178,14 @@ def persistent_homology(D, R, max_rad, p):
     Im_bars = []
     Im_coord = []
     PreIm = []
+    CycleKill = []
     for d in range(dim):
         Hom_bars.append([])
         Hom_coord.append([])
         Im_bars.append([])
         Im_coord.append([])
         PreIm.append([])
+        CycleKill.append([])
 
     # preallocate space for dim - 1
     domain_dim = np.size(D[dim - 1], 1)
