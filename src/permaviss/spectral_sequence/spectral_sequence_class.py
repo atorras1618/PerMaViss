@@ -380,7 +380,7 @@ class spectral_sequence(object):
         Betas_1_page = np.zeros((
             len(R), self.page_dim_matrix[1, deg, n_dim-1]
             ))
-        if np.any(R):
+        if len(R)>0:
             for nerve_spx_index in range(n_spx_number):
                 lift_references.append([])
                 lift_coordinates.append([])
@@ -393,7 +393,7 @@ class spectral_sequence(object):
             # workers_pool = Pool()
             # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
             # workers_pool.close()
-
+            
         return Betas_1_page, [lift_references, lift_coordinates]
     # end compute_differential
 
