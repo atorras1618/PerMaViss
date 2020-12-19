@@ -141,17 +141,12 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         differentials = [0]
         for n_dim in range(1, nerve_dim):
             base.append(barcode_basis(MV_ss.first_page_barcodes[n_dim][deg]))
-            differentials.append((MV_ss.compute_differential(n_dim, deg, 1)).T)
+            differentials.append((MV_ss.first_differential(n_dim, deg, 1)).T)
         # end for
         Hom, Im, PreIm = module_persistence_homology(differentials, base, p)
-        if deg == 0:
-            if not np.any(differentials[1]):
-                raise(RuntimeError)
-            print("Hom_dim0:{}".format(Hom[0].dim))
-            print("Hom_dim1:{}".format(Hom[1].dim))
         MV_ss.add_output_higher(Hom, Im, PreIm, 0, deg, 1)
-        # adjust reps of Hom
-        for n_dim in range(1, nerve_dim):
+        # compute total complex representatives for second page classes
+        for n_dim in range(nerve_dim):
             if MV_ss.Hom[1][n_dim][deg].dim > 0:
                 MV_ss.compute_total_representatives(n_dim, deg, 1)
             # end if
@@ -168,38 +163,24 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         flip = -flip
         print(MV_ss.page_dim_matrix[current_page][np.argsort(flip)])
 
-        raise(RuntimeError)
-        # Loop through sequences of differentials ending in the first
+        # Loop through sequences of possibly nontrivial differentials
         # current_page columns
         for start_n_dim in range(current_page):
             for start_deg in range(max_dim):
-                base = []
-                differentials = [MV_ss.page_dim_matrix[
-                    current_page, start_deg, start_n_dim]]
                 deg = start_deg
                 n_dim = start_n_dim
+                differentials = [0]
+                base = [MV_ss.Hom[current_page - 1][n_dim][deg]]
                 # While (n_dim, deg) lies within the spectral sequence
                 # boundaries
                 while deg >= 0 and n_dim < nerve_dim:
-                    # Generate barcode bases for sending to
-                    # module_persistence_homology
-                    if current_page == 1:
-                        base.append(barcode_basis(MV_ss.first_page_barcodes[
-                            n_dim][deg]))
-                    else:
-                        if type(MV_ss.Hom[current_page - 1][n_dim][
-                                deg]) == list:
-                            MV_ss.Hom[current_page - 1][n_dim][
-                                deg] = barcode_basis([])
-                        # end if
-                        base.append(MV_ss.Hom[current_page - 1][n_dim][deg])
-                    # end else
                     # Advance to differential domain and compute differential
                     deg += 1 - current_page
                     n_dim += current_page
                     if deg >= 0 and n_dim < nerve_dim:
-                        differentials.append(MV_ss.compute_differential(n_dim,
-                            deg, current_page).T)
+                        differentials.append(MV_ss.high_differential(n_dim,
+                                deg, current_page).T)
+                        base.append(MV_ss.Hom[current_page - 1][n_dim][deg])
                     # end if
                 # end while
                 Hom, Im, PreIm = module_persistence_homology(differentials,
@@ -209,13 +190,11 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
                 # adjust reps of im and create reps for next hom
                 deg = start_deg
-                n_dim = start_n_dim
-                for diff_mat in differentials:
-                    MV_ss.residual_adjustment(
-                        self, n_dim, deg, current_page, diff_mat)
-                    # Advance to differential domain and compute differential
+                for n_dim in range(start_n_dim, nerve_dim, current_page):
+                    # compute total complex reps for next page classes
+                    MV_ss.compute_total_representatives(
+                        n_dim, deg, current_page)
                     deg += 1 - current_page
-                    n_dim += current_page
                     # end if
                 # end while
             # end for
