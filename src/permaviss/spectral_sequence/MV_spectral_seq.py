@@ -148,7 +148,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         # compute total complex representatives for second page classes
         for n_dim in range(nerve_dim):
             if MV_ss.Hom[1][n_dim][deg].dim > 0:
-                MV_ss.compute_total_representatives(n_dim, deg, 1)
+                MV_ss.compute_two_page_representatives(n_dim, deg)
             # end if
         # end for
     # end for
@@ -190,31 +190,22 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
                 # adjust reps of im and create reps for next hom
                 deg = start_deg
-                for n_dim in range(start_n_dim, nerve_dim, current_page):
+                n_dim = start_n_dim
+                while deg >= 0 and n_dim < nerve_dim:
                     # compute total complex reps for next page classes
-                    MV_ss.compute_total_representatives(
+                    MV_ss.compute_higher_representatives(
                         n_dim, deg, current_page)
                     deg += 1 - current_page
+                    n_dim += current_page
                     # end if
                 # end while
             # end for
         # end for
     # end for
 
-    # compute representatives for cycles
-    for n_dim in range(MV_ss.no_columns):
-        for deg in range(MV_ss.no_rows):
-            if MV_ss.page_dim_matrix[no_pages-1, deg, n_dim] > 0:
-                _ = MV_ss.zig_zag(n_dim, deg, n_dim + deg + 2, store_reps=True)
-                if(MV_ss.page_dim_matrix[no_pages-1, deg, n_dim] != len(
-                        MV_ss.tot_complex_reps[n_dim][deg][0])):
-                    raise ValueError
-            # end if
-        # end for
-    # end for
 
-    # EXTENSION PROBLEM
-    MV_ss.persistent_homology.append(MV_ss.Hom[no_pages-1][0][0])
+    # EXTENSION PROBLEM ########################################################
+
     # Go through each diagonal
     for deg in range(1, MV_ss.no_rows):
         # compute dimension of diagonal deg

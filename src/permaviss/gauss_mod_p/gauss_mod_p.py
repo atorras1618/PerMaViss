@@ -209,11 +209,15 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
             col_barcode[j,0] < row_barcode[:,1])]
         # pivot relative to active rows
         active_pivot = _index_pivot(Red[:,j][active_rows])
-        # pivot relative to number of rows in A
-        real_pivot = active_rows[active_pivot]
-        # Assume that the j-column is not reduced
-        reduced = False
         # active_pivot = -1 when active column is 0
+        if active_pivot == -1:
+            real_pivot = -1
+            reduced = True
+        else:
+            # pivot relative to number of rows in A
+            real_pivot = active_rows[active_pivot]
+            # Assume that the j-column is not reduced
+            reduced = False
         while (active_pivot > -1) & (not reduced):
             reduced = True
             # look for previous columns to j
