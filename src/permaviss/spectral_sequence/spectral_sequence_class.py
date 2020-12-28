@@ -332,6 +332,7 @@ class spectral_sequence(object):
 
         Returns Betas and image coordinates.
         """
+        Betas = Betas.T
         # lift up to current_page
         for k in range(1, target_page):
             Im = self.Im[k][n_dim][deg]
@@ -352,7 +353,7 @@ class spectral_sequence(object):
             start_index = Im_dim + Hom_dim
             # add radii coordinates and radii
             barcode_col = np.append(barcode_col, Beta_barcode, axis=0)
-            A = np.append(Im_Hom, Betas.T, axis=1)
+            A = np.append(Im_Hom, Betas, axis=1)
             # barcodes of rows
             barcode_row = self.Hom[k][n_dim][deg].prev_basis.barcode
             # gaussian reduction on matrix between persistence modules
@@ -768,6 +769,7 @@ class spectral_sequence(object):
         print("start_n_dim:{}, start_deg:{}".format(start_n_dim, start_deg))
         death_radii = self.Hom[self.no_pages-1][start_n_dim][
             start_deg].barcode[:,1]
+        no_gens = len(death_radii)
         Hom_reps = self.Hom_reps[self.no_pages-1][start_n_dim][start_deg]
         # bars for extension problem of infty page classes
         barcode_extension = np.ones((len(death_radii), 2))
@@ -782,17 +784,28 @@ class spectral_sequence(object):
                 print("target_page:{}".format(target_page))
                 # get coefficients on first page
                 Betas = np.zeros((
-                    len(death_radii), self.page_dim_matrix[1, Sdeg, Sn_dim]
-                    ))
+                    no_gens, self.page_dim_matrix[1, Sdeg, Sn_dim]))
+                print("Betas:({},{})".format(
+                    np.size(Betas, 0), np.size(Betas, 1)
+                ))
                 prev = 0
+                print("covers:{}".format(self.cycle_dimensions[Sn_dim][Sdeg]))
                 for nerve_spx_index, next in enumerate(
                         self.cycle_dimensions[Sn_dim][Sdeg][:-1]):
-                    _, Betas_first_page = self.first_page_local_lift(
-                        Sn_dim, Sdeg, nerve_spx_index,
-                        chains[1][nerve_spx_index].T, death_radii)
-                    Betas[:, prev:next] = Betas_first_page.T
+                    if (prev < next) and (len(chains[0][nerve_spx_index]) > 0):
+                        _, Betas_first_page = self.first_page_local_lift(
+                            Sn_dim, Sdeg, nerve_spx_index,
+                            chains[1][nerve_spx_index].T, death_radii)
+                        Betas_aux = np.zeros((no_gens, next-prev))
+                        Betas_aux[chains[0][nerve_spx_index]] = Betas_first_page.T
+                        Betas[:, prev:next] = Betas_aux
+                    # end if
                     prev = next
                 # go up to target_page and modify total_complex_reps
+                print("lift to {} page".format(target_page))
+                print("Betas:({},{})".format(
+                    np.size(Betas, 0), np.size(Betas, 1)
+                ))
                 Betas, Gammas = self.lift_to_page(
                     Sn_dim, Sdeg, target_page, Betas, barcode_extension)
                 # check that we have vanished Betas
@@ -800,6 +813,8 @@ class spectral_sequence(object):
                     raise RuntimeError
                 # modify reps
                 if np.any(Gammas):
+                    print("Gammas")
+                    print("({},{})",format(np.size(Gammas,0),np.size(Gammas,1)))
                     # compute coefficients of Gammas in 1st page
                     Im_coefficients = np.matmul(
                         self.Im[target_page-1][Sn_dim][Sdeg].coordinates, Gammas.T)
