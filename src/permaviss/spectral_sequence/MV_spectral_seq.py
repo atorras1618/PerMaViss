@@ -165,6 +165,8 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
         # Loop through sequences of possibly nontrivial differentials
         # current_page columns
+
+        print("higher reps, current_page:{}".format(current_page))
         for start_n_dim in range(current_page):
             for start_deg in range(max_dim):
                 deg = start_deg
@@ -193,6 +195,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                 n_dim = start_n_dim
                 while deg >= 0 and n_dim < nerve_dim:
                     # compute total complex reps for next page classes
+                    print("hr deg:{}, n_dim:{}".format(deg, n_dim))
                     MV_ss.compute_higher_representatives(
                         n_dim, deg, current_page)
                     deg += 1 - current_page
@@ -204,8 +207,10 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     # end for
 
 
-    # EXTENSION PROBLEM ########################################################
 
+    # EXTENSION PROBLEM ########################################################
+    # store 0 dim persistent homology
+    MV_ss.persistent_homology.append(MV_ss.Hom[MV_ss.no_pages - 1][0][0])
     # Go through each diagonal
     for deg in range(1, MV_ss.no_rows):
         # compute dimension of diagonal deg

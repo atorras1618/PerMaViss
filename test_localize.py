@@ -146,9 +146,20 @@ if __name__=='__main__':
     overlap = max_r
     p = 5
     # compute ordinary persistent homology
-    # Dist = dist.squareform(dist.pdist(X))
-    # C, R = vietoris_rips(Dist, max_r, max_dim)
-    # Diff = complex_differentials(C, p)
-    # PerHom, _, _ = persistent_homology(Diff, R, max_r, p)
+    Dist = dist.squareform(dist.pdist(X))
+    C, R = vietoris_rips(Dist, max_r, max_dim)
+    Diff = complex_differentials(C, p)
+    PerHom, _, _ = persistent_homology(Diff, R, max_r, p)
     # compute spectral sequence
     MV_ss = create_MV_ss(X, max_r, max_dim, max_div, overlap, p)
+    # Check that computed barcodes coincide
+    #print("extension")
+    #for ext in MV_ss.extensions[1][0]:
+    #    print(ext)
+    for it, PH in enumerate(MV_ss.persistent_homology):
+        #print("deg:{}".format(it))
+        #print("MV_SS")
+        #print(PH.barcode)
+        #print("ordinary")
+        #print(PerHom[it].barcode)
+        assert np.array_equal(PH.barcode, PerHom[it].barcode)

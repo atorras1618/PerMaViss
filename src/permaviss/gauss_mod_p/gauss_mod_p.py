@@ -223,7 +223,8 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
             # look for previous columns to j
             for k in range(start_index):
                 # check the radius
-                if col_barcode[k,0] <= col_barcode[j,0]:
+                if col_barcode[k,0] <= col_barcode[j,0] and col_barcode[
+                        j,0] < col_barcode[k,1]:
                     # if the pivots coincide, subtract column k to column j
                     # multiplied by a suitable coefficient q
                     if _index_pivot(Red[:,k][active_rows]) == active_pivot:
@@ -236,7 +237,7 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
                             active_pivot = _index_pivot(Red[:,j][active_rows])
                             real_pivot = active_rows[active_pivot]
                             reduced = False
-                            break
+                            break # break for k loop only
                         # end if
                     # end if
                 # end if
