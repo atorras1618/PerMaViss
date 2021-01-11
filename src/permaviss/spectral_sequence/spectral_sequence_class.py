@@ -227,13 +227,7 @@ class spectral_sequence(object):
             dim_local = self.nerve[n_dim]
         for nerve_spx_index in range(dim_local):
             if self.Hom[0][n_dim][nerve_spx_index][1].dim > 0:
-                print("multiply ({},{}) times ({},{})".format(
-                    np.size(self.zero_diff[n_dim][nerve_spx_index][1],0),
-                    np.size(self.zero_diff[n_dim][nerve_spx_index][1],1),
-                    np.size(self.Hom[0][n_dim][nerve_spx_index][1].coordinates,0),
-                    np.size(self.Hom[0][n_dim][nerve_spx_index][1].coordinates,1)
-                ))
-                trivial_image = np.matmul(
+                trivial_image = multiply_print(
                     self.zero_diff[n_dim][nerve_spx_index][1],
                     self.Hom[0][n_dim][nerve_spx_index][1].coordinates
                 ) % self.p
@@ -330,12 +324,55 @@ class spectral_sequence(object):
         (n_dim, deg) in current_page >= 2.
 
         """
+        print("high_differential: n_dim:{}, deg:{}".format(n_dim, deg))
         # handle trivial case
         if self.Hom[current_page-1][n_dim][deg].dim == 0:
             return np.array([])
 
         # take last total complex entry of Hom reps
         chains = self.Hom_reps[current_page-1][n_dim][deg][current_page-1]
+        ############# start checks
+        # check that chains[-1] is zero through  first vertical then horizontal
+        if n_dim == 2 and deg == 0:
+            # compute vertical differential
+            chains_new = [[],[]]
+            print("chains lift")
+            print(chains)
+            for idx, ref in enumerate(chains[0]):
+                chains_new[0].append(ref)
+                if len(ref) > 0:
+                    chains_new[1].append(multiply_print(
+                        self.zero_diff[1][idx][1],
+                        chains[1][idx].T
+                    ).T)
+                else:
+                    chains_new[1].append([])
+            print("chains_new")
+            print(chains_new)
+            # check that representative is correct
+            # compute horizontal differential of first entry
+            horiz_image = self.cech_diff(1,0, self.Hom_reps[current_page-1][n_dim][deg][0])
+            for idx, local_ch in enumerate(horiz_image[1]):
+                if np.any(local_ch % self.p):
+                    print("idx:{}".format(idx))
+                    print("previous image chains_new")
+                    print(chains[0][idx])
+                    print(chains_new[1][idx])
+                    print("local_ch")
+                    print(local_ch[chains[0][idx]] % self.p)
+                    print("sum")
+                    print(local_ch[chains[0][idx]] + chains_new[1][idx])
+                    if np.any((local_ch[chains[0][idx]] + chains_new[1][idx]) % self.p):
+                        print((local_ch[chains[0][idx]] + chains_new[1][idx]) % self.p)
+                        raise(RuntimeError)
+            #compute horizontal differential
+            trivial_image = self.cech_diff(0, 0, chains_new)
+            for triv in trivial_image[1]:
+                if len(triv) > 0:
+                    if np.any(triv % self.p):
+                        print(triv % self.p)
+                        raise(RuntimeError)
+        ################# end checks
         Hom_barcode = self.Hom[current_page-1][n_dim][deg].barcode
         # differential (n_dim, deg) --> (Sn_dim, Sdeg)
         Sn_dim = n_dim - current_page
@@ -463,8 +500,11 @@ class spectral_sequence(object):
             generators, local_chains = self.cech_diff_local(
                 chains[0], chains[1], n_dim, deg, nerve_spx_index)
             image_chains[0].append(generators)
-            # transpose to put on local standard form with generators as rows
-            image_chains[1].append(local_chains.T)
+            if len(generators) > 0:
+                # transpose to put on local standard form with generators as rows
+                image_chains[1].append(local_chains.T)
+            else:
+                image_chains[1].append([])
         # end for
         return image_chains
 
@@ -495,15 +535,6 @@ class spectral_sequence(object):
         # if trivial cover skip
         if prev == next:
             return
-        # check preimage is a cycle
-        if deg == 1 and len(local_preimage[nerve_spx_index]) > 0:
-            print(local_preimage[nerve_spx_index])
-            trivial_preimage = np.matmul(
-                self.zero_diff[n_dim+1][nerve_spx_index][1],
-                local_preimage[nerve_spx_index].T
-            ) % self.p
-            if np.any(trivial_preimage):
-                raise(ValueError)
         # CECH DIFFERENTIAL
         generators, local_chains = self.cech_diff_local(
             reference_preimage, local_preimage, n_dim, deg, nerve_spx_index)
@@ -530,18 +561,36 @@ class spectral_sequence(object):
         # LOCAL LIFT TO FIRST PAGE
         gammas, betas = self.first_page_local_lift(
             n_dim, deg, nerve_spx_index, local_chains, R[generators])
+
         # compute vertical preimage and store
         # look for indices of nonzero columns
         preimages = np.matmul(self.PreIm[0][n_dim][nerve_spx_index][deg+1],
                               gammas).T
         nonzero_idx = np.where(gammas.any(axis=0))[0]
-        if np.any(nonzero_idx):
+        if len(nonzero_idx) > 0:
             lift_coordinates[nerve_spx_index] = preimages[nonzero_idx]
             lift_references[nerve_spx_index] = generators[nonzero_idx]
         # store first page coefficients
         betas_aux = np.zeros((len(R), next - prev))
         betas_aux[generators] = np.transpose(betas)
         Betas_1_page[:, prev:next] = betas_aux
+        if n_dim == 1 and deg == 0 and nerve_spx_index == 11:
+            print("checking local lift ####################")
+            print("gammas")
+            print(gammas)
+            print("betas")
+            print(betas)
+            print("preimages")
+            print(preimages)
+            print("nonzero_idx")
+            print(nonzero_idx)
+            print("preimages[nonzero_idx]")
+            print(preimages[nonzero_idx])
+            print("generators")
+            print(generators)
+            print("lift_coordinates[nerve_spx_index]")
+            print(lift_coordinates[nerve_spx_index])
+            print("##########")
     # end cech_diff_and_lift_local
 
 
@@ -679,7 +728,7 @@ class spectral_sequence(object):
                             self.PreIm[0][n_dim][nerve_spx_index][deg+1],
                             gammas)).T
                     else:
-                        lift_coordinates[nerve_spx_index] = gammas
+                        lift_coordinates[nerve_spx_index] = []
                 # end if
                 prev = next
             # end for
@@ -813,7 +862,7 @@ class spectral_sequence(object):
 
         All info is written in self.Hom_reps
 
-        TO FIX: Why reps are trivial in position (2,0)??????
+        To DO: write test for checking that zig-zag works
         """
         if self.Hom[1][n_dim][deg].dim == 0:
             return
@@ -848,11 +897,45 @@ class spectral_sequence(object):
             R = self.Hom[1][n_dim][deg].barcode[:,0]
             # cech_diff_and_lift
             betas, lift = self.cech_diff_and_lift(n_dim, deg, chains, R)
+            if n_dim == 2 and deg == 0:
+                print("lift[0][11]")
+                print(lift[0][11])
+                print("lift[1][11]")
+                print(lift[1][11])
             if np.any(betas):
                 raise(ValueError)
             # vertical lift written on total_complex_reps
             self.Hom_reps[1][n_dim][deg].append(lift)
         # end if
+        #################################################### check correct reps
+        if n_dim > 0:
+            cech_diff_im = self.cech_diff(n_dim-1, deg, chains)
+            betas, _ = self.first_page_lift(n_dim-1, deg, cech_diff_im, R)
+            if np.any(betas):
+                print(betas)
+                raise(RuntimeError)
+            for idx, ref in enumerate(lift[0]):
+                if len(ref) > 0:
+                    vert_im = multiply_print(
+                        self.zero_diff[n_dim-1][idx][deg+1],
+                        lift[1][idx].T
+                    ).T
+                    cech_local_nontrivial = cech_diff_im[1][idx][
+                        cech_diff_im[1][idx].any(axis=1)]
+                    print(vert_im % self.p)
+                    print(cech_local_nontrivial)
+                    if np.any((vert_im + cech_local_nontrivial)%self.p):
+                        print((vert_im + cech_local_nontrivial)%self.p)
+                        raise(RuntimeError)
+                else:
+                    if len(cech_diff_im[0][idx]) > 0 and np.any(cech_diff_im[1][idx]):
+                        print("here")
+                        print("local_lift")
+                        print(lift[1][idx])
+                        print("local_cech_im")
+                        print(cech_diff_im[1][idx])
+                        raise(ValueError)
+
     # end def
 
     ############################################################################
@@ -1020,13 +1103,7 @@ class spectral_sequence(object):
                                 Sn_dim][Sdeg]):
                             if prev < next:
                                 im_refs.append(np.array(range(np.size(Gammas,0))))
-                                print("({},{}) times ({},{})".format(
-                                    np.size(image_classes[prev:next].T,0),
-                                    np.size(image_classes[prev:next].T,1),
-                                    np.size(self.Hom[0][Sn_dim][nerv_idx][Sdeg].coordinates.T,0),
-                                    np.size(self.Hom[0][Sn_dim][nerv_idx][Sdeg].coordinates.T,1)
-                                ))
-                                im_coord.append(np.matmul(
+                                im_coord.append(multiply_print(
                                     image_classes[prev:next].T,
                                     self.Hom[0][Sn_dim][nerv_idx][
                                         Sdeg].coordinates.T
@@ -1123,6 +1200,15 @@ def local_sums(chains, sums):
             new_coord.append([])
     # end for
     return [new_ref, new_coord]
+
+######################
+# Multiply-print
+
+def multiply_print(A,B):
+    print("multiply ({},{}) times ({},{})".format(
+        np.size(A,0), np.size(A,1), np.size(B,0), np.size(B,1)
+    ))
+    return np.matmul(A,B)
 
 ################################################################################
 # copy_seq_local
