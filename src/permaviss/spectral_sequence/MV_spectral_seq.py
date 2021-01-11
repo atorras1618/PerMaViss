@@ -141,7 +141,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         differentials = [0]
         for n_dim in range(1, nerve_dim):
             base.append(barcode_basis(MV_ss.first_page_barcodes[n_dim][deg]))
-            differentials.append((MV_ss.first_differential(n_dim, deg, 1)).T)
+            differentials.append((MV_ss.first_differential(n_dim, deg)).T)
         # end for
         Hom, Im, PreIm = module_persistence_homology(differentials, base, p)
         MV_ss.add_output_higher(Hom, Im, PreIm, 0, deg, 1)
@@ -341,5 +341,13 @@ def local_persistent_homology(nerve_point_cloud, max_r, max_dim, p,  n_dim,
     # Persistent Homology
     Hom, Im, PreIm = persistent_homology(local_differentials, local_R,
                                          max_r, p)
+
+    # check that Hom are indeed cycles
+    for idx, hom in enumerate(Hom):
+        if hom.dim > 0 and idx > 0:
+            trivial_image = np.matmul(local_differentials[idx], hom.coordinates)
+            if np.any(trivial_image % p):
+                print(trivial_image % p)
+                raise(RuntimeError)
 
     return local_complex, local_differentials, Hom, Im, PreIm

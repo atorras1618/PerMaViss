@@ -137,7 +137,7 @@ def gauss_col_rad(A, R, start_index, p):
         pivot = _index_pivot(Red[j])
         # Assume that the j-column is not reduced
         reduced = False
-        while (pivot > -1) & (not reduced):
+        while pivot > -1:
             reduced = True
             # look for previous columns to j
             for k in range(start_index):
@@ -151,13 +151,19 @@ def gauss_col_rad(A, R, start_index, p):
                         T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
                         # reset pivot and check for nullity
                         if np.any(Red[j]):
-                            pivot = _index_pivot(Red[j])
                             reduced = False
                             break
                         # end if
                     # end if
                 # end if
             # end for
+            new_pivot = _index_pivot(Red[j])
+            if new_pivot != pivot:
+                pivot = new_pivot
+            else:
+                print("pivot:{}".format(pivot))
+                print(Red[j])
+                raise(RuntimeError)
         # end while
     # end for
     return np.transpose(Red), np.transpose(T)
