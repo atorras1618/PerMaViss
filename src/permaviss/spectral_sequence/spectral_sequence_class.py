@@ -341,7 +341,7 @@ class spectral_sequence(object):
             for idx, ref in enumerate(chains[0]):
                 chains_new[0].append(ref)
                 if len(ref) > 0:
-                    chains_new[1].append(multiply_print(
+                    chains_new[1].append(np.matmul(
                         self.zero_diff[1][idx][1],
                         chains[1][idx].T
                     ).T)
@@ -354,14 +354,6 @@ class spectral_sequence(object):
             horiz_image = self.cech_diff(1,0, self.Hom_reps[current_page-1][n_dim][deg][0])
             for idx, local_ch in enumerate(horiz_image[1]):
                 if np.any(local_ch % self.p):
-                    print("idx:{}".format(idx))
-                    print("previous image chains_new")
-                    print(chains[0][idx])
-                    print(chains_new[1][idx])
-                    print("local_ch")
-                    print(local_ch[chains[0][idx]] % self.p)
-                    print("sum")
-                    print(local_ch[chains[0][idx]] + chains_new[1][idx])
                     if np.any((local_ch[chains[0][idx]] + chains_new[1][idx]) % self.p):
                         print((local_ch[chains[0][idx]] + chains_new[1][idx]) % self.p)
                         raise(RuntimeError)
@@ -372,6 +364,22 @@ class spectral_sequence(object):
                     if np.any(triv % self.p):
                         print(triv % self.p)
                         raise(RuntimeError)
+            print("check that chains are cycles")
+            image_chains = self.cech_diff(0,1,chains)
+            trivial_im = [[],[]]
+            for idx, ref in enumerate(image_chains[0]):
+                trivial_im[0].append(ref)
+                if len(ref) > 0:
+                    trivial_im[1].append(np.matmul(
+                        self.zero_diff[0][idx][1],
+                        image_chains[1][idx].T
+                    ).T)
+                    if np.any(trivial_im[1][-1] % self.p):
+                        print(trivial_im[1][-1] % self.p)
+                        raise(RuntimeError)
+                else:
+                    chains_new[1].append([])
+
         ################# end checks
         Hom_barcode = self.Hom[current_page-1][n_dim][deg].barcode
         # differential (n_dim, deg) --> (Sn_dim, Sdeg)
@@ -389,7 +397,7 @@ class spectral_sequence(object):
     # self.lift_to_page(self, n_dim, deg, page, chains):
 
     def lift_to_page(self, n_dim, deg, target_page, Betas, Beta_barcode):
-        """ Lifts chains in position (n_dim, deg) from page 1 to target_page - 1.
+        """ Lifts chains in position (n_dim, deg) from page 1 to target_page
 
         Returns Betas and image coordinates.
         """
@@ -542,17 +550,8 @@ class spectral_sequence(object):
         if len(generators)==0:
             return
         # check that image chain is a cycle
-        if deg == 1:
-            print("sizes local complexes: {} and {}".format(
-                len(self.subcomplexes[n_dim][nerve_spx_index][1]),
-                self.subcomplexes[n_dim][nerve_spx_index][0]
-            ))
-            print("multiplying:({},{}) times ({},{})".format(
-                np.size(self.zero_diff[n_dim][nerve_spx_index][deg],0),
-                np.size(self.zero_diff[n_dim][nerve_spx_index][deg],1),
-                np.size(local_chains,0), np.size(local_chains,1)
-            ))
-            trivial_image = np.matmul(
+        if deg > 0:
+            trivial_image = multiply_print(
                 self.zero_diff[n_dim][nerve_spx_index][deg],
                 local_chains) % self.p
             if np.any(trivial_image):
@@ -574,23 +573,6 @@ class spectral_sequence(object):
         betas_aux = np.zeros((len(R), next - prev))
         betas_aux[generators] = np.transpose(betas)
         Betas_1_page[:, prev:next] = betas_aux
-        if n_dim == 1 and deg == 0 and nerve_spx_index == 11:
-            print("checking local lift ####################")
-            print("gammas")
-            print(gammas)
-            print("betas")
-            print(betas)
-            print("preimages")
-            print(preimages)
-            print("nonzero_idx")
-            print(nonzero_idx)
-            print("preimages[nonzero_idx]")
-            print(preimages[nonzero_idx])
-            print("generators")
-            print(generators)
-            print("lift_coordinates[nerve_spx_index]")
-            print(lift_coordinates[nerve_spx_index])
-            print("##########")
     # end cech_diff_and_lift_local
 
 
@@ -947,14 +929,17 @@ class spectral_sequence(object):
 
         All info is written in self.Hom_reps
         """
+        print("compute higher reps:({},{})".format(n_dim, deg))
+        print("current_page:{}".format(current_page))
         # handle trivial cases
         if self.Hom[current_page][n_dim][deg].dim == 0:
-            self.Hom_reps[current_page][n_dim][deg] = self.Hom_reps[
-                current_page - 1][n_dim][deg]
+            self.Hom_reps[current_page][n_dim][deg] = []
             return
         # lift image to page
         hom_barcode = self.Hom[current_page][n_dim][deg].barcode
         hom_sums = (self.Hom[current_page][n_dim][deg].coordinates).T
+        # create total complex reps up to last entry by using coefficients and
+        # total complex representatives on previous page
         total_complex_reps = []
         # compute
         for chains in self.Hom_reps[current_page - 1][n_dim][deg]:
@@ -963,6 +948,7 @@ class spectral_sequence(object):
         # (n_dim, deg) --> (Sn_dim, Sdeg)
         Sn_dim = n_dim - current_page
         Sdeg = deg + current_page - 1
+        print("Sn_dim:{}, Sdeg:{}".format(Sn_dim, Sdeg))
         # if differential is trivial, no need to compute cech differential
         if Sn_dim < 0:
             self.Hom_reps[current_page][n_dim][deg] = total_complex_reps
@@ -971,24 +957,45 @@ class spectral_sequence(object):
             Betas, _ = self.cech_diff_and_lift(
                 Sn_dim + 1, Sdeg, total_complex_reps[-1], hom_barcode[:,0])
             # go up to target_page and modify total_complex_reps
+            print("Betas")
+            print(Betas)
             Betas, Gammas = self.lift_to_page(
                 Sn_dim, Sdeg, target_page, Betas, hom_barcode)
             # modify reps
             # from im_coord obtain total cpx chains
-            if np.any(Gammas):
-                Tn_dim = Sn_dim + current_page
-                Tdeg = Sdeg - current_page + 1
-                preimage_reps = []
+            Tn_dim = Sn_dim + target_page - 1
+            Tdeg = Sdeg - target_page + 2
+            preimage_reps = []
+            print("len total cpx:{}".format(len(total_complex_reps)))
+            if np.any(Gammas) and target_page == 2:
+                prev = 0
+                for spx_idx, next in enumerate(self.cycle_dimensions[Sn_dim + 1][Sdeg]):
+                    if prev < next:
+                        local_preimage = (np.matmul(
+                            self.Hom[0][Sn_dim + 1][spx_idx][Sdeg].coordinates,
+                            Gammas[:,prev:next].T)).T
+                        if len(total_complex_reps[-1][0][spx_idx]) > 0:
+                            total_complex_reps[-1][1][spx_idx] += local_preimage
+                        else:
+                            total_complex_reps[-1][0][spx_idx] = range(
+                                np.size(local_preimage, 0))
+                            total_complex_reps[-1][1][spx_idx] = local_preimage
+                    prev = next
+                # end for
+            elif np.any(Gammas):
                 for chains in self.Hom_reps[target_page][Tn_dim][Tdeg]:
                     preimage_reps.append(local_sums(chains, Gammas))
                 # add preimage reps to current tot_complex reps
-                for idx, chains in enumerate(total_complex_reps):
-                    chains[1][idx] += preimage_reps[idx]
+                for idx, chains in enumerate(preimage_reps):
+                    total_complex_reps[current_page - target_page + 1 + idx][
+                        1] += chains[1]
                 # end for
-            # end if
+            # end elif
         # end for
         Betas, lift = self.cech_diff_and_lift(
             Sn_dim + 1, Sdeg, total_complex_reps[-1], hom_barcode[:,0])
+        print("Betas")
+        print(Betas)
         # check that there are no problems
         if np.any(Betas):
             raise RuntimeError

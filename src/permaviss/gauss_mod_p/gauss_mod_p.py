@@ -136,9 +136,7 @@ def gauss_col_rad(A, R, start_index, p):
     for j in range(start_index, N):
         pivot = _index_pivot(Red[j])
         # Assume that the j-column is not reduced
-        reduced = False
         while pivot > -1:
-            reduced = True
             # look for previous columns to j
             for k in range(start_index):
                 # check the radius
@@ -151,7 +149,6 @@ def gauss_col_rad(A, R, start_index, p):
                         T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
                         # reset pivot and check for nullity
                         if np.any(Red[j]):
-                            reduced = False
                             break
                         # end if
                     # end if
@@ -218,19 +215,14 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
         # active_pivot = -1 when active column is 0
         if active_pivot == -1:
             real_pivot = -1
-            reduced = True
         else:
             # pivot relative to number of rows in A
             real_pivot = active_rows[active_pivot]
-            # Assume that the j-column is not reduced
-            reduced = False
-        while (active_pivot > -1) & (not reduced):
-            reduced = True
+        while active_pivot > -1:
             # look for previous columns to j
             for k in range(start_index):
                 # check the radius
-                if col_barcode[k,0] <= col_barcode[j,0] and col_barcode[
-                        j,0] < col_barcode[k,1]:
+                if col_barcode[k,0] <= col_barcode[j,0]:
                     # if the pivots coincide, subtract column k to column j
                     # multiplied by a suitable coefficient q
                     if _index_pivot(Red[:,k][active_rows]) == active_pivot:
@@ -240,14 +232,19 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
                         T[:,j] = add_arrays_mod_c(T[:,j], -q * T[:,k], p)
                         # reset pivot and check for nullity
                         if np.any(Red[:,j][active_rows]):
-                            active_pivot = _index_pivot(Red[:,j][active_rows])
-                            real_pivot = active_rows[active_pivot]
-                            reduced = False
+                            new_act_piv = _index_pivot(Red[:,j][active_rows])
+                            real_pivot = active_rows[new_act_piv]
                             break # break for k loop only
                         # end if
                     # end if
                 # end if
             # end for
+            if new_act_piv == active_pivot:
+                print("pivot:{}".format(active_pivot))
+                print(Red[:,j])
+                raise(RuntimeError)
+            active_pivot = new_act_piv
+            # end if
         # end while
     # end for
     return Red, T
