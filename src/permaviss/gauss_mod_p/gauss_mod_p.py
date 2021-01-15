@@ -173,6 +173,8 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
     from  start_index. Only columns from a lower index are
     added to columns with a higher index.
 
+    ROW BARCODES HAVE TO BE ORDERED, OTHERWISE THERE WILL BE PROBLEMS, ALMOST
+    SURELY. Col barcodes only need to be ordered from start_index.
 
     Parameters
     ----------
@@ -231,17 +233,13 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
                         Red[:,j] = add_arrays_mod_c(Red[:,j], -q * Red[:,k], p)
                         T[:,j] = add_arrays_mod_c(T[:,j], -q * T[:,k], p)
                         # reset pivot and check for nullity
-                        if np.any(Red[:,j][active_rows]):
-                            new_act_piv = _index_pivot(Red[:,j][active_rows])
-                            real_pivot = active_rows[new_act_piv]
-                            break # break for k loop only
-                        # end if
+                        new_act_piv = _index_pivot(Red[:,j][active_rows])
+                        real_pivot = active_rows[new_act_piv]
+                        break # break for k loop only
                     # end if
                 # end if
             # end for
             if new_act_piv == active_pivot:
-                print("pivot:{}".format(active_pivot))
-                print(Red[:,j])
                 raise(RuntimeError)
             active_pivot = new_act_piv
             # end if

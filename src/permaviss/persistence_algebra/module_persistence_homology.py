@@ -133,8 +133,7 @@ def module_persistence_homology(D, Base, p):
             Hom[d] = Base[d]
         else:
             # compute barcode bases for image and kernel
-            Im[d - 1], Ker, PreIm[d] = image_kernel(Base[d], Base[d-1], D[d],
-                                                    p)
+            Im[d - 1], Ker, PreIm[d] = image_kernel(Base[d], Base[d-1], D[d], p)
             # Perform quotient of Ker by Im[d]
             Hom[d] = quotient(Ker, Im[d], p)
 
