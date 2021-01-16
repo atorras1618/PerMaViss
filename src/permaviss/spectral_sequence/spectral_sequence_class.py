@@ -304,6 +304,10 @@ class spectral_sequence(object):
         chains = [references, local_coordinates]
         # call cech_diff_and_lift
         Betas, _ = self.cech_diff_and_lift(n_dim, deg, chains, R)
+        if not np.any(Betas):
+            print("n_dim:{}, deg:{}".format(n_dim, deg))
+            print("nonzero")
+            raise(ValueError)
         return  Betas
 
 
@@ -327,6 +331,8 @@ class spectral_sequence(object):
 
         """
         # handle trivial case
+        print("high differential:{}".format(current_page))
+        print("n_dim:{}, deg:{}".format(n_dim, deg))
         if self.Hom[current_page-1][n_dim][deg].dim == 0:
             return np.array([])
         # take last total complex entry of Hom reps
@@ -364,7 +370,7 @@ class spectral_sequence(object):
 
         Returns
         -------
-        target_betas : np.array
+        Betas : np.array
             Coefficients of image of current_page differentials. The image of
             each class from (n_dim, deg) is given as a row.
         Gammas : np.array
@@ -373,9 +379,11 @@ class spectral_sequence(object):
             classes using target_betas leads to the original Betas.
 
         """
+        print("target_page:{}".format(target_page))
         Betas = Betas.T
         # lift up to target_page
         for k in range(1, target_page):
+            print("entered loop")
             Im = self.Im[k][n_dim][deg]
             Im_dim = self.Im[k][n_dim][deg].dim
             Hom = self.Hom[k][n_dim][deg]
@@ -389,6 +397,8 @@ class spectral_sequence(object):
                     barcode_col = Hom.barcode
             else:
                 Betas = np.array([])
+                Gammas = np.array([])
+                raise(RuntimeError)
                 break
 
             start_index = Im_dim + Hom_dim
@@ -409,9 +419,9 @@ class spectral_sequence(object):
             T = T[:, start_index:]
             # next page coefficients
             Gammas = T[:Im_dim]
-            target_betas = T[Im_dim:start_index]
+            Betas = T[Im_dim:start_index]
         # end for
-        return  target_betas.T, Gammas.T
+        return  Betas.T, Gammas.T
     # end lift_to_page
 
     ###########################################################################
@@ -462,11 +472,13 @@ class spectral_sequence(object):
             partial_cech_diff_and_lift_local = partial(
                 self.cech_diff_and_lift_local, R, chains[0], chains[1],
                 n_dim - 1, deg, lift_references, lift_coordinates, Betas_1_page)
-            for idx in range(n_spx_number):
-                partial_cech_diff_and_lift_local(idx)
-            # workers_pool = Pool()
-            # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
-            # workers_pool.close()
+
+            for nerve_spx_index in range(n_spx_number):
+                partial_cech_diff_and_lift_local(nerve_spx_index)
+            #workers_pool = Pool()
+            #workers_pool.map(partial_cech_diff_and_lift_local,
+            #                 range(n_spx_number))
+            #workers_pool.close()
 
         return Betas_1_page, [lift_references, lift_coordinates]
     # end cech_diff_and_lift
@@ -475,7 +487,7 @@ class spectral_sequence(object):
     # self.cech_diff
 
     def cech_diff(self, n_dim, deg, chains):
-        """Given chains in (n_dim + 1, deg), compute Cech differential.
+        """ Given chains in (n_dim + 1, deg), compute Cech differential.
         """
         image_chains = [[],[]]
         # CECH DIFFERENTIAL
