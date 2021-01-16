@@ -157,9 +157,9 @@ if __name__=='__main__':
     #for ext in MV_ss.extensions[1][0]:
     #    print(ext)
     for it, PH in enumerate(MV_ss.persistent_homology):
-        #print("deg:{}".format(it))
-        #print("MV_SS")
-        #print(PH.barcode)
-        #print("ordinary")
-        #print(PerHom[it].barcode)
+        print("deg:{}".format(it))
+        print("MV_SS")
+        print(PH.barcode)
+        print("ordinary")
+        print(PerHom[it].barcode)
         assert np.array_equal(PH.barcode, PerHom[it].barcode)

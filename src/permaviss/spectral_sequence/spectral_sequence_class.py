@@ -220,34 +220,13 @@ class spectral_sequence(object):
         self.Im[0][n_dim] = [it[3] for it in output]
         self.PreIm[0][n_dim] = [it[4] for it in output]
 
-        # TEST cycles
-        ########################################################################
-        # check that we added cycles in dim 1
-        if n_dim > 0:
-            dim_local = len(self.nerve[n_dim])
-        else:
-            dim_local = self.nerve[n_dim]
-        for nerve_spx_index in range(dim_local):
-            if self.Hom[0][n_dim][nerve_spx_index][1].dim > 0:
-                trivial_image = np.matmul(
-                    self.zero_diff[n_dim][nerve_spx_index][1],
-                    self.Hom[0][n_dim][nerve_spx_index][1].coordinates
-                ) % self.p
-                if np.any(trivial_image):
-                    print("n_dim:{}, nerve_spx_index:{}".format(n_dim, nerve_spx_index))
-                    raise(ValueError)
-            # end if
-        # end for
-        ########################################################################
-
         # Number of simplices in nerve[n_dim]
         if n_dim > 0:
             n_spx_number = np.size(self.nerve[n_dim], 0)
         else:
             n_spx_number = self.nerve[0]
 
-        # add this to check that the level of intersection is not empty.
-        # otherwise we might run out of index range
+        # check that the level of intersection is not empty.
         if len(self.Hom[0][n_dim]) > 0:
             for deg in range(self.no_rows):
                 no_cycles = 0
@@ -285,19 +264,29 @@ class spectral_sequence(object):
     # self.first_differential(self, n_dim, deg):
 
     def first_differential(self, n_dim, deg):
-        """ Compute first differential from (n_dim, deg)
+        """ Compute differential on first page (n_dim, deg) --> (n_dim-1, deg)
+
+        Parameters
+        ----------
+        n_dim, deg : int, int
+            Differential domain position on first page.
+
+        Returns
+        -------
+        Betas : np.array
+            Coefficients of image of first page differentials. The image of
+            each class from (n_dim, deg) is given as a row.
 
         """
         # handle trivial cases
         if self.page_dim_matrix[1, deg, n_dim] == 0:
             return np.array([])
-        # generate refs and coordinates of current page
-        # store as total complex
+        # generate chains for sending to cech_diff_and_lift
+        references = []
+        local_coordinates = []
         # compute array of initial radii
         R = np.zeros(self.page_dim_matrix[1, deg, n_dim])
         # birth radii and localized_coordinates for classes
-        references = []
-        local_coordinates = []
         prev = 0
         for nerve_spx_index, next in enumerate(
                 self.cycle_dimensions[n_dim][deg][:-1]):
@@ -322,76 +311,33 @@ class spectral_sequence(object):
     # self.high_differential(self, n_dim, deg, current_page):
 
     def high_differential(self, n_dim, deg, current_page):
-        """ Compute differential of spectral sequence starting on position
-        (n_dim, deg) in current_page >= 2.
+        """ Compute differential on `current-page`
+        (n_dim, deg) --> (n_dim - current_page, deg + current_page - 1).
+
+        Parameters
+        ----------
+        n_dim, deg : int, int
+            Differential domain position.
+
+        Returns
+        -------
+        Betas : np.array
+            Coefficients of image of current_page differentials. The image of
+            each class from (n_dim, deg) is given as a row.
 
         """
-        print("high_differential: n_dim:{}, deg:{}".format(n_dim, deg))
         # handle trivial case
         if self.Hom[current_page-1][n_dim][deg].dim == 0:
             return np.array([])
-
         # take last total complex entry of Hom reps
         chains = self.Hom_reps[current_page-1][n_dim][deg][current_page-1]
-        # TEST commutativity and cycles
-        ########################################################################
-        # check that chains[-1] is zero through  first vertical then horizontal
-        if n_dim == 2 and deg == 0:
-            # compute vertical differential
-            chains_new = [[],[]]
-            for idx, ref in enumerate(chains[0]):
-                chains_new[0].append(ref)
-                if len(ref) > 0:
-                    chains_new[1].append(np.matmul(
-                        self.zero_diff[1][idx][1],
-                        chains[1][idx].T
-                    ).T)
-                else:
-                    chains_new[1].append([])
-            # check that representative is correct
-            # compute horizontal differential of first entry
-            horiz_image = self.cech_diff(1,0, self.Hom_reps[current_page-1][n_dim][deg][0])
-            for idx, local_ch in enumerate(horiz_image[1]):
-                if np.any(local_ch % self.p):
-                    if np.any((local_ch[chains[0][idx]] + chains_new[1][idx]) % self.p):
-                        print((local_ch[chains[0][idx]] + chains_new[1][idx]) % self.p)
-                        raise(RuntimeError)
-            #compute horizontal differential
-            trivial_image = self.cech_diff(0, 0, chains_new)
-            for triv in trivial_image[1]:
-                if len(triv) > 0:
-                    if np.any(triv % self.p):
-                        print(triv % self.p)
-                        raise(RuntimeError)
-            image_chains = self.cech_diff(0,1,chains)
-            trivial_im = [[],[]]
-            for idx, ref in enumerate(image_chains[0]):
-                trivial_im[0].append(ref)
-                if len(ref) > 0:
-                    trivial_im[1].append(np.matmul(
-                        self.zero_diff[0][idx][1],
-                        image_chains[1][idx].T
-                    ).T)
-                    if np.any(trivial_im[1][-1] % self.p):
-                        print(trivial_im[1][-1] % self.p)
-                        raise(RuntimeError)
-                else:
-                    chains_new[1].append([])
-
-        ########################################################################
         Hom_barcode = self.Hom[current_page-1][n_dim][deg].barcode
-        # differential (n_dim, deg) --> (Sn_dim, Sdeg)
+        # codomain position
         Sn_dim = n_dim - current_page
         Sdeg = deg + current_page - 1
+        # differential (n_dim, deg) --> (Sn_dim, Sdeg)
         Betas, _ = self.cech_diff_and_lift(Sn_dim + 1, Sdeg, chains,
                                            Hom_barcode[:,0])
-
-        # TEST lift to page: whether it lifts hom coordinates
-        ########################################################################
-
-
-        ########################################################################
-
         Betas, _ = self.lift_to_page(Sn_dim, Sdeg, current_page, Betas,
                                      Hom_barcode)
         return  Betas
@@ -404,6 +350,28 @@ class spectral_sequence(object):
         """ Lifts chains in position (n_dim, deg) from page 1 to target_page
 
         Returns Betas and image coordinates.
+
+        Parameters
+        ----------
+        n_dim, deg : int, int
+            Differential domain position.
+        target_page : int
+            Lift classes up to this page.
+        Betas : np.array
+            Coordinates of classes on first page.
+        Betas_barcode : np.array
+            Barcodes of classes to be lifted.
+
+        Returns
+        -------
+        target_betas : np.array
+            Coefficients of image of current_page differentials. The image of
+            each class from (n_dim, deg) is given as a row.
+        Gammas : np.array
+            Coefficients of added differentials of (current_page - 1) page.
+            This is such that the sum of differentials using Gammas, plus adding
+            classes using target_betas leads to the original Betas.
+
         """
         Betas = Betas.T
         # lift up to target_page
@@ -436,14 +404,14 @@ class spectral_sequence(object):
             # order row barcodes as well
             ordered_barcode_row = barcode_row[order]
             A = A[order]
-            _, T = gauss_barcodes(A, ordered_barcode_row, barcode_col, start_index,
-                                  self.p)
+            _, T = gauss_barcodes(A, ordered_barcode_row, barcode_col,
+                                  start_index, self.p)
             T = T[:, start_index:]
             # next page coefficients
             Gammas = T[:Im_dim]
-            Betas = T[Im_dim:start_index]
+            target_betas = T[Im_dim:start_index]
         # end for
-        return  Betas.T, Gammas.T
+        return  target_betas.T, Gammas.T
     # end lift_to_page
 
     ###########################################################################
@@ -464,6 +432,7 @@ class spectral_sequence(object):
         ----------
         n_dim, deg, current_page : int, int, int
             Postition on spectral sequence and current page.
+        chains : :obj:`list(list(Numpy Array))`
 
         Returns
         -------
@@ -558,16 +527,7 @@ class spectral_sequence(object):
         # if there are no images to compute, return
         if len(generators)==0:
             return
-        # TEST that image of Cech differential is a cycle
-        ########################################################################
-        if deg > 0:
-            trivial_image = np.matmul(
-                self.zero_diff[n_dim][nerve_spx_index][deg],
-                local_chains) % self.p
-            if np.any(trivial_image):
-                print("Image of Cech diff not a cycle")
-                raise(RuntimeError)
-        ########################################################################
+
         # LOCAL LIFT TO FIRST PAGE
         gammas, betas = self.first_page_local_lift(
             n_dim, deg, nerve_spx_index, local_chains, R[generators])
@@ -584,16 +544,6 @@ class spectral_sequence(object):
         betas_aux = np.zeros((len(R), next - prev))
         betas_aux[generators] = np.transpose(betas)
         Betas_1_page[:, prev:next] = betas_aux
-
-        # TEST radius nonzero entries in betas_aux
-        ########################################################################
-        for g in generators:
-            nonzero_coeff_bars = self.Hom[0][n_dim][nerve_spx_index][
-                deg].barcode[np.nonzero(betas_aux[g])[0]]
-            if len(nonzero_coeff_bars) > 0:
-                if R[g] < np.max(nonzero_coeff_bars[:,0]):
-                    raise(ValueError)
-        ########################################################################
     # end cech_diff_and_lift_local
 
 
@@ -905,35 +855,6 @@ class spectral_sequence(object):
             # vertical lift written on total_complex_reps
             self.Hom_reps[1][n_dim][deg].append(lift)
         # end if
-        # TEST commumativity of second page reps
-        ########################################################################
-        if n_dim > 0:
-            cech_diff_im = self.cech_diff(n_dim-1, deg, chains)
-            betas, _ = self.first_page_lift(n_dim-1, deg, cech_diff_im, R)
-            if np.any(betas):
-                print(betas)
-                raise(RuntimeError)
-            for idx, ref in enumerate(lift[0]):
-                if len(ref) > 0:
-                    vert_im = np.matmul(
-                        self.zero_diff[n_dim-1][idx][deg+1],
-                        lift[1][idx].T
-                    ).T
-                    cech_local_nontrivial = cech_diff_im[1][idx][
-                        cech_diff_im[1][idx].any(axis=1)]
-                    if np.any((vert_im + cech_local_nontrivial)%self.p):
-                        print((vert_im + cech_local_nontrivial)%self.p)
-                        raise(RuntimeError)
-                else:
-                    if len(cech_diff_im[0][idx]) > 0 and np.any(cech_diff_im[1][idx]):
-                        print("here")
-                        print("local_lift")
-                        print(lift[1][idx])
-                        print("local_cech_im")
-                        print(cech_diff_im[1][idx])
-                        raise(ValueError)
-        ########################################################################
-
     # end def
 
     ############################################################################
@@ -1031,18 +952,16 @@ class spectral_sequence(object):
 
         Problem: what if death_red == self.max_r ?
         """
-        print("start_n_dim:{}, start_deg:{}".format(start_n_dim, start_deg))
         death_radii = self.Hom[self.no_pages-1][start_n_dim][
             start_deg].barcode[:,1]
         Hom_reps = copy_seq_local(
             self.Hom_reps[self.no_pages - 1][start_n_dim][start_deg])
-        print("len Hom_reps:{}".format(len(Hom_reps)))
         # bars for extension problem of infty page classes
         barcode_extension = np.ones((len(death_radii), 2))
         barcode_extension[:, 0] = death_radii
         barcode_extension[:, 1] *= self.max_r
         # if death_radii is equal to max_r, no need to compute ext coefficients
-        ext_indices = death_radii < self.max_r
+        ext_bool = death_radii < self.max_r
         # initialize extension matrices as zero matrices
         Sdeg = start_deg
         Sn_dim = start_n_dim
@@ -1053,71 +972,55 @@ class spectral_sequence(object):
             Sdeg += 1
             Sn_dim -= 1
         # end for
-        print("ext_indices:{}".format(ext_indices))
         # if there are no extension coefficients to compute, return
-        if not np.any(ext_indices):
+        if not np.any(ext_bool):
             return
         # COMPUTE EXTENSION COEFFICIENTS
         # go through all diagonal
         Sdeg = start_deg
         Sn_dim = start_n_dim
         for idx, chains in enumerate(Hom_reps):
-            print("Sn_dim:{}, Sdeg:{}".format(Sn_dim, Sdeg))
             # lift to infinity page and substract betas
             Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
-                                            death_radii[ext_indices])
+                                            death_radii[ext_bool])
             # go up to target_page
             Betas, _ = self.lift_to_page(Sn_dim, Sdeg, self.no_pages, Betas,
-                                         barcode_extension[ext_indices])
-            print("Betas_infty_page")
-            print(Betas)
+                                         barcode_extension[ext_bool])
             # STORE EXTENSION COEFFICIENTS
             self.extensions[start_n_dim][start_deg][idx][:,
-                ext_indices] = Betas.T
-            # print("before beta reduction")
-            # print(Hom_reps[1][1])
+                ext_bool] = Betas.T
             # MODIFY TOTAL COMPLEX REPS using BETAS
-            for ext_deg, Schains in enumerate(
-                    self.Hom_reps[self.no_pages - 1][Sn_dim][Sdeg]):
-                # compute chains using betas and substract to reps
-                # problem with local sums!!!
-                local_chains_beta = local_sums(Schains, Betas)
-                for k, local_coord in enumerate(Hom_reps[ext_deg + idx][1]):
-                    local_ref = Hom_reps[ext_deg + idx][0][k]
-                    Hom_reps[ext_deg + idx][1][k] = (
-                        local_coord - local_chains_beta[1][k]) % self.p
+            if np.any(Betas):
+                for ext_deg, Schains in enumerate(
+                        self.Hom_reps[self.no_pages - 1][Sn_dim][Sdeg]):
+                    # compute chains using betas and substract to reps
+                    # problem with local sums!!!
+                    local_chains_beta = local_sums(Schains, Betas)
+                    for k, local_coord in enumerate(Hom_reps[ext_deg + idx][1]):
+                        local_ref = Hom_reps[ext_deg + idx][0][k]
+                        Hom_reps[ext_deg + idx][1][k] = (
+                            local_coord - local_chains_beta[1][k]) % self.p
+                    # end for
                 # end for
-            # end for
+            # end if
             # reduce up to 1st page using gammas
             for target_page in range(self.no_pages, 1, -1):
-                print("reduce up to {} page".format(target_page))
                 # get coefficients on first page
                 Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                 death_radii)
                 # go up to target_page
                 Betas, Gammas = self.lift_to_page(
                     Sn_dim, Sdeg, target_page, Betas, barcode_extension)
+                # if lift target_page is nonzero, raise an error
                 if np.any(Betas):
-                    print("Betas that should be zero")
-                    print(Betas)
                     raise(RuntimeError)
                 # MODIFY TOTAL COMPLEX REPS using GAMMAS
                 if np.any(Gammas):
-                    print("Betas: ({},{})".format(
-                        np.size(Betas,0),np.size(Betas,1)
-                    ))
-                    print("Gammas: ({},{})".format(
-                        np.size(Gammas,0),np.size(Gammas,1)
-                    ))
-                    print(Gammas)
                     # compute coefficients of Gammas in 1st page
                     image_classes = np.matmul(
                         self.Im[target_page-1][Sn_dim][Sdeg].coordinates,
                         -Gammas.T)
                     # look for bars that might be already zero
-                    print("image_classes: ({},{})".format(
-                        np.size(image_classes,0),np.size(image_classes,1)
-                    ))
                     if target_page == 2:
                         # obtain coefficients for gammas
                         im_coord = []
@@ -1148,17 +1051,9 @@ class spectral_sequence(object):
                     # get coefficients on first page
                     Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains_aux,
                                                     death_radii)
-                    print("modified first page betas with gammas")
-                    print(Betas)
                     # go up to target_page
                     Betas, Gammas = self.lift_to_page(
                         Sn_dim, Sdeg, target_page, Betas, barcode_extension)
-                    print("modified betas with gammas")
-                    print(Betas)
-                    print("Gammas: ({},{})".format(
-                        np.size(Gammas,0),np.size(Gammas,1)
-                    ))
-                    print(Gammas)
                     chains = chains_aux
                 # end if
             # end for
@@ -1167,30 +1062,15 @@ class spectral_sequence(object):
                                                      death_radii)
             Betas_lift, Gammas = self.lift_to_page(
                 Sn_dim, Sdeg, 2, Betas, barcode_extension)
-            print("betas lifted")
-            print(Betas_lift)
-            print(Gammas)
+            # if lift to first page is nonzero, raise an error
             if np.any(Betas):
-                print("Betas")
-                print(Betas)
-                print("dim_betas:({},{})".format(np.size(Betas,0), np.size(Betas,1)))
-                print("barcode_extension")
-                print(barcode_extension)
-                print("barcode, nonzeros")
-                nonzero_bars = [np.any(t) for t in Betas.T]
-                print(nonzero_bars)
-                print(len(nonzero_bars))
-                print(self.first_page_barcodes[0][1][nonzero_bars])
-                print("max_r{}".format(self.max_r))
                 raise(RuntimeError)
             if Sn_dim > 0:
                 # compute Cech differential of lift_coord and add to current reps
                 image_chains = self.cech_diff(Sn_dim - 1, Sdeg + 1, lift_coord)
                 Hom_reps[idx+1] = add_local_chains(Hom_reps[idx + 1], image_chains)
                 lift_aux, _ = self.first_page_lift(Sn_dim - 1, Sdeg + 1,
-                    Hom_reps[idx+1], death_radii[ext_indices])
-                print("lift with cech diff")
-                print(lift_aux)
+                    Hom_reps[idx+1], death_radii[ext_bool])
             # advance reduction position
             Sdeg += 1
             Sn_dim -= 1

@@ -129,8 +129,8 @@ def gauss_col_rad(A, R, start_index, p):
     # number of columns in A
     N = np.size(A, 1)
     # copy of matrix to be reduced
-    # The matrix is transposed for indexing convenience
-    Red = np.copy(np.transpose(A))
+    # The matrix is transposed for indexing convenience, also do % p
+    Red = np.copy(np.transpose(A % p))
     T = np.identity(N)
     # iterate over all columns
     for j in range(start_index, N):
