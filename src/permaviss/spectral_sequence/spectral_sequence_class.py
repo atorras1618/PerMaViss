@@ -304,10 +304,6 @@ class spectral_sequence(object):
         chains = [references, local_coordinates]
         # call cech_diff_and_lift
         Betas, _ = self.cech_diff_and_lift(n_dim, deg, chains, R)
-        if not np.any(Betas):
-            print("n_dim:{}, deg:{}".format(n_dim, deg))
-            print("nonzero")
-            raise(ValueError)
         return  Betas
 
 
@@ -331,8 +327,6 @@ class spectral_sequence(object):
 
         """
         # handle trivial case
-        print("high differential:{}".format(current_page))
-        print("n_dim:{}, deg:{}".format(n_dim, deg))
         if self.Hom[current_page-1][n_dim][deg].dim == 0:
             return np.array([])
         # take last total complex entry of Hom reps
@@ -379,11 +373,9 @@ class spectral_sequence(object):
             classes using target_betas leads to the original Betas.
 
         """
-        print("target_page:{}".format(target_page))
         Betas = Betas.T
         # lift up to target_page
         for k in range(1, target_page):
-            print("entered loop")
             Im = self.Im[k][n_dim][deg]
             Im_dim = self.Im[k][n_dim][deg].dim
             Hom = self.Hom[k][n_dim][deg]
@@ -475,6 +467,8 @@ class spectral_sequence(object):
 
             for nerve_spx_index in range(n_spx_number):
                 partial_cech_diff_and_lift_local(nerve_spx_index)
+            # careful before parallelizing, since coefficients do not store well
+            # in Betas_1_page
             #workers_pool = Pool()
             #workers_pool.map(partial_cech_diff_and_lift_local,
             #                 range(n_spx_number))
@@ -878,8 +872,6 @@ class spectral_sequence(object):
 
         All info is written in self.Hom_reps
         """
-        print("compute higher reps:({},{})".format(n_dim, deg))
-        print("current_page:{}".format(current_page))
         # handle trivial cases
         if self.Hom[current_page][n_dim][deg].dim == 0:
             self.Hom_reps[current_page][n_dim][deg] = []
@@ -897,7 +889,6 @@ class spectral_sequence(object):
         # (n_dim, deg) --> (Sn_dim, Sdeg)
         Sn_dim = n_dim - current_page
         Sdeg = deg + current_page - 1
-        print("Sn_dim:{}, Sdeg:{}".format(Sn_dim, Sdeg))
         # if differential is trivial, no need to compute cech differential
         if Sn_dim < 0:
             self.Hom_reps[current_page][n_dim][deg] = total_complex_reps
@@ -915,7 +906,7 @@ class spectral_sequence(object):
             Tdeg = Sdeg - target_page + 2
             preimage_reps = []
             # obtain preimage_coefficients from expressions in Gammas
-            preimage_coefficients = multiply_print(
+            preimage_coefficients = np.matmul(
                 self.PreIm[target_page - 1][Tn_dim][Tdeg], Gammas.T
             )
             # case of target_page is special due to local coordinates
@@ -1117,15 +1108,6 @@ def local_sums(chains, sums):
     # end for
     return [new_ref, new_coord]
 
-######################
-# Multiply-print
-
-def multiply_print(A,B):
-    print("multiply ({},{}) times ({},{})".format(
-        np.size(A,0), np.size(A,1), np.size(B,0), np.size(B,1)
-    ))
-    return np.matmul(A,B)
-
 ################################################################################
 # copy_seq_local
 #
@@ -1155,12 +1137,15 @@ def add_local_chains(A, B):
     for idx, A_ref in enumerate(A[0]):
         A_coord, B_ref, B_coord = A[1][idx], B[0][idx], B[1][idx]
         C_ref = np.unique(np.append(A_ref, B_ref))
-        new_ref.append(C_ref)
-        local_size = max(np.size(A_coord,0), np.size(B_coord,0))
-        if local_size > 0:
+        new_ref.append(C_ref.astype(int))
+        if min(len(A_ref),len(B_ref)) > 0:
             C_coord = np.zeros((len(C_ref), np.size(A_coord,1)))
             C_coord[np.isin(C_ref, A_ref)] += A_coord
             C_coord[np.isin(C_ref, B_ref)] += B_coord
+        elif len(A_ref) > 0:
+            C_coord = A_coord
+        elif len(B_coord) > 0:
+            C_coord = B_coord
         else:
             C_coord = []
         new_chains.append(C_coord)

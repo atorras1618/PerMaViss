@@ -165,8 +165,6 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
         # Loop through sequences of possibly nontrivial differentials
         # current_page columns
-
-        print("higher reps, current_page:{}".format(current_page))
         for start_n_dim in range(current_page):
             for start_deg in range(max_dim):
                 deg = start_deg
@@ -195,7 +193,6 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                 n_dim = start_n_dim
                 while deg >= 0 and n_dim < nerve_dim:
                     # compute total complex reps for next page classes
-                    print("hr deg:{}, n_dim:{}".format(deg, n_dim))
                     MV_ss.compute_higher_representatives(
                         n_dim, deg, current_page)
                     deg += 1 - current_page
@@ -230,6 +227,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             for start_n_dim in range(1, min(deg+1, MV_ss.no_columns)):
                 if MV_ss.page_dim_matrix[no_pages-1][
                         start_deg, start_n_dim] > 0:
+                    print("start_n_dim:{}, start_deg:{}".format(start_n_dim, start_deg))
                     MV_ss.extension(start_n_dim, start_deg)
                     extensions = MV_ss.extensions[start_n_dim][start_deg]
                     column_range = ext_mat[:, dim_PH[start_n_dim]: dim_PH[
@@ -341,13 +339,5 @@ def local_persistent_homology(nerve_point_cloud, max_r, max_dim, p,  n_dim,
     # Persistent Homology
     Hom, Im, PreIm = persistent_homology(local_differentials, local_R,
                                          max_r, p)
-
-    # check that Hom are indeed cycles
-    for idx, hom in enumerate(Hom):
-        if hom.dim > 0 and idx > 0:
-            trivial_image = np.matmul(local_differentials[idx], hom.coordinates)
-            if np.any(trivial_image % p):
-                print(trivial_image % p)
-                raise(RuntimeError)
 
     return local_complex, local_differentials, Hom, Im, PreIm
