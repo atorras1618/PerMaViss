@@ -408,7 +408,8 @@ class spectral_sequence(object):
             A = A[order]
             _, T = gauss_barcodes(A, ordered_barcode_row, barcode_col,
                                   start_index, self.p)
-            T = T[:, start_index:]
+            # correct sign
+            T = -T[:, start_index:] % self.p
             # next page coefficients
             Gammas = T[:Im_dim]
             Betas = T[Im_dim:start_index]
@@ -544,7 +545,8 @@ class spectral_sequence(object):
                               gammas).T
         nonzero_idx = np.where(gammas.any(axis=0))[0]
         if len(nonzero_idx) > 0:
-            lift_coordinates[nerve_spx_index] = preimages[nonzero_idx]
+            # correct sign
+            lift_coordinates[nerve_spx_index] = -preimages[nonzero_idx] % self.p
             lift_references[nerve_spx_index] = generators[nonzero_idx]
         # store first page coefficients
         betas_aux = np.zeros((len(R), next - prev))
@@ -625,8 +627,8 @@ class spectral_sequence(object):
             )
         R_M = np.concatenate([R_M, lift_radii], axis=None)
         _, T = gauss_col_rad(M, R_M, start_index, self.p)
-        # look at reductions on generators
-        T = T[:, start_index:]
+        # look at reductions on generators and correct sign
+        T = -T[:, start_index:] % self.p
         gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
         betas = T[self.Im[0][n_dim][nerve_spx_index][deg].dim : start_index]
         # return preimage coordinates and beta coordinates
@@ -905,9 +907,9 @@ class spectral_sequence(object):
             Tn_dim = Sn_dim + target_page - 1
             Tdeg = Sdeg - target_page + 2
             preimage_reps = []
-            # obtain preimage_coefficients from expressions in Gammas
+            # obtain preimage_coefficients from expressions in -Gammas
             preimage_coefficients = np.matmul(
-                self.PreIm[target_page - 1][Tn_dim][Tdeg], Gammas.T
+                self.PreIm[target_page - 1][Tn_dim][Tdeg], -Gammas.T
             )
             # case of target_page is special due to local coordinates
             if np.any(Gammas) and target_page == 2:
@@ -984,6 +986,7 @@ class spectral_sequence(object):
         Sn_dim = start_n_dim
         for idx, chains in enumerate(Hom_reps):
             # lift to infinity page and substract betas
+            print("ext_deg:{}".format(idx))
             Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                             death_radii[ext_bool])
             # go up to target_page
@@ -994,20 +997,24 @@ class spectral_sequence(object):
                 ext_bool] = Betas.T
             # MODIFY TOTAL COMPLEX REPS using BETAS
             if np.any(Betas):
+                print("Betas to reduce")
+                print(Betas)
                 for ext_deg, Schains in enumerate(
                         self.Hom_reps[self.no_pages - 1][Sn_dim][Sdeg]):
+                    print("ext_deg_int:{}".format(ext_deg))
                     # compute chains using betas and substract to reps
                     # problem with local sums!!!
-                    local_chains_beta = local_sums(Schains, Betas)
+                    local_chains_beta = local_sums(Schains, -Betas)
                     for k, local_coord in enumerate(Hom_reps[ext_deg + idx][1]):
                         local_ref = Hom_reps[ext_deg + idx][0][k]
                         Hom_reps[ext_deg + idx][1][k] = (
-                            local_coord - local_chains_beta[1][k]) % self.p
+                            local_coord + local_chains_beta[1][k]) % self.p
                     # end for
                 # end for
             # end if
             # reduce up to 1st page using gammas
             for target_page in range(self.no_pages, 1, -1):
+                print("target_page:{}".format(target_page))
                 # get coefficients on first page
                 Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                 death_radii)
@@ -1016,9 +1023,13 @@ class spectral_sequence(object):
                     Sn_dim, Sdeg, target_page, Betas, barcode_extension)
                 # if lift target_page is nonzero, raise an error
                 if np.any(Betas):
+                    print("Sn_dim:{}, Sdeg:{}".format(Sn_dim, Sdeg))
+                    print(Betas)
                     raise(RuntimeError)
                 # MODIFY TOTAL COMPLEX REPS using GAMMAS
                 if np.any(Gammas):
+                    print("Gammas")
+                    print(Gammas)
                     # compute coefficients of Gammas in 1st page
                     image_classes = np.matmul(
                         self.Im[target_page-1][Sn_dim][Sdeg].coordinates,
@@ -1050,21 +1061,18 @@ class spectral_sequence(object):
                             image_classes.T
                         )
                     # end else
-                    chains_aux = add_local_chains(chains, image_chains)
-                    # get coefficients on first page
-                    Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains_aux,
-                                                    death_radii)
-                    # go up to target_page
-                    Betas, Gammas = self.lift_to_page(
-                        Sn_dim, Sdeg, target_page, Betas, barcode_extension)
-                    chains = chains_aux
+                    chains = add_local_chains(chains, image_chains)
                 # end if
             # end for
             # vertical differential
             Betas, lift_coord = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                      death_radii)
-            Betas_lift, Gammas = self.lift_to_page(
-                Sn_dim, Sdeg, 2, Betas, barcode_extension)
+            # correct sign of lift_coord
+            for k, coord in enumerate(lift_coord[1]):
+                if len(coord) > 0:
+                    lift_coord[1][k] = -coord % self.p
+                # end if
+            # end for
             # if lift to first page is nonzero, raise an error
             if np.any(Betas):
                 raise(RuntimeError)

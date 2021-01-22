@@ -132,6 +132,9 @@ def gauss_col_rad(A, R, start_index, p):
     # The matrix is transposed for indexing convenience, also do % p
     Red = np.copy(np.transpose(A % p))
     T = np.identity(N)
+    pivots = []
+    for col in Red[:start_index]:
+        pivots.append(_index_pivot(col))
     # iterate over all columns
     for j in range(start_index, N):
         pivot = _index_pivot(Red[j])
