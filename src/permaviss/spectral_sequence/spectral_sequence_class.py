@@ -377,11 +377,9 @@ class spectral_sequence(object):
         # lift up to target_page
         for k in range(1, target_page):
             Im = self.Im[k][n_dim][deg]
-            Im_dim = self.Im[k][n_dim][deg].dim
             Hom = self.Hom[k][n_dim][deg]
-            Hom_dim = self.Hom[k][n_dim][deg].dim
-            if Hom_dim > 0:
-                if Im_dim > 0:
+            if Hom.dim > 0:
+                if Im.dim > 0:
                     Im_Hom = np.append(Im.coordinates, Hom.coordinates, axis=1)
                     barcode_col = np.append(Im.barcode, Hom.barcode, axis=0)
                 else:
@@ -393,7 +391,7 @@ class spectral_sequence(object):
                 raise(RuntimeError)
                 break
 
-            start_index = Im_dim + Hom_dim
+            start_index = Im.dim + Hom.dim
             # add radii coordinates and radii
             barcode_col = np.append(barcode_col, Beta_barcode, axis=0)
             A = np.append(Im_Hom, Betas, axis=1)
@@ -406,13 +404,11 @@ class spectral_sequence(object):
             # order row barcodes as well
             ordered_barcode_row = barcode_row[order]
             A = A[order]
-            _, T = gauss_barcodes(A, ordered_barcode_row, barcode_col,
-                                  start_index, self.p)
-            # correct sign
-            T = -T[:, start_index:] % self.p
+            _, coefficients = gauss_barcodes(
+                A, ordered_barcode_row, barcode_col, start_index, self.p)
             # next page coefficients
-            Gammas = T[:Im_dim]
-            Betas = T[Im_dim:start_index]
+            Gammas = coefficients[:Im.dim]
+            Betas = coefficients[Im.dim:]
         # end for
         return  Betas.T, Gammas.T
     # end lift_to_page
@@ -612,20 +608,24 @@ class spectral_sequence(object):
 
         loca_chains with generators indexing columns.
         """
-        # create Im_Hom Matrix
-        Im_Hom = np.append(
-            self.Im[0][n_dim][nerve_spx_index][deg].coordinates,
-            self.Hom[0][n_dim][nerve_spx_index][deg].coordinates, axis=1)
+        # R_M : vector of birth radii of columns in M
+        # distinguish from trivial case where images are zero
+        if self.Im[0][n_dim][nerve_spx_index][deg].dim > 0:
+            Im_Hom = np.append(
+                self.Im[0][n_dim][nerve_spx_index][deg].coordinates,
+                self.Hom[0][n_dim][nerve_spx_index][deg].coordinates, axis=1)
+            R_M = self.Im[0][n_dim][nerve_spx_index][deg].barcode[:,0]
+            R_M = np.concatenate([
+                R_M, self.Hom[0][n_dim][nerve_spx_index][deg].barcode[:,0]],
+                axis=None)
+        else:
+            Im_Hom = self.Hom[0][n_dim][nerve_spx_index][deg].coordinates
+            R_M = self.Hom[0][n_dim][nerve_spx_index][deg].barcode[:,0]
+
+        R_M = np.concatenate([R_M, lift_radii], axis=None)
         start_index = np.size(Im_Hom,1)
         # Gaussian elimination of  M = (Im | Hom | local_chains)
         M = np.append(Im_Hom, local_chains, axis = 1)
-        # R_M : vector of birth radii of columns in M
-        R_M = self.Im[0][n_dim][nerve_spx_index][deg].barcode[:,0]
-        R_M = np.concatenate([
-            R_M, self.Hom[0][n_dim][nerve_spx_index][deg].barcode[:,0]],
-            axis=None
-            )
-        R_M = np.concatenate([R_M, lift_radii], axis=None)
         _, T = gauss_col_rad(M, R_M, start_index, self.p)
         # look at reductions on generators and correct sign
         T = -T[:, start_index:] % self.p
@@ -955,7 +955,6 @@ class spectral_sequence(object):
         """ Take information from spectral sequence class, and calculate
         extension coefficients for a given position (start_deg, start_n_dim).
 
-        Problem: what if death_red == self.max_r ?
         """
         death_radii = self.Hom[self.no_pages-1][start_n_dim][
             start_deg].barcode[:,1]
@@ -980,28 +979,31 @@ class spectral_sequence(object):
         # if there are no extension coefficients to compute, return
         if not np.any(ext_bool):
             return
+        # zero out representatives not in ext_bool
+        for chains in Hom_reps:
+            for k, local_ref in enumerate(chains[0]):
+                if len(local_ref) > 0 and np.any(np.invert(ext_bool[local_ref])) > 0:
+                    chains[1][k][np.invert(ext_bool[local_ref])] *= 0
+                # end if
+            # end for
+        # end for
         # COMPUTE EXTENSION COEFFICIENTS
         # go through all diagonal
         Sdeg = start_deg
         Sn_dim = start_n_dim
         for idx, chains in enumerate(Hom_reps):
             # lift to infinity page and substract betas
-            print("ext_deg:{}".format(idx))
             Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
-                                            death_radii[ext_bool])
+                                            death_radii)
             # go up to target_page
             Betas, _ = self.lift_to_page(Sn_dim, Sdeg, self.no_pages, Betas,
-                                         barcode_extension[ext_bool])
+                                         barcode_extension)
             # STORE EXTENSION COEFFICIENTS
-            self.extensions[start_n_dim][start_deg][idx][:,
-                ext_bool] = Betas.T
+            self.extensions[start_n_dim][start_deg][idx] = Betas.T
             # MODIFY TOTAL COMPLEX REPS using BETAS
             if np.any(Betas):
-                print("Betas to reduce")
-                print(Betas)
                 for ext_deg, Schains in enumerate(
                         self.Hom_reps[self.no_pages - 1][Sn_dim][Sdeg]):
-                    print("ext_deg_int:{}".format(ext_deg))
                     # compute chains using betas and substract to reps
                     # problem with local sums!!!
                     local_chains_beta = local_sums(Schains, -Betas)
@@ -1014,7 +1016,6 @@ class spectral_sequence(object):
             # end if
             # reduce up to 1st page using gammas
             for target_page in range(self.no_pages, 1, -1):
-                print("target_page:{}".format(target_page))
                 # get coefficients on first page
                 Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                 death_radii)
@@ -1023,13 +1024,9 @@ class spectral_sequence(object):
                     Sn_dim, Sdeg, target_page, Betas, barcode_extension)
                 # if lift target_page is nonzero, raise an error
                 if np.any(Betas):
-                    print("Sn_dim:{}, Sdeg:{}".format(Sn_dim, Sdeg))
-                    print(Betas)
                     raise(RuntimeError)
                 # MODIFY TOTAL COMPLEX REPS using GAMMAS
                 if np.any(Gammas):
-                    print("Gammas")
-                    print(Gammas)
                     # compute coefficients of Gammas in 1st page
                     image_classes = np.matmul(
                         self.Im[target_page-1][Sn_dim][Sdeg].coordinates,
@@ -1065,13 +1062,16 @@ class spectral_sequence(object):
                 # end if
             # end for
             # vertical differential
+
             Betas, lift_coord = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                      death_radii)
-            # correct sign of lift_coord
+
+            # correct sign of lift_coord and trivialise references with coord []
             for k, coord in enumerate(lift_coord[1]):
                 if len(coord) > 0:
                     lift_coord[1][k] = -coord % self.p
-                # end if
+                else:
+                    lift_coord[0][k] = []
             # end for
             # if lift to first page is nonzero, raise an error
             if np.any(Betas):
@@ -1081,7 +1081,7 @@ class spectral_sequence(object):
                 image_chains = self.cech_diff(Sn_dim - 1, Sdeg + 1, lift_coord)
                 Hom_reps[idx+1] = add_local_chains(Hom_reps[idx + 1], image_chains)
                 lift_aux, _ = self.first_page_lift(Sn_dim - 1, Sdeg + 1,
-                    Hom_reps[idx+1], death_radii[ext_bool])
+                    Hom_reps[idx+1], death_radii)
             # advance reduction position
             Sdeg += 1
             Sn_dim -= 1

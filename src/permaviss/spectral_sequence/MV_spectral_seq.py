@@ -203,8 +203,6 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         # end for
     # end for
 
-
-
     # EXTENSION PROBLEM ########################################################
     # store 0 dim persistent homology
     MV_ss.persistent_homology.append(MV_ss.Hom[MV_ss.no_pages - 1][0][0])
@@ -227,7 +225,6 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             for start_n_dim in range(1, min(deg+1, MV_ss.no_columns)):
                 if MV_ss.page_dim_matrix[no_pages-1][
                         start_deg, start_n_dim] > 0:
-                    print("start_n_dim:{}, start_deg:{}".format(start_n_dim, start_deg))
                     MV_ss.extension(start_n_dim, start_deg)
                     extensions = MV_ss.extensions[start_n_dim][start_deg]
                     column_range = ext_mat[:, dim_PH[start_n_dim]: dim_PH[

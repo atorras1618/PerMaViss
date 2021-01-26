@@ -172,12 +172,13 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
     """This function implements the Gaussian elimination by columns,
     but specialized for columns and rows with arbitrary finite barcodes.
 
-    A is reduced by left to right column additions starting
-    from  start_index. Only columns from a lower index are
-    added to columns with a higher index.
+    It reduces columns starting from start_index by the previous ones.
+    Returns the combinations that lead to those columns.
+    For each column to reduce, performs
+    gaussian elimination on corresponding submatrix.
 
-    ROW BARCODES HAVE TO BE ORDERED, OTHERWISE THERE WILL BE PROBLEMS, ALMOST
-    SURELY. Col barcodes only need to be ordered from start_index.
+    ROW AND COLUMN BARCODES HAVE TO BE ORDERED,
+    OTHERWISE THERE WILL BE PROBLEMS, ALMOST SURELY.
 
     Parameters
     ----------
@@ -194,7 +195,7 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
 
     Returns
     -------
-    T : :obj:`Numpy Array`
+    coefficients : :obj:`Numpy Array`
         Matrix recording additions performed, so that
         we obtain the lifts and coefficients.
 
@@ -208,44 +209,26 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
     N_col = np.size(A, 1)
     # copy of matrix to be reduced
     # Matrix to reduce
-    Red = np.copy(A)
-    T = np.identity(N_col)
-    # iterate over all columns
-    for j in range(start_index, N_col):
+    coefficients = np.zeros((start_index, N_col - start_index))
+    # iterate over all columns from start_index
+    for idx, j in enumerate(range(start_index, N_col)):
+        # find active rows at start rad of current beta
         active_rows = np.array(range(np.size(A, 0)))[np.logical_and(
             row_barcode[:,0] <= col_barcode[j, 0],
             col_barcode[j,0] < row_barcode[:,1])]
-        # pivot relative to active rows
-        active_pivot = _index_pivot(Red[:,j][active_rows])
-        # active_pivot = -1 when active column is 0
-        if active_pivot == -1:
-            real_pivot = -1
-        else:
-            # pivot relative to number of rows in A
-            real_pivot = active_rows[active_pivot]
-        while active_pivot > -1:
-            # look for previous columns to j
-            for k in range(start_index):
-                # check the radius
-                if col_barcode[k,0] <= col_barcode[j,0]:
-                    # if the pivots coincide, subtract column k to column j
-                    # multiplied by a suitable coefficient q
-                    if _index_pivot(Red[:,k][active_rows]) == active_pivot:
-                        q = (Red[real_pivot,j] * inv_mod_p(
-                            Red[real_pivot,k], p)) % p
-                        Red[:,j] = add_arrays_mod_c(Red[:,j], -q * Red[:,k], p)
-                        T[:,j] = add_arrays_mod_c(T[:,j], -q * T[:,k], p)
-                        # reset pivot and check for nullity
-                        new_act_piv = _index_pivot(Red[:,j][active_rows])
-                        real_pivot = active_rows[new_act_piv]
-                        break # break for k loop only
-                    # end if
-                # end if
-            # end for
-            if new_act_piv == active_pivot:
+        active_columns = np.array(range(start_index))[np.logical_and(
+            col_barcode[:start_index, 0] <= col_barcode[j,0],
+            col_barcode[j,0] < col_barcode[:start_index, 1]
+        )]
+        if len(active_rows) > 0:
+            active_columns = np.append(active_columns, j)
+            print
+            # do a gaussian elimination with respect to submatrix
+            Red, T = gauss_col(A[active_rows][:,active_columns], p)
+            # check that last column has been reduced
+            if np.any(Red[:,-1]):
                 raise(RuntimeError)
-            active_pivot = new_act_piv
-            # end if
-        # end while
+            # store combination that equals the jth column of A
+            coefficients[active_columns[:-1], idx] = -T[:-1, -1] % p
     # end for
-    return Red, T
+    return Red, coefficients

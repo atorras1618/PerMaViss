@@ -10,16 +10,16 @@ from permaviss.persistence_algebra.PH_classic import persistent_homology
 
 def test_double_complex():
     # creating and saving new point cloud ############
-    #X = random_cube(500, 3)
-    #point_cloud = take_sample(X, 50)
-    #output_file = open("data.txt", "w")
-    #for row in point_cloud:
-    #    np.savetxt(output_file, row)
-    #output_file.close()
+    X = random_cube(500, 3)
+    point_cloud = take_sample(X, 50)
+    output_file = open("data.txt", "w")
+    for row in point_cloud:
+        np.savetxt(output_file, row)
+    output_file.close()
     # using old point cloud ###################
-    saved_data = np.loadtxt("data.txt")
-    no_points = int(np.size(saved_data,0) / 3)
-    point_cloud = np.reshape(saved_data, (no_points, 3))
+    # saved_data = np.loadtxt("data.txt")
+    # no_points = int(np.size(saved_data,0) / 3)
+    # point_cloud = np.reshape(saved_data, (no_points, 3))
     max_r = 0.4
     max_dim = 3
     max_div = 2
@@ -37,16 +37,19 @@ def test_double_complex():
     ###########################################################################
     # check that first page representatives are cycles
     for n_deg in range(MV_ss.no_columns):
-        for nerve_spx_index, _ in enumerate(MV_ss.cycle_dimensions[n_deg][0]):
+        if n_deg == 0:
+            no_covers = MV_ss.nerve[0]
+        else:
+            no_covers = len(MV_ss.nerve[n_deg])
+        for nerve_spx_index in range(no_covers):
             local_differentials = complex_differentials(
                 MV_ss.subcomplexes[n_deg][nerve_spx_index], p)
-            for deg, hom in enumerate(MV_ss.Hom[n_deg][nerve_spx_index]):
-                if hom.dim > 0 and deg > 0:
+            for mdeg, hom in enumerate(MV_ss.Hom[0][n_deg][nerve_spx_index][1:]):
+                if type(hom) != type([]) and hom.dim > 0:
                     trivial_image = np.matmul(
-                        local_differentials[deg],
+                        local_differentials[mdeg+1],
                         hom.coordinates)
                     if np.any(trivial_image % p):
-                        print(trivial_image % p)
                         raise(RuntimeError)
                     # end if
                 # end if
@@ -55,19 +58,41 @@ def test_double_complex():
     # end for
 
     ###########################################################################
-    # test local_cech_matrix
+    # compute cech differential twice and check that it vanishes
 
     """Iterate over test_local_cech_matrix"""
-    for n_dim in range(2, self.no_columns):
-        for deg in range(self.no_rows):
-            if MV_SS.page_dim_matrix[1][deg][n_dim] > 0:
-                cech_differential(MV_SS, n_dim, deg)
+    for n_dim in range(2, MV_ss.no_columns):
+        for deg in range(MV_ss.no_rows):
+            if MV_ss.page_dim_matrix[1][deg][n_dim] > 0:
+                cech_differential_twice(MV_ss, n_dim, deg)
             # end if
         # end for
     # end for
+
+    ############################################################################
+    # check that classic PH coincides with result
+    # print("Extensions")
+    # print(MV_ss.extensions[1][0][0])
+    # print("and")
+    # print(MV_ss.extensions[1][0][1])
+    # print("Barcodes to extend")
+    # print(MV_ss.Hom[1][1][0].barcode)
+    # print("extend to ")
+    # print(MV_ss.Hom[1][0][1].barcode)
+    for it, PH in enumerate(MV_ss.persistent_homology):
+        # if it > 0:
+        #     print("Spectral sequence")
+        #     print(PH.barcode)
+        #     print("Ordinary")
+        #     print(PerHom[it].barcode)
+        #     print("lenghts:{} and {}".format(
+        #         np.size(PH.barcode,0),
+        #         np.size(PerHom[it].barcode,0)))
+        assert np.array_equal(PH.barcode, PerHom[it].barcode)
 # end test_double complex
 
-def cech_differential(MV_SS, n_dim, deg):
+
+def cech_differential_twice(MV_ss, n_dim, deg):
     """ Check that the local check matrices add up to form a
     cech differential. Check this on generators starting in position
     (n_dim, deg)  from first page.
@@ -78,28 +103,33 @@ def cech_differential(MV_SS, n_dim, deg):
     ref_preim = []
     coord_preim = []
     prev = 0
-    for nerv_idx, no_cycles in enumerate(self.cycle_dimensions[
+    for nerv_idx, next in enumerate(MV_ss.cycle_dimensions[
             n_dim][deg][:-1]):
-        if prev < no_cycles:
-            ref_preim.append(range(prev, no_cycles))
-            coord_preim.append(MV_SS.Hom[0][n_dim][nerv_idx][
+        if prev < next:
+            ref_preim.append(range(prev, next))
+            coord_preim.append(MV_ss.Hom[0][n_dim][nerv_idx][
                 deg].coordinates.T)
         else:
             ref_preim.append(np.array([]))
             coord_preim.append(np.array([]))
         # end if else
-        prev = no_cycles
+        prev = next
     # end for
     # IMAGE OF CECH DIFFERENTIAL twice #############################
     for k in [1,2]:
         ref_im = []
         coord_im = []
         for nerve_face_index, coboundary in enumerate(
-                self.nerve_differentials[n_dim-k+1]):
-            MV_SS.cech_diff_local(
+                MV_ss.nerve_differentials[n_dim-k+1]):
+            ref_loc, coord_loc = MV_ss.cech_diff_local(
                 ref_preim, coord_preim, n_dim-k,
                 deg, nerve_face_index
             )
+            ref_im.append(ref_loc)
+            if len(coord_loc) > 0:
+                coord_im.append(coord_loc.T)
+            else:
+                coord_im.append([])
         # end for
         ref_preim = ref_im
         coord_preim = coord_im
@@ -109,3 +139,10 @@ def cech_differential(MV_SS, n_dim, deg):
         assert np.any(A) == False
     # end for
 # end cech_differential
+
+#####
+def multprint(A,B):
+    print("multiplying ({},{}) times ({},{})".format(
+        np.size(A,0), np.size(A,1), np.size(B,0), np.size(B,1)
+    ))
+    return np.matmul(A,B)
