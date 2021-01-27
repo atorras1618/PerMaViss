@@ -12,12 +12,12 @@ def test_double_complex():
     # creating and saving new point cloud ############
     X = random_cube(500, 3)
     point_cloud = take_sample(X, 50)
-    output_file = open("data.txt", "w")
+    output_file = open("test/spectral_sequence/random_cube.txt", "w")
     for row in point_cloud:
         np.savetxt(output_file, row)
     output_file.close()
     # using old point cloud ###################
-    # saved_data = np.loadtxt("data.txt")
+    # saved_data = np.loadtxt("test/spectral_sequence/failing_1.txt")
     # no_points = int(np.size(saved_data,0) / 3)
     # point_cloud = np.reshape(saved_data, (no_points, 3))
     max_r = 0.4
@@ -71,23 +71,7 @@ def test_double_complex():
 
     ############################################################################
     # check that classic PH coincides with result
-    # print("Extensions")
-    # print(MV_ss.extensions[1][0][0])
-    # print("and")
-    # print(MV_ss.extensions[1][0][1])
-    # print("Barcodes to extend")
-    # print(MV_ss.Hom[1][1][0].barcode)
-    # print("extend to ")
-    # print(MV_ss.Hom[1][0][1].barcode)
     for it, PH in enumerate(MV_ss.persistent_homology):
-        # if it > 0:
-        #     print("Spectral sequence")
-        #     print(PH.barcode)
-        #     print("Ordinary")
-        #     print(PerHom[it].barcode)
-        #     print("lenghts:{} and {}".format(
-        #         np.size(PH.barcode,0),
-        #         np.size(PerHom[it].barcode,0)))
         assert np.array_equal(PH.barcode, PerHom[it].barcode)
 # end test_double complex
 

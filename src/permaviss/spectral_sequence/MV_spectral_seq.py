@@ -230,8 +230,9 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                     column_range = ext_mat[:, dim_PH[start_n_dim]: dim_PH[
                         start_n_dim+1]]
                     for i, blk in enumerate(extensions):
-                        column_range[dim_PH[start_n_dim - i]: dim_PH[
-                            start_n_dim + 1 - i]] = np.copy(extensions[i])
+                        if len(blk) > 0:
+                            column_range[dim_PH[start_n_dim - i]: dim_PH[
+                                start_n_dim + 1 - i]] = np.copy(blk)
                     # end for
                 # end if
                 start_deg -= 1

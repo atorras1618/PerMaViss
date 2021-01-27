@@ -373,6 +373,7 @@ class spectral_sequence(object):
             classes using target_betas leads to the original Betas.
 
         """
+        print("n_dim:{}, deg:{}, target_page:{}".format(n_dim, deg, target_page))
         Betas = Betas.T
         # lift up to target_page
         for k in range(1, target_page):
@@ -388,7 +389,6 @@ class spectral_sequence(object):
             else:
                 Betas = np.array([])
                 Gammas = np.array([])
-                raise(RuntimeError)
                 break
 
             start_index = Im.dim + Hom.dim
@@ -404,7 +404,7 @@ class spectral_sequence(object):
             # order row barcodes as well
             ordered_barcode_row = barcode_row[order]
             A = A[order]
-            _, coefficients = gauss_barcodes(
+            coefficients = gauss_barcodes(
                 A, ordered_barcode_row, barcode_col, start_index, self.p)
             # next page coefficients
             Gammas = coefficients[:Im.dim]
@@ -561,6 +561,9 @@ class spectral_sequence(object):
         coboundary = self.nerve_differentials[n_dim + 1][nerve_spx_index]
         # cofaces and coefficients on cech differential
         cofaces = np.nonzero(coboundary)[0]
+        print("cofaces:{}".format(cofaces))
+        print("len reference_preimage:{}".format(len(reference_preimage)))
+        print(reference_preimage)
         coefficients = coboundary[cofaces]
         # indices of generators that are nontrivial by cech diff
         generators = reference_preimage[cofaces[0]]
@@ -610,7 +613,8 @@ class spectral_sequence(object):
         """
         # R_M : vector of birth radii of columns in M
         # distinguish from trivial case where images are zero
-        if self.Im[0][n_dim][nerve_spx_index][deg].dim > 0:
+        if self.Im[0][n_dim][nerve_spx_index][deg].dim > 0 and self.Hom[0][
+                n_dim][nerve_spx_index][deg].dim > 0:
             Im_Hom = np.append(
                 self.Im[0][n_dim][nerve_spx_index][deg].coordinates,
                 self.Hom[0][n_dim][nerve_spx_index][deg].coordinates, axis=1)
@@ -618,9 +622,14 @@ class spectral_sequence(object):
             R_M = np.concatenate([
                 R_M, self.Hom[0][n_dim][nerve_spx_index][deg].barcode[:,0]],
                 axis=None)
-        else:
+        elif self.Hom[0][n_dim][nerve_spx_index][deg].dim > 0:
             Im_Hom = self.Hom[0][n_dim][nerve_spx_index][deg].coordinates
             R_M = self.Hom[0][n_dim][nerve_spx_index][deg].barcode[:,0]
+        elif self.Im[0][n_dim][nerve_spx_index][deg].dim > 0:
+            Im_Hom = self.Im[0][n_dim][nerve_spx_index][deg].coordinates
+            R_M = self.Im[0][n_dim][nerve_spx_index][deg].barcode[:,0]
+        else:
+            return [], []
 
         R_M = np.concatenate([R_M, lift_radii], axis=None)
         start_index = np.size(Im_Hom,1)
@@ -680,9 +689,10 @@ class spectral_sequence(object):
                         n_dim, deg, nerve_spx_index,
                         chains[1][nerve_spx_index].T, R)
                     # save betas
-                    Betas_aux = np.zeros((len(R), next-prev))
-                    Betas_aux[chains[0][nerve_spx_index]] = betas.T
-                    Betas_1_page[:, prev:next] = Betas_aux
+                    if len(betas) > 0:
+                        Betas_aux = np.zeros((len(R), next-prev))
+                        Betas_aux[chains[0][nerve_spx_index]] = betas.T
+                        Betas_1_page[:, prev:next] = Betas_aux
                     # save lifts
                     if len(gammas) > 0:
                         lift_coordinates[nerve_spx_index] = (np.matmul(
@@ -956,6 +966,7 @@ class spectral_sequence(object):
         extension coefficients for a given position (start_deg, start_n_dim).
 
         """
+        print("start_n_dim:{}, start_deg:{}".format(start_n_dim, start_deg))
         death_radii = self.Hom[self.no_pages-1][start_n_dim][
             start_deg].barcode[:,1]
         Hom_reps = copy_seq_local(
@@ -992,6 +1003,7 @@ class spectral_sequence(object):
         Sdeg = start_deg
         Sn_dim = start_n_dim
         for idx, chains in enumerate(Hom_reps):
+            print("Sn_dim:{}, Sdeg:{}".format(Sn_dim, Sdeg))
             # lift to infinity page and substract betas
             Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                             death_radii)

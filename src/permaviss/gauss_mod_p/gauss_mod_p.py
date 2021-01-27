@@ -231,4 +231,4 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
             # store combination that equals the jth column of A
             coefficients[active_columns[:-1], idx] = -T[:-1, -1] % p
     # end for
-    return Red, coefficients
+    return coefficients
