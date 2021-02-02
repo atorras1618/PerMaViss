@@ -9,34 +9,6 @@ from .barcode_bases import barcode_basis
 
 from .image_kernel import image_kernel
 
-###############################################################################
-# Find pivot of array
-
-
-def _pivot(l):
-    """Given a 1D array of integers, return the index of the last nonzero entry.
-
-    Parameters
-    ----------
-    l : :obj:`list`
-        1D array of integers.
-
-    Returns
-    -------
-    int
-        Index of last nonzero entry. If `l` is zero, returns -1.
-
-    """
-    l_bool = np.nonzero(l)
-    if len(l_bool[0]) > 0:
-        return l_bool[0][-1]
-
-    return -1
-
-
-assert _pivot(np.array([0, 1, 0, 1, 0])) == 3
-assert _pivot(np.array([0, 0, 0])) == -1
-
 
 ###############################################################################
 # Quotient of barcode bases
@@ -133,7 +105,8 @@ def module_persistence_homology(D, Base, p):
             Hom[d] = Base[d]
         else:
             # compute barcode bases for image and kernel
-            Im[d - 1], Ker, PreIm[d] = image_kernel(Base[d], Base[d-1], D[d], p)
+            Im[d - 1], Ker, PreIm[d] = image_kernel(
+                Base[d], Base[d-1], D[d], p)
             # Perform quotient of Ker by Im[d]
             Hom[d] = quotient(Ker, Im[d], p)
 

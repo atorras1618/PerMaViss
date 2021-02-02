@@ -8,6 +8,7 @@ from permaviss.simplicial_complexes.vietoris_rips import vietoris_rips
 from permaviss.simplicial_complexes.differentials import complex_differentials
 from permaviss.persistence_algebra.PH_classic import persistent_homology
 
+
 def test_double_complex():
     # creating and saving new point cloud ############
     X = random_cube(500, 3)
@@ -44,8 +45,9 @@ def test_double_complex():
         for nerve_spx_index in range(no_covers):
             local_differentials = complex_differentials(
                 MV_ss.subcomplexes[n_deg][nerve_spx_index], p)
-            for mdeg, hom in enumerate(MV_ss.Hom[0][n_deg][nerve_spx_index][1:]):
-                if type(hom) != type([]) and hom.dim > 0:
+            for mdeg, hom in enumerate(
+                    MV_ss.Hom[0][n_deg][nerve_spx_index][1:]):
+                if hom.dim > 0:
                     trivial_image = np.matmul(
                         local_differentials[mdeg+1],
                         hom.coordinates)
@@ -69,7 +71,7 @@ def test_double_complex():
         # end for
     # end for
 
-    ############################################################################
+    ###########################################################################
     # check that classic PH coincides with result
     for it, PH in enumerate(MV_ss.persistent_homology):
         assert np.array_equal(PH.barcode, PerHom[it].barcode)
@@ -100,7 +102,7 @@ def cech_differential_twice(MV_ss, n_dim, deg):
         prev = next
     # end for
     # IMAGE OF CECH DIFFERENTIAL twice #############################
-    for k in [1,2]:
+    for k in [1, 2]:
         ref_im = []
         coord_im = []
         for nerve_face_index, coboundary in enumerate(
@@ -120,13 +122,6 @@ def cech_differential_twice(MV_ss, n_dim, deg):
     # twice cech differential
     # Check that images are zero
     for _, A in enumerate(coord_im):
-        assert np.any(A) == False
+        assert not np.any(A)
     # end for
 # end cech_differential
-
-#####
-def multprint(A,B):
-    print("multiplying ({},{}) times ({},{})".format(
-        np.size(A,0), np.size(A,1), np.size(B,0), np.size(B,1)
-    ))
-    return np.matmul(A,B)

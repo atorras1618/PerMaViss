@@ -10,28 +10,28 @@ from .arithmetic_mod_p import add_arrays_mod_c, inv_mod_p
 # Index searching function
 
 
-def _index_pivot(l):
+def index_pivot(vect):
     """Returns the pivot of a 1D array
 
     Parameters
     ----------
-    l : :obj:`list(int)`
+    vect : :obj:`list(int)`
         List of integers to compute pivot from.
 
     Returns
     -------
     int
-        Index of last nonzero entry on `l`. Returns -1 if the list is zero.
+        Index of last nonzero entry on `vect`. Returns -1 if the list is zero.
     """
-    l_bool = np.nonzero(l)
-    if len(l_bool[0]) > 0:
-        return l_bool[0][-1]
+    vect_bool = np.nonzero(vect)
+    if len(vect_bool[0]) > 0:
+        return vect_bool[0][-1]
 
     return -1
 
 
-assert _index_pivot(np.array([0, 1, 0, 1, 0])) == 3
-assert _index_pivot(np.array([0, 0, 0])) == -1
+assert index_pivot(np.array([0, 1, 0, 1, 0])) == 3
+assert index_pivot(np.array([0, 0, 0])) == -1
 
 ###############################################################################
 # Gaussian elimination procedure
@@ -69,7 +69,7 @@ def gauss_col(A, p):
     T = np.identity(N)
     # iterate over all columns
     for j in range(N):
-        pivot = _index_pivot(R[j])
+        pivot = index_pivot(R[j])
         # Assume that the j-column is not reduced
         reduced = False
         while (pivot > -1) & (not reduced):
@@ -78,13 +78,13 @@ def gauss_col(A, p):
             for k in range(j):
                 # if the pivots coincide, subtract column k to column j
                 # multiplied by a suitable coefficient q
-                if _index_pivot(R[k]) == pivot:
+                if index_pivot(R[k]) == pivot:
                     q = (R[j][pivot] * inv_mod_p(R[k][pivot], p)) % p
                     R[j] = add_arrays_mod_c(R[j], -q * R[k], p)
                     T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
                     # reset pivot
                     if np.any(R[j]):
-                        pivot = _index_pivot(R[j])
+                        pivot = index_pivot(R[j])
                         reduced = False
 
                     break
@@ -93,6 +93,7 @@ def gauss_col(A, p):
         # end while
     # end for
     return np.transpose(R), np.transpose(T)
+
 
 def gauss_col_rad(A, R, start_index, p):
     """This function implements the Gaussian elimination by columns,
@@ -134,10 +135,10 @@ def gauss_col_rad(A, R, start_index, p):
     T = np.identity(N)
     pivots = []
     for col in Red[:start_index]:
-        pivots.append(_index_pivot(col))
+        pivots.append(index_pivot(col))
     # iterate over all columns
     for j in range(start_index, N):
-        pivot = _index_pivot(Red[j])
+        pivot = index_pivot(Red[j])
         # Assume that the j-column is not reduced
         while pivot > -1:
             # look for previous columns to j
@@ -146,7 +147,7 @@ def gauss_col_rad(A, R, start_index, p):
                 if R[k] <= R[j]:
                     # if the pivots coincide, subtract column k to column j
                     # multiplied by a suitable coefficient q
-                    if _index_pivot(Red[k]) == pivot:
+                    if index_pivot(Red[k]) == pivot:
                         q = (Red[j][pivot] * inv_mod_p(Red[k][pivot], p)) % p
                         Red[j] = add_arrays_mod_c(Red[j], -q * Red[k], p)
                         T[j] = add_arrays_mod_c(T[j], -q * T[k], p)
@@ -157,7 +158,7 @@ def gauss_col_rad(A, R, start_index, p):
                     # end if
                 # end if
             # end for
-            new_pivot = _index_pivot(Red[j])
+            new_pivot = index_pivot(Red[j])
             if new_pivot != pivot:
                 pivot = new_pivot
             else:
@@ -167,6 +168,7 @@ def gauss_col_rad(A, R, start_index, p):
         # end while
     # end for
     return np.transpose(Red), np.transpose(T)
+
 
 def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
     """This function implements the Gaussian elimination by columns,
@@ -214,19 +216,19 @@ def gauss_barcodes(A, row_barcode, col_barcode, start_index, p):
     for idx, j in enumerate(range(start_index, N_col)):
         # find active rows at start rad of current beta
         active_rows = np.array(range(np.size(A, 0)))[np.logical_and(
-            row_barcode[:,0] <= col_barcode[j, 0],
-            col_barcode[j,0] < row_barcode[:,1])]
+            row_barcode[:, 0] <= col_barcode[j, 0],
+            col_barcode[j, 0] < row_barcode[:, 1])]
         active_columns = np.array(range(start_index))[np.logical_and(
-            col_barcode[:start_index, 0] <= col_barcode[j,0],
-            col_barcode[j,0] < col_barcode[:start_index, 1]
+            col_barcode[:start_index, 0] <= col_barcode[j, 0],
+            col_barcode[j, 0] < col_barcode[:start_index, 1]
         )]
         if len(active_rows) > 0:
             active_columns = np.append(active_columns, j)
             print
             # do a gaussian elimination with respect to submatrix
-            Red, T = gauss_col(A[active_rows][:,active_columns], p)
+            Red, T = gauss_col(A[active_rows][:, active_columns], p)
             # check that last column has been reduced
-            if np.any(Red[:,-1]):
+            if np.any(Red[:, -1]):
                 raise(RuntimeError)
             # store combination that equals the jth column of A
             coefficients[active_columns[:-1], idx] = -T[:-1, -1] % p

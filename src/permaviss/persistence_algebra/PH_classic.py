@@ -6,39 +6,9 @@
 """
 import numpy as np
 
-from ..gauss_mod_p import gauss_mod_p
+from ..gauss_mod_p.gauss_mod_p import gauss_col, index_pivot
 
 from .barcode_bases import barcode_basis
-
-
-###############################################################################
-# Find pivot of array
-
-
-def _pivot(l):
-    """
-    Compute pivot of a list of integers.
-
-    Parameters
-    ----------
-    l : :obj:`list(int)`
-
-    Returns
-    -------
-    index : int
-        Index of last nonzero entry.
-        Returns -1 if the list is zero.
-
-    """
-    l_bool = np.nonzero(l)
-    if len(l_bool[0]) > 0:
-        return l_bool[0][-1]
-
-    return -1
-
-
-assert _pivot(np.array([0, 1, 0, 1, 0])) == 3
-assert _pivot(np.array([0, 0, 0])) == -1
 
 
 ###############################################################################
@@ -211,7 +181,7 @@ def persistent_homology(D, R, max_rad, p):
         Im_coord[d - 1] = np.zeros((range_dim, len(non_pivots)))
         PreIm[d] = np.zeros((domain_dim, len(non_pivots)))
         # Perform Gaussian reduction by left to right column additions mod p
-        Im_aux, T = gauss_mod_p.gauss_col(Daux, p)
+        Im_aux, T = gauss_col(Daux, p)
         # Reset dimension variables
         Hom_dim_current = Hom_dim_next
         Hom_dim_next = 0
@@ -221,8 +191,8 @@ def persistent_homology(D, R, max_rad, p):
             reduced_im = Im_aux[:, k]
             # If column is nonzero
             if np.any(reduced_im):
-                pivots.append(_pivot(reduced_im))
-                birth_rad = R[d - 1][_pivot(reduced_im)]
+                pivots.append(index_pivot(reduced_im))
+                birth_rad = R[d - 1][index_pivot(reduced_im)]
                 death_rad = R[d][k]
                 if birth_rad < death_rad:
                     Hom_bars[d - 1][Hom_dim_next] = [birth_rad, death_rad]

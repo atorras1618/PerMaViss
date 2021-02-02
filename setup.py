@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from src.permaviss.version import __version__
 
 with io.open("README.rst", "r", encoding="utf-8") as readme_file:
-     README = readme_file.read()
+    README = readme_file.read()
 
 setup(
     name="permaviss",

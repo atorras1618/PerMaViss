@@ -8,34 +8,8 @@ import numpy as np
 
 from .barcode_bases import barcode_basis
 
-from ..gauss_mod_p import gauss_mod_p
+from ..gauss_mod_p.gauss_mod_p import gauss_col, index_pivot
 from ..gauss_mod_p.functions import multiply_mod_p
-
-###############################################################################
-# Find pivot of array
-
-
-def _pivot(l):
-    """
-    Parameters
-    ----------
-    l : :obj:`list(int)`
-        List of integers to compute pivot from.
-
-    Returns
-    -------
-    int
-        Index of last nonzero entry on `l`. Returns -1 if the list is zero.
-    """
-    l_bool = np.nonzero(l)
-    if len(l_bool[0]) > 0:
-        return l_bool[0][-1]
-
-    return -1
-
-
-assert _pivot(np.array([0, 1, 0, 1, 0])) == 3
-assert _pivot(np.array([0, 0, 0])) == -1
 
 
 ###############################################################################
@@ -140,8 +114,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
 
     """
     # Throw ValueError if dimensions of A, B and F do not fit
-    if B.dim != np.size(F,0) or A.dim != np.size(F,1):
-        print("ImageKernel error: dimensions of bases and differential do not fit")
+    if B.dim != np.size(F, 0) or A.dim != np.size(F, 1):
+        print("Dimensions of bases and differential do not fit")
         print("A:{}".format(A.dim))
         print("B:{}".format(B.dim))
         print("F:{}".format(F))
@@ -234,7 +208,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
             # end if
             else:
                 # Reduce K0 by column additions
-                K0, Q0 = gauss_mod_p.gauss_col(K0, p)
+                K0, Q0 = gauss_col(K0, p)
                 # Perform the same reductions on Ker, if Q0 is not empty
                 if np.any(Q0):
                     Ker_coordinates[:, :kernel_dim] = multiply_mod_p(
@@ -247,7 +221,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                 for j, c in enumerate(K0.T):
                     # Find pivot in terms of whole basis A, keep also the
                     # active pivot.
-                    active_pivot = _pivot(c)
+                    active_pivot = index_pivot(c)
                     piv = active_rel_indices[active_pivot]
                     # If the pivot is new and the column is nonzero
                     if (piv not in dead_images) and (active_pivot > -1):
@@ -282,7 +256,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
         # Reduce I0, adding new generators to the kernel and adjusting
         # Im_rel_coordinates.
         if I0.size > 0:
-            I0, T0 = gauss_mod_p.gauss_col(I0, p)
+            I0, T0 = gauss_col(I0, p)
             # Adapt T0 to the whole basis A
             Q0 = np.zeros((A.dim, np.size(T0, 1)))
             Q0[active_indices] = T0
@@ -315,7 +289,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                 K0 = Ker_coordinates[:, :kernel_dim]
                 K0 = K0[active_rel_indices]
                 # Reduce K0 by column additions
-                K0, Q0 = gauss_mod_p.gauss_col(K0, p)
+                K0, Q0 = gauss_col(K0, p)
                 # Perform the same reductions on Ker, if Q0 is not empty
                 if np.any(Q0):
                     Ker_coordinates[
@@ -324,7 +298,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                                            Q0, p)
                 # Look at K0, eliminating linear dependencies
                 for j, c in enumerate(K0.T):
-                    if (_pivot(c) == -1) and (j not in dead_kernels):
+                    if (index_pivot(c) == -1) and (j not in dead_kernels):
                         dead_kernels.append(j)
                         Ker_barcode[j, 1] = rad
                     # end if

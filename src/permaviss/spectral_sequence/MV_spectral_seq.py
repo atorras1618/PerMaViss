@@ -106,7 +106,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     MV_ss = spectral_sequence(nerve, nerve_point_cloud, points_IN, max_dim,
                               max_r, no_pages, p)
 
-    # 0 PAGE ###################################################################
+    # 0 PAGE ##################################################################
 
     for n_dim in range(0, nerve_dim):
         if n_dim > 0:
@@ -128,7 +128,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     # test for cech differential
     # MV_ss.test_local_cech_matrix()
 
-    # 1 PAGE ###################################################################
+    # 1 PAGE ##################################################################
 
     # Print page
     print("PAGE: 1")
@@ -153,8 +153,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         # end for
     # end for
 
-
-    # PAGES => 2 ###############################################################
+    # PAGES => 2 ##############################################################
 
     for current_page in range(2, no_pages):
         # Print page
@@ -178,8 +177,8 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                     deg += 1 - current_page
                     n_dim += current_page
                     if deg >= 0 and n_dim < nerve_dim:
-                        differentials.append(MV_ss.high_differential(n_dim,
-                                deg, current_page).T)
+                        differentials.append(MV_ss.high_differential(
+                            n_dim, deg, current_page).T)
                         base.append(MV_ss.Hom[current_page - 1][n_dim][deg])
                     # end if
                 # end while
@@ -203,7 +202,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         # end for
     # end for
 
-    # EXTENSION PROBLEM ########################################################
+    # EXTENSION PROBLEM #######################################################
     # store 0 dim persistent homology
     MV_ss.persistent_homology.append(MV_ss.Hom[MV_ss.no_pages - 1][0][0])
     # Go through each diagonal
