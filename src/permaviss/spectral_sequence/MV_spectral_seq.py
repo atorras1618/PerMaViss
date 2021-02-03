@@ -94,7 +94,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     nerve_point_cloud, points_IN, nerve = cubical_cover.generate_cover(
         max_div, overlap, point_cloud)
 
-    nerve_dim = len(nerve)
+    nerve_dim = len(nerve) - 1
     # Count maximum points on hypercube cover
     max_points = 0
     for hyp_pc in nerve_point_cloud[0]:

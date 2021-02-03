@@ -4,7 +4,8 @@
 
 import numpy as np
 
-# from multiprocessing import Pool
+import time
+from multiprocessing import Pool
 from functools import partial
 
 from ..simplicial_complexes.differentials import complex_differentials
@@ -20,8 +21,8 @@ class spectral_sequence(object):
     ----------
     nerve : :obj:`list(Numpy Array)`
         Simplicial complex storing the nerve of the covering. This is stored as
-        a list, where the ith entry contains a Numpy Array storing all the
-        ith simplices.
+        a list, where the ith entry contains a :obj:`Numpy Array` storing all the
+        ith simplices; a simplex for each row.
     nerve_point_cloud : :obj:`list(list(Numpy Array))`
         Point clouds indexed by nerve of the cover, see
         :mod:`permaviss.covers.cubical_cover`
@@ -41,6 +42,8 @@ class spectral_sequence(object):
     ----------
     nerve, nerve_point_cloud, points_IN, max_dim, max_r, no_pages, p :
         as described above
+    nerve_differentials : :obj:`list(Numpy Array)`
+        Differentials of Nerve. Used for computing Cech Complex.
     no_rows, no_columns : int, int
         Number of rows and columns in each page
     nerve_differentials : :obj:`list(Numpy Array)`
@@ -127,7 +130,7 @@ class spectral_sequence(object):
         # dimensions of spectral sequence
         self.no_pages = no_pages
         self.no_rows = max_dim
-        self.no_columns = len(nerve)
+        self.no_columns = len(nerve) - 1
         self.max_r = max_r
         self.p = p
         # add nerve_point_cloud to spectral_sequence info
@@ -136,6 +139,13 @@ class spectral_sequence(object):
         self.points_IN = points_IN
         # add nerve and compute nerve differentials
         self.nerve = nerve
+        # count number of simplices in nerve
+        self.nerve_spx_number = []
+        self.nerve_spx_number.append(self.nerve[0])
+        for nerve_simplices in nerve[1:self.no_columns]:
+            self.nerve_spx_number.append(np.size(nerve_simplices, 0))
+        # end for
+        self.nerve_spx_number
         self.nerve_differentials = complex_differentials(nerve, p)
         # list containing barcode bases for Hom, Im and PreIm
         # Hom and Im go through all pages, whereas
@@ -220,20 +230,14 @@ class spectral_sequence(object):
         self.Im[0][n_dim] = [it[3] for it in output]
         self.PreIm[0][n_dim] = [it[4] for it in output]
 
-        # Number of simplices in nerve[n_dim]
-        if n_dim > 0:
-            n_spx_number = np.size(self.nerve[n_dim], 0)
-        else:
-            n_spx_number = self.nerve[0]
-
         # check that the level of intersection is not empty.
         if len(self.Hom[0][n_dim]) > 0:
             for deg in range(self.no_rows):
                 no_cycles = 0
                 # cumulative dimensions
                 self.cycle_dimensions[n_dim].append(
-                    np.zeros(n_spx_number+1).astype(int))
-                for k in range(n_spx_number):
+                    np.zeros(self.nerve_spx_number[n_dim]+1).astype(int))
+                for k in range(self.nerve_spx_number[n_dim]):
                     # Generate page dim matrix and local_coordinates info
                     cycles_in_cover = self.Hom[0][n_dim][k][deg].dim
                     no_cycles += cycles_in_cover
@@ -247,7 +251,7 @@ class spectral_sequence(object):
                     self.first_page_barcodes[n_dim][deg] = np.zeros((
                         no_cycles, 2))
                     prev = 0
-                    for k in range(n_spx_number):
+                    for k in range(self.nerve_spx_number[n_dim]):
                         # Generate page dim matrix and local_coordinates info
                         next = self.cycle_dimensions[n_dim][deg][k]
                         if prev < next:
@@ -363,10 +367,10 @@ class spectral_sequence(object):
 
         Returns
         -------
-        Betas : np.array
+        Betas.T : np.array
             Coefficients of image of current_page differentials. The image of
             each class from (n_dim, deg) is given as a row.
-        Gammas : np.array
+        Gammas.T : np.array
             Coefficients of added differentials of (current_page - 1) page.
             This is such that the sum of differentials using Gammas,
             plus adding classes using target_betas leads to the original Betas.
@@ -438,37 +442,36 @@ class spectral_sequence(object):
             vertical differential.
 
         """
-        # number of simplices to parallelize over in position (n_dim-1, deg)
-        if n_dim == 1:
-            n_spx_number = self.nerve[0]
-        else:
-            n_spx_number = len(self.nerve[n_dim-1])
-
-        # store space for preimages
-        lift_references = []
-        lift_coordinates = []
-        # coordinates in first page
+        # store space for coordinates in first page
         Betas_1_page = np.zeros((
             len(R), self.page_dim_matrix[1, deg, n_dim-1]
             ))
+        # store space for preimages
+        lift_references = []
+        lift_coordinates = []
         if len(R) > 0:
-            for nerve_spx_index in range(n_spx_number):
-                lift_references.append([])
-                lift_coordinates.append([])
-
             partial_cech_diff_and_lift_local = partial(
                 self.cech_diff_and_lift_local, R, chains[0], chains[1],
-                n_dim - 1, deg, lift_references, lift_coordinates,
-                Betas_1_page)
-
-            for nerve_spx_index in range(n_spx_number):
-                partial_cech_diff_and_lift_local(nerve_spx_index)
-            # careful before parallelizing, coefficients do not store well
-            # in Betas_1_page
-            # workers_pool = Pool()
-            # workers_pool.map(partial_cech_diff_and_lift_local,
-            #                 range(n_spx_number))
-            # workers_pool.close()
+                n_dim - 1, deg)
+            # map reduce local cech differential and lifts
+            workers_pool = Pool()
+            output = workers_pool.map(
+                partial_cech_diff_and_lift_local,
+                range(self.nerve_spx_number[n_dim-1]))
+            workers_pool.close()
+            prev = 0
+            # store results
+            for nerve_spx_index, next in enumerate(
+                    self.cycle_dimensions[n_dim-1][deg][:-1]):
+                if output[nerve_spx_index] is None:
+                    lift_references.append([])
+                    lift_coordinates.append([])
+                else:
+                    Betas_1_page[:, prev:next] = output[nerve_spx_index][0]
+                    lift_references.append(output[nerve_spx_index][1])
+                    lift_coordinates.append(output[nerve_spx_index][2])
+                prev = next
+            # end for
 
         return Betas_1_page, [lift_references, lift_coordinates]
     # end cech_diff_and_lift
@@ -502,12 +505,13 @@ class spectral_sequence(object):
 
     def cech_diff_and_lift_local(
             self, R, reference_preimage, local_preimage, n_dim, deg,
-            lift_references, lift_coordinates, Betas_1_page,
             nerve_spx_index
             ):
         """ Takes some chains in position (n_dim+1, deg) and computes Cech diff
         followed by a lift by vertical differential. This is done locally at
         cover information in (n_dim, deg).
+
+        Do map reduce to return coefficients on 1st page.
 
         parameters
         ----------
@@ -534,19 +538,21 @@ class spectral_sequence(object):
             n_dim, deg, nerve_spx_index, local_chains, R[generators])
 
         # compute vertical preimage and store
-        # look for indices of nonzero columns
         preimages = np.matmul(self.PreIm[0][n_dim][nerve_spx_index][deg+1],
                               gammas).T
+        # look for indices of nonzero columns
         nonzero_idx = np.where(gammas.any(axis=0))[0]
         if len(nonzero_idx) > 0:
+            local_lift_references = generators[nonzero_idx]
             # correct sign
-            lift_coordinates[nerve_spx_index] = -preimages[
-                nonzero_idx] % self.p
-            lift_references[nerve_spx_index] = generators[nonzero_idx]
+            local_lift_coordinates = -preimages[nonzero_idx] % self.p
+        else:
+            local_lift_references, local_lift_coordinates = [], []
         # store first page coefficients
         betas_aux = np.zeros((len(R), next - prev))
         betas_aux[generators] = np.transpose(betas)
-        Betas_1_page[:, prev:next] = betas_aux
+        # Betas_1_page[:, prev:next] = betas_aux
+        return betas_aux, local_lift_references, local_lift_coordinates
     # end cech_diff_and_lift_local
 
     ###########################################################################
@@ -657,11 +663,6 @@ class spectral_sequence(object):
         [lift_references, lift_coordinates]: local coordinates lifted by
             vertical differential in position (n_dim, deg+1).
         """
-        # number of simplices to parallelize over in position (n_dim-1, deg)
-        if n_dim == 0:
-            n_spx_number = self.nerve[0]
-        else:
-            n_spx_number = len(self.nerve[n_dim])
 
         # store space for preimages
         lift_coordinates = []
@@ -670,7 +671,7 @@ class spectral_sequence(object):
             len(R), self.page_dim_matrix[1, deg, n_dim]
             ))
         if len(R) > 0:
-            for nerve_spx_index in range(n_spx_number):
+            for nerve_spx_index in range(self.nerve_spx_number[n_dim]):
                 lift_coordinates.append([])
 
             partial_first_page_local_lift = partial(
@@ -699,7 +700,7 @@ class spectral_sequence(object):
             # end for
 
             # workers_pool = Pool()
-            # workers_pool.map(partial_cech_diff_and_lift, range(n_spx_number))
+            # workers_pool.map(partial_cech_diff_and_lift, range(self.nerve_spx_number[n_dim]))
             # workers_pool.close()
         # end if
 

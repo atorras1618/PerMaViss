@@ -18,9 +18,9 @@
 PerMaViss
 *********
 
-Welcome to PerMaViss! This is a Python3 implementation of the Persistence Mayer Vietoris spectral sequence. 
-For full documentation, visit `this page <https://permaviss.readthedocs.io/en/latest/?badge=latest>`_. 
-For a mathematical description of the procedure, see `Distributing Persistent Homology via Spectral Sequences <https://arxiv.org/abs/1907.05228>`_. 
+Welcome to PerMaViss! This is a Python3 implementation of the Persistence Mayer Vietoris spectral sequence.
+For full documentation, visit `this page <https://permaviss.readthedocs.io/en/latest/?badge=latest>`_.
+For a mathematical description of the procedure, see `Distributing Persistent Homology via Spectral Sequences <https://arxiv.org/abs/1907.05228>`_.
 
 In a nutshell, this library is intended to be a `proof of concept` for persistence homology parallelization. That is, one can divide a point cloud into covering regions, compute persistent homology on each part, and combine all results to obtain the global persistent homology again. This is done by means of the Persistence Mayer Vietoris spectral sequence. Here we present two examples, the torus and random point clouds in three dimensions. Both of these are divided into `8` mutually overlapping regions, and the spectral sequence is computed with respect to this cover. The resulting barcodes coincide with that which would be obtained by computing persistent homology directly.
 
@@ -28,7 +28,7 @@ This implementation is more of a `prototype` than a finished program. As such, i
 
 
 .. image:: docs/examples/TorusExtension.png
-   :width: 700 
+   :width: 700
    :align: center
 
 .. image:: docs/examples/torusRep0.png
@@ -46,7 +46,7 @@ This implementation is more of a `prototype` than a finished program. As such, i
 .. image:: docs/examples/torusRep4.png
   :width: 250
 
-   
+
 
 Dependencies
 ============
@@ -66,9 +66,9 @@ Optional for examples and notebooks:
 Installation
 ============
 
-Permaviss is built on Python 3, and relies only on `NumPy <http://www.numpy.org/>`_  and `Scipy <https://www.scipy.org/>`_. 
+Permaviss is built on Python 3, and relies only on `NumPy <http://www.numpy.org/>`_  and `Scipy <https://www.scipy.org/>`_.
 
-Additionally, `Matplotlib <https://matplotlib.org/>`_ and `mpl_toolkits <https://matplotlib.org/mpl_toolkits/>`_ are used for the tutorials. 
+Additionally, `Matplotlib <https://matplotlib.org/>`_ and `mpl_toolkits <https://matplotlib.org/mpl_toolkits/>`_ are used for the tutorials.
 
 To install using :code:`pip3`::
 
@@ -150,7 +150,7 @@ DISCLAIMER
 
 **The main purpose of this library is to explore how the Persistent Mayer Vietoris spectral sequence can be used for computing persistent homology.**
 
-**This does not pretend to be an optimal library. Also, it does not parallelize the computations of persistent homology after the first page. Thus, this is slower than most other persistent homology computations.**
+**This does not pretend to be an optimal library. Thus, this is slower than most other persistent homology computations.**
 
 **This library is still on development and is still highly undertested. If you notice any issues, please email
 TorrasCasasA@cardiff.ac.uk**
@@ -173,4 +173,3 @@ Reference
 =========
 
 This module is written using the algorithm in `Distributing Persistent Homology via Spectral Sequences <https://arxiv.org/abs/1907.05228>`_.
-
