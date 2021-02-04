@@ -4,7 +4,6 @@
 
 import numpy as np
 
-import time
 from multiprocessing import Pool
 from functools import partial
 
@@ -12,6 +11,8 @@ from ..simplicial_complexes.differentials import complex_differentials
 from ..gauss_mod_p.gauss_mod_p import gauss_col_rad, gauss_barcodes
 
 from ..persistence_algebra.barcode_bases import barcode_basis
+
+from .local_chains_class import local_chains, local_sums, copy_seq_local
 
 
 class spectral_sequence(object):
@@ -21,8 +22,8 @@ class spectral_sequence(object):
     ----------
     nerve : :obj:`list(Numpy Array)`
         Simplicial complex storing the nerve of the covering. This is stored as
-        a list, where the ith entry contains a :obj:`Numpy Array` storing all the
-        ith simplices; a simplex for each row.
+        a list, where the ith entry contains a :obj:`Numpy Array` storing
+        all the ith simplices; a simplex for each row.
     nerve_point_cloud : :obj:`list(list(Numpy Array))`
         Point clouds indexed by nerve of the cover, see
         :mod:`permaviss.covers.cubical_cover`
@@ -286,8 +287,7 @@ class spectral_sequence(object):
         if self.page_dim_matrix[1, deg, n_dim] == 0:
             return np.array([])
         # generate chains for sending to cech_diff_and_lift
-        references = []
-        local_coordinates = []
+        domain_chains = local_chains(self.nerve_spx_number)
         # compute array of initial radii
         R = np.zeros(self.page_dim_matrix[1, deg, n_dim])
         # birth radii and localized_coordinates for classes
@@ -295,19 +295,15 @@ class spectral_sequence(object):
         for nerve_spx_index, next in enumerate(
                 self.cycle_dimensions[n_dim][deg][:-1]):
             if prev < next:
-                references.append(np.array(range(prev, next)))
-                local_coordinates.append((self.Hom[0][n_dim][nerve_spx_index][
-                    deg].coordinates).T)
+                domain_chains.add_entry(
+                    nerve_spx_index, np.array(range(prev, next)),
+                    (self.Hom[0][n_dim][nerve_spx_index][deg].coordinates).T)
                 R[prev:next] = self.Hom[0][n_dim][nerve_spx_index][
                     deg].barcode[:, 0]
                 prev = next
-            else:
-                references.append([])
-                local_coordinates.append([])
         # end for
-        chains = [references, local_coordinates]
         # call cech_diff_and_lift
-        Betas, _ = self.cech_diff_and_lift(n_dim, deg, chains, R)
+        Betas, _ = self.cech_diff_and_lift(n_dim, deg, domain_chains, R)
         return Betas
 
     ###########################################################################
@@ -418,7 +414,7 @@ class spectral_sequence(object):
     ###########################################################################
     # self.cech_diff_and_lift
 
-    def cech_diff_and_lift(self, n_dim, deg, chains, R):
+    def cech_diff_and_lift(self, n_dim, deg, start_chains, R):
         """Given chains in position (n_dim, deg), computes horizontal
         differential followed by lift by vertical differential.
 
@@ -447,12 +443,10 @@ class spectral_sequence(object):
             len(R), self.page_dim_matrix[1, deg, n_dim-1]
             ))
         # store space for preimages
-        lift_references = []
-        lift_coordinates = []
+        lift_chains = local_chains(self.nerve_spx_number[n_dim-1])
         if len(R) > 0:
             partial_cech_diff_and_lift_local = partial(
-                self.cech_diff_and_lift_local, R, chains[0], chains[1],
-                n_dim - 1, deg)
+                self.cech_diff_and_lift_local, R, start_chains, n_dim - 1, deg)
             # map reduce local cech differential and lifts
             workers_pool = Pool()
             output = workers_pool.map(
@@ -463,17 +457,13 @@ class spectral_sequence(object):
             # store results
             for nerve_spx_index, next in enumerate(
                     self.cycle_dimensions[n_dim-1][deg][:-1]):
-                if output[nerve_spx_index] is None:
-                    lift_references.append([])
-                    lift_coordinates.append([])
-                else:
+                if output[nerve_spx_index] is not None:
                     Betas_1_page[:, prev:next] = output[nerve_spx_index][0]
-                    lift_references.append(output[nerve_spx_index][1])
-                    lift_coordinates.append(output[nerve_spx_index][2])
+                    lift_chains.add_entry(
+                        nerve_spx_index, output[nerve_spx_index])
                 prev = next
             # end for
-
-        return Betas_1_page, [lift_references, lift_coordinates]
+        return Betas_1_page, lift_chains
     # end cech_diff_and_lift
 
     ###########################################################################
@@ -481,22 +471,26 @@ class spectral_sequence(object):
 
     def cech_diff(self, n_dim, deg, chains):
         """ Given chains in (n_dim + 1, deg), compute Cech differential.
+
+        Parameters
+        ----------
+        n_dim, deg: int, int
+            Codomain position in spectral sequence.
+        chains : :class:`local_chains` object
+            Chains on (n_dim+1, deg) that are stored as references in chains[0]
+            and local coordinates as rows in chains[1].
+
+        Returns
+        -------
+        image_chains : :obj:`Local Coordinates`
+            Image coordinates of Cech differential.
+
         """
-        image_chains = [[], []]
+        image_chains = local_chains(self.nerve_spx_number[n_dim])
         # CECH DIFFERENTIAL
-        if n_dim == 0:
-            size_nerve = self.nerve[0]
-        else:
-            size_nerve = len(self.nerve[n_dim])
-        for nerve_spx_index in range(size_nerve):
-            generators, local_chains = self.cech_diff_local(
-                chains[0], chains[1], n_dim, deg, nerve_spx_index)
-            image_chains[0].append(generators)
-            if len(generators) > 0:
-                # transpose to put on local generators as rows
-                image_chains[1].append(local_chains.T)
-            else:
-                image_chains[1].append([])
+        for nerve_spx_index in range(self.nerve_spx_number[n_dim]):
+            image_chains.add_entry(nerve_spx_index, self.cech_diff_local(
+                chains[0], chains[1], n_dim, deg, nerve_spx_index))
         # end for
         return image_chains
 
@@ -504,20 +498,30 @@ class spectral_sequence(object):
     # Cech chain plus lift of preimage
 
     def cech_diff_and_lift_local(
-            self, R, reference_preimage, local_preimage, n_dim, deg,
-            nerve_spx_index
-            ):
+            self, R, start_chains, n_dim, deg, nerve_spx_index):
         """ Takes some chains in position (n_dim+1, deg) and computes Cech diff
         followed by a lift by vertical differential. This is done locally at
         cover information in (n_dim, deg).
 
-        Do map reduce to return coefficients on 1st page.
+        This method is meant to be run in parallel.
 
-        parameters
+        Parameters
         ----------
-        R: vector of radii
+        R : :obj:`list`
+            Vector of radii
+        start_chains : :class:`local_chains` object
+            Chains in position (n_dim + 1, deg)
+        n_dim, deg, nerve_spx_index : int, int, int
+            Position in spectral sequence and local index.
 
-        Assume that reference_preimages are indexed from 0 to len(R)-1
+        Returns
+        -------
+        betas_1_page : :obj:`Numpy Array`
+            Coefficients of lift to 1st page on position (n_dim, deg)
+        local_lift_references : :obj:`list`
+            List of local references of lift.
+        local_lift_coordinates : :obj:`Numpy Array`
+            Local coordinates of lift.
 
         """
         # if nerve_spx_index==0, then prev=0
@@ -528,90 +532,126 @@ class spectral_sequence(object):
             return
         # CECH DIFFERENTIAL
         generators, local_chains = self.cech_diff_local(
-            reference_preimage, local_preimage, n_dim, deg, nerve_spx_index)
+            start_chains, n_dim, deg, nerve_spx_index)
         # if there are no images to compute, return
         if len(generators) == 0:
             return
-
         # LOCAL LIFT TO FIRST PAGE
         gammas, betas = self.first_page_local_lift(
             n_dim, deg, nerve_spx_index, local_chains, R[generators])
-
+        # store first page coefficients
+        betas_1_page = np.zeros((len(R), next - prev))
+        betas_1_page[generators] = np.transpose(betas)
         # compute vertical preimage and store
         preimages = np.matmul(self.PreIm[0][n_dim][nerve_spx_index][deg+1],
                               gammas).T
         # look for indices of nonzero columns
         nonzero_idx = np.where(gammas.any(axis=0))[0]
         if len(nonzero_idx) > 0:
-            local_lift_references = generators[nonzero_idx]
+            local_lift_ref = generators[nonzero_idx]
             # correct sign
-            local_lift_coordinates = -preimages[nonzero_idx] % self.p
+            local_lift_coord = -preimages[nonzero_idx] % self.p
         else:
-            local_lift_references, local_lift_coordinates = [], []
-        # store first page coefficients
-        betas_aux = np.zeros((len(R), next - prev))
-        betas_aux[generators] = np.transpose(betas)
-        # Betas_1_page[:, prev:next] = betas_aux
-        return betas_aux, local_lift_references, local_lift_coordinates
+            local_lift_ref, local_lift_coord = [], []
+        # end if else
+        return betas_1_page, local_lift_ref, local_lift_coord
     # end cech_diff_and_lift_local
 
     ###########################################################################
     # self.cech_diff_local
 
     def cech_diff_local(
-            self, reference_preimage, local_preimage, n_dim, deg,
-            nerve_spx_index
-            ):
+            self, start_chains, n_dim, deg, nerve_spx_index):
+        """ Local Cech differential, starting from chains in (n_dim + 1, deg).
+
+        Parameters
+        ----------
+        start_chains : :class:`local_chains` object
+            Chains to compute Cech differential from.
+        n_dim, deg, nerve_spx_index : int, int, int
+            Position in spectral sequence and local index.
+
+        Returns
+        -------
+        local_image_ref : :obj:`list`
+            List of local references of image.
+        local_image_coord : :obj:`Numpy Array`
+            Local coordinates of image.
+        """
         coboundary = self.nerve_differentials[n_dim + 1][nerve_spx_index]
         # cofaces and coefficients on cech differential
         cofaces = np.nonzero(coboundary)[0]
         coefficients = coboundary[cofaces]
         # indices of generators that are nontrivial by cech diff
-        generators = reference_preimage[cofaces[0]]
+        generators = local_preimage.ref[cofaces[0]]
         for coface_index in cofaces[1:]:
-            generators = np.append(generators, reference_preimage[
+            generators = np.append(generators, local_preimage.ref[
                 coface_index]).astype(int)
         # end for
-        generators = np.unique(generators)
+        local_image_ref = np.unique(generators)
         # if there are no images to compute, return
-        if len(generators) == 0:
-            return generators, []
+        if len(local_image_ref) == 0:
+            return [], []
         # size of local complex
         if deg == 0:
             cpx_size = self.subcomplexes[n_dim][nerve_spx_index][0]
         else:
             cpx_size = len(self.subcomplexes[n_dim][nerve_spx_index][deg])
 
-        local_chains = np.zeros((cpx_size, len(generators)))
+        local_image_coord = np.zeros((cpx_size, len(local_image_ref)))
         # IMAGE OF CECH DIFFERENTIAL #############################
         for coface_index, nerve_coeff in zip(cofaces, coefficients):
             # check that there are some local coordinates
-            if len(reference_preimage[coface_index]) > 0:
+            if len(start_chains.ref[coface_index]) > 0:
                 # generate boundary matrix
                 cech_local = self.local_cech_matrix(
                     n_dim+1, deg, coface_index, nerve_spx_index,
                     nerve_coeff)
                 active_generators = np.where(np.in1d(
-                    generators, reference_preimage[coface_index])
+                    local_image_ref, start_chains.ref[coface_index])
                     )[0]
                 # image of cech complex
-                local_chains[:, active_generators] += np.matmul(
-                    cech_local, local_preimage[coface_index].T
+                local_image_coord[:, active_generators] += np.matmul(
+                    cech_local, start_chains.coord[coface_index].T
                     )
             # end if
         # end for
-        local_chains %= self.p
-        return generators, local_chains
+        local_image_coord %= self.p
+        return local_image_ref, local_image_coord
 
     ###########################################################################
     # self.first_page_local_lift
 
     def first_page_local_lift(
-            self, n_dim, deg, nerve_spx_index, local_chains, lift_radii):
+            self, n_dim, deg, start_chains, lift_radii, nerve_spx_index):
         """ Lift to first page on a given open cover.
 
-        loca_chains with generators indexing columns.
+        Parameters
+        ----------
+        n_dim, deg : int, int
+            Position on spectral sequence.
+        start_chains : :class:`local_chains` object
+            Chains to be lifted by vertical differential.
+        lift_radi : :obj:`list`
+            Values at which we want to lift `start_chains` by the
+            vertical differential.
+        nerve_spx_inex : int
+            Local index. This function is meant to be parallelized over this.
+
+        Returns
+        -------
+        gammas : :obj:`Numpy Array`
+            2D Matrix expressing coefficients of lift. Each expression
+            corresponds to a column, while image generators correspond to rows.
+        betas_1_page : :obj:`Numpy Array`
+            2D Matrix expressing coefficients in terms of homology classes on
+            page 1. Expressions correspond to columns, while homology classes
+            correspond to rows.
+
         """
+        # return if nothing to lift
+        if len(start_chains.ref[nerve_spx_index]) == 0:
+            return [], []
         # R_M : vector of birth radii of columns in M
         # distinguish from trivial case where images are zero
         if self.Im[0][n_dim][nerve_spx_index][deg].dim > 0 and self.Hom[0][
@@ -634,21 +674,21 @@ class spectral_sequence(object):
 
         R_M = np.concatenate([R_M, lift_radii], axis=None)
         start_index = np.size(Im_Hom, 1)
-        # Gaussian elimination of  M = (Im | Hom | local_chains)
-        M = np.append(Im_Hom, local_chains, axis=1)
+        # Gaussian elimination of  M = (Im | Hom | start_chains (local))
+        M = np.append(Im_Hom, start_chains.coord[nerve_spx_index].T, axis=1)
         _, T = gauss_col_rad(M, R_M, start_index, self.p)
         # look at reductions on generators and correct sign
         T = -T[:, start_index:] % self.p
         gammas = T[0:self.Im[0][n_dim][nerve_spx_index][deg].dim]
-        betas = T[self.Im[0][n_dim][nerve_spx_index][deg].dim:start_index]
+        betas_1_page = T[self.Im[0][n_dim][nerve_spx_index][deg].dim:start_index]
         # return preimage coordinates and beta coordinates
-        return gammas, betas
+        return gammas, betas_1_page
     # end first_page_local_lift
 
     ###########################################################################
     # self.first_page_lift
 
-    def first_page_lift(self, n_dim, deg, chains, R):
+    def first_page_lift(self, n_dim, deg, start_chains, R):
         """Given some chains in position (n_dim, deg), lift to first page
         accross several covers.
 
@@ -663,48 +703,40 @@ class spectral_sequence(object):
         [lift_references, lift_coordinates]: local coordinates lifted by
             vertical differential in position (n_dim, deg+1).
         """
-
         # store space for preimages
-        lift_coordinates = []
+        lift_chains = local_chains(self.nerve_spx_number[n_dim])
         # coordinates in first page
         Betas_1_page = np.zeros((
-            len(R), self.page_dim_matrix[1, deg, n_dim]
-            ))
-        if len(R) > 0:
-            for nerve_spx_index in range(self.nerve_spx_number[n_dim]):
-                lift_coordinates.append([])
-
-            partial_first_page_local_lift = partial(
-                self.first_page_local_lift, n_dim, deg)
-
-            prev = 0
-            for nerve_spx_index, next in enumerate(
-                    self.cycle_dimensions[n_dim][deg][:-1]):
-                if len(chains[0][nerve_spx_index]) > 0:
-                    gammas, betas = partial_first_page_local_lift(
-                        nerve_spx_index, chains[1][nerve_spx_index].T, R)
-                    # save betas
-                    if len(betas) > 0:
-                        Betas_aux = np.zeros((len(R), next-prev))
-                        Betas_aux[chains[0][nerve_spx_index]] = betas.T
-                        Betas_1_page[:, prev:next] = Betas_aux
-                    # save lifts
-                    if len(gammas) > 0:
-                        lift_coordinates[nerve_spx_index] = (np.matmul(
-                            self.PreIm[0][n_dim][nerve_spx_index][deg+1],
-                            gammas)).T
-                    else:
-                        lift_coordinates[nerve_spx_index] = []
-                # end if
-                prev = next
-            # end for
-
-            # workers_pool = Pool()
-            # workers_pool.map(partial_cech_diff_and_lift, range(self.nerve_spx_number[n_dim]))
-            # workers_pool.close()
-        # end if
-
-        return Betas_1_page, [chains[0], lift_coordinates]
+            len(R), self.page_dim_matrix[1, deg, n_dim]))
+        # return if trivial
+        if len(R) == 0:
+            return Betas_1_page, lift_chains
+        # compute vertical lifts in parallel
+        partial_first_page_local_lift = partial(
+            self.first_page_local_lift, n_dim, deg, start_chains, R)
+        workers_pool = Pool()
+        output = workers_pool.map(
+            partial_first_page_local_lift, range(self.nerve_spx_number[n_dim]))
+        workers_pool.close()
+        prev = 0
+        for nerve_spx_index, next in enumerate(
+                self.cycle_dimensions[n_dim][deg][:-1]):
+            gammas, betas = output[nerve_spx_index]
+            # save betas
+            if len(betas) > 0:
+                Betas_aux = np.zeros((len(R), next-prev))
+                Betas_aux[chains[0][nerve_spx_index]] = betas.T
+                Betas_1_page[:, prev:next] = Betas_aux
+            # save lifts
+            if len(gammas) > 0:
+                local_chains.add_entry(
+                    nerve_spx_index, start_chains[0][nerve_spx_index], (
+                    np.matmul(self.PreIm[0][n_dim][nerve_spx_index][deg+1],
+                              gammas)).T)
+            # end if
+            prev = next
+        # end for
+        return Betas_1_page, lift_chains
 
     ###########################################################################
     # local boundary matrix
@@ -1102,74 +1134,3 @@ class spectral_sequence(object):
     # end def
 
 # end spectral_sequence class #################################################
-
-###############################################################################
-# local_sums
-
-
-def local_sums(chains, sums):
-    """Sum chains as indicated by "sums"
-
-    Each sum is given by rows in sums. These store the coefficients that
-    the chain entries need to be added.
-
-    chains are given in localized form
-    """
-    no_sums = np.size(sums, axis=0)
-    new_ref = []
-    new_coord = []
-    for local_idx, ref in enumerate(chains[0]):
-        if len(ref) > 0:
-            new_ref.append(np.array(range(no_sums)).astype(int))
-            new_coord.append(np.matmul(
-                chains[1][local_idx].T, (sums.T)[ref]).T)
-        else:
-            new_ref.append([])
-            new_coord.append([])
-    # end for
-    return [new_ref, new_coord]
-
-###############################################################################
-# copy_seq_local
-
-
-def copy_seq_local(seq_chains):
-    """ Given a sequence of local chains, makes a copy and returns it.
-    """
-    copy_seq = []
-    for chains in seq_chains:
-        copy_chains = [[], []]
-        for idx, ref in enumerate(chains[0]):
-            copy_chains[0].append(np.copy(ref))
-            copy_chains[1].append(np.copy(chains[1][idx]))
-        copy_seq.append(copy_chains)
-    return copy_seq
-
-###############################################################################
-# add_local_chains
-
-
-def add_local_chains(A, B):
-    """Given two local chains, adds then and returns the result.
-
-    Assumes that references are the same.
-    """
-    new_ref, new_chains = [], []
-    for idx, A_ref in enumerate(A[0]):
-        A_coord, B_ref, B_coord = A[1][idx], B[0][idx], B[1][idx]
-        C_ref = np.unique(np.append(A_ref, B_ref))
-        new_ref.append(C_ref.astype(int))
-        if min(len(A_ref), len(B_ref)) > 0:
-            C_coord = np.zeros((len(C_ref), np.size(A_coord, 1)))
-            C_coord[np.isin(C_ref, A_ref)] += A_coord
-            C_coord[np.isin(C_ref, B_ref)] += B_coord
-        elif len(A_ref) > 0:
-            C_coord = A_coord
-        elif len(B_coord) > 0:
-            C_coord = B_coord
-        else:
-            C_coord = []
-        new_chains.append(C_coord)
-        # end if
-    # end for
-    return [new_ref, new_chains]
