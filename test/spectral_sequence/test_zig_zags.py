@@ -3,8 +3,7 @@ import scipy.spatial.distance as dist
 
 from permaviss.sample_point_clouds.examples import random_cube, take_sample
 from permaviss.spectral_sequence.MV_spectral_seq import create_MV_ss
-from permaviss.spectral_sequence.spectral_sequence_class import (
-    add_local_chains)
+from permaviss.spectral_sequence.local_chains_class import local_chains
 
 from permaviss.simplicial_complexes.vietoris_rips import vietoris_rips
 from permaviss.simplicial_complexes.differentials import complex_differentials
@@ -73,20 +72,18 @@ def test_double_complex():
                 Sn_dim, Sdeg = Sn_dim - 1, Sdeg + 1
                 next_chains = MV_ss.Hom_reps[MV_ss.no_pages - 1][
                     start_n_dim][start_deg][k + 1]
-                vert_im = [next_chains[0], []]
-                for nerve_spx_index, ref in enumerate(next_chains[0]):
+                vert_im = local_chains(len(next_chains.ref))
+                for nerve_spx_index, ref in enumerate(next_chains.ref):
                     if len(ref) > 0:
                         # compute vertical image of next_chains locally
-                        vert_im[1].append(np.matmul(
+                        vert_im.add_entry(nerve_spx_index, ref, np.matmul(
                             MV_ss.zero_diff[Sn_dim][nerve_spx_index][Sdeg],
-                            next_chains[1][nerve_spx_index].T).T % p)
-                    else:
-                        vert_im[1].append([])
+                            next_chains.coord[nerve_spx_index].T).T % p)
                     # end if
                 # end for
                 # check that d_v(next_chains) + d_cech(chains) = 0
-                zero_chains = add_local_chains(vert_im, diff_im)
-                for coord in zero_chains[1]:
+                zero_chains = vert_im + diff_im
+                for coord in zero_chains.coord:
                     if len(coord) > 0:
                         if np.any(coord % p):
                             raise(ValueError)
@@ -105,15 +102,13 @@ def test_double_complex():
                 # calculate Cech differential of chains in (Sn_dim, Sdeg)
                 diff_im = MV_ss.cech_diff(Sn_dim, Sdeg, chains)
                 # initialize image vertical diff of cech diff
-                zero_chains = [diff_im[0], []]
+                zero_chains = local_chains(len(diff_im[0]))
                 for nerve_spx_index, ref in enumerate(diff_im[0]):
                     if len(ref) > 0:
                         # compute vertical image of next_chains locally
-                        zero_chains[1].append(np.matmul(
+                        zero_chains.add_entry(ref, (np.matmul(
                             MV_ss.zero_diff[Sn_dim][nerve_spx_index][Sdeg],
-                            diff_im[1][nerve_spx_index].T).T % p)
-                    else:
-                        zero_chains.append([])
+                            diff_im[1][nerve_spx_index].T).T % p))
                 # check that result is indeed zero
                 for coord in zero_chains[1]:
                     if len(coord) > 0:

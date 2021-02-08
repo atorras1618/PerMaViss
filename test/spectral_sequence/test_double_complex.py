@@ -3,6 +3,7 @@ import scipy.spatial.distance as dist
 
 from permaviss.sample_point_clouds.examples import random_cube, take_sample
 from permaviss.spectral_sequence.MV_spectral_seq import create_MV_ss
+from permaviss.spectral_sequence.local_chains_class import local_chains
 
 from permaviss.simplicial_complexes.vietoris_rips import vietoris_rips
 from permaviss.simplicial_complexes.differentials import complex_differentials
@@ -86,42 +87,34 @@ def cech_differential_twice(MV_ss, n_dim, deg):
     We assume that the given position is not trivial.
     """
     # compute coordinates for all generators in positoin (n_dim, deg)
-    ref_preim = []
-    coord_preim = []
+    preim = local_chains(MV_ss.nerve_spx_number[n_dim])
     prev = 0
     for nerv_idx, next in enumerate(MV_ss.cycle_dimensions[
             n_dim][deg][:-1]):
         if prev < next:
-            ref_preim.append(range(prev, next))
-            coord_preim.append(MV_ss.Hom[0][n_dim][nerv_idx][
-                deg].coordinates.T)
-        else:
-            ref_preim.append(np.array([]))
-            coord_preim.append(np.array([]))
-        # end if else
+            preim.add_entry(nerv_idx, range(prev, next), MV_ss.Hom[0][n_dim][
+                            nerv_idx][deg].coordinates.T)
+        # end if
         prev = next
     # end for
     # IMAGE OF CECH DIFFERENTIAL twice #############################
     for k in [1, 2]:
-        ref_im = []
-        coord_im = []
+        print(k)
+        print("preim")
+        print(preim)
+        cech_im = local_chains(MV_ss.nerve_spx_number[n_dim-k])
         for nerve_face_index, coboundary in enumerate(
                 MV_ss.nerve_differentials[n_dim-k+1]):
             ref_loc, coord_loc = MV_ss.cech_diff_local(
-                ref_preim, coord_preim, n_dim-k,
-                deg, nerve_face_index
+                preim, n_dim-k, deg, nerve_face_index
             )
-            ref_im.append(ref_loc)
             if len(coord_loc) > 0:
-                coord_im.append(coord_loc.T)
-            else:
-                coord_im.append([])
+                cech_im.add_entry(nerve_face_index, ref_loc, coord_loc)
         # end for
-        ref_preim = ref_im
-        coord_preim = coord_im
+        preim = cech_im
     # twice cech differential
     # Check that images are zero
-    for _, A in enumerate(coord_im):
-        assert not np.any(A)
+    for zero_coord in cech_im.coord:
+        assert not np.any(zero_coord)
     # end for
 # end cech_differential
