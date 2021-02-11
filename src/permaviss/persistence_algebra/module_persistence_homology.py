@@ -4,6 +4,7 @@
     This module implements the persistence module homology
 """
 import numpy as np
+import time
 
 from .barcode_bases import barcode_basis
 
@@ -105,10 +106,14 @@ def module_persistence_homology(D, Base, p):
             Hom[d] = Base[d]
         else:
             # compute barcode bases for image and kernel
+            start = time.time()
             Im[d - 1], Ker, PreIm[d] = image_kernel(
                 Base[d], Base[d-1], D[d], p)
+            print("Im_kernel:{}".format(time.time()-start))
+            start = time.time()
             # Perform quotient of Ker by Im[d]
             Hom[d] = quotient(Ker, Im[d], p)
+            print("quotient:{}".format(time.time()-start))
 
     # Trivial case dim 0
     if Base[0].dim == 0:
@@ -122,7 +127,10 @@ def module_persistence_homology(D, Base, p):
             print(Im[0].prev_basis)
             assert False
 
+        start = time.time()
+        print("entering 0 quotient")
         Hom[0] = quotient(Ker, Im[0], p)
+        print("0 quotient:{}".format(time.time()-start))
 
     # Return lists of barcode bases for Hom, Im and PreIm
     return Hom, Im, PreIm

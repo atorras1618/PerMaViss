@@ -16,3 +16,11 @@ setup.cfg
 *_templates*
 %SystemDrive%
 **/random_cube.txt
+
+# profiling
+prof.calltree
+prof.out
+Plotting.ipynb
+plotting_data.txt
+*torus3D.txt*
+*test_examples.py*

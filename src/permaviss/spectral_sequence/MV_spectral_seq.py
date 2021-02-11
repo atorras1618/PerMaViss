@@ -5,6 +5,8 @@ This module implements the Mayer-Vietoris spectral sequence management.
 import numpy as np
 import scipy.spatial.distance as dist
 
+import time
+
 from multiprocessing import Pool
 from functools import partial
 
@@ -107,7 +109,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                               max_r, no_pages, p)
 
     # 0 PAGE ##################################################################
-
+    start = time.time()
     for n_dim in range(0, nerve_dim):
         if n_dim > 0:
             n_spx_number = np.size(nerve[n_dim], 0)
@@ -125,8 +127,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
 
         MV_ss.add_output_first(output, n_dim)
 
-    # test for cech differential
-    # MV_ss.test_local_cech_matrix()
+    print("first page computation: {}".format(time.time()-start))
 
     # 1 PAGE ##################################################################
 
@@ -143,7 +144,10 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             base.append(barcode_basis(MV_ss.first_page_barcodes[n_dim][deg]))
             differentials.append((MV_ss.first_differential(n_dim, deg)).T)
         # end for
+        print("module pers hom time, deg:{}".format(deg))
+        start = time.time()
         Hom, Im, PreIm = module_persistence_homology(differentials, base, p)
+        print(time.time()-start)
         MV_ss.add_output_higher(Hom, Im, PreIm, 0, deg, 1)
         # compute total complex representatives for second page classes
         for n_dim in range(nerve_dim):
@@ -161,6 +165,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
         flip = np.array(range(MV_ss.no_rows))
         flip = -flip
         print(MV_ss.page_dim_matrix[current_page][np.argsort(flip)])
+        start = time.time()
 
         # Loop through sequences of possibly nontrivial differentials
         # current_page columns
@@ -200,13 +205,17 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                 # end while
             # end for
         # end for
+        print("time:{}".format(time.time()-start))
     # end for
 
     # EXTENSION PROBLEM #######################################################
     # store 0 dim persistent homology
+    print("extension problem")
+    start_ext = time.time()
     MV_ss.persistent_homology.append(MV_ss.Hom[MV_ss.no_pages - 1][0][0])
     # Go through each diagonal
     for deg in range(1, MV_ss.no_rows):
+        print("deg:{}=========".format(deg))
         # compute dimension of diagonal deg
         dim_PH = [0]
         # Cumulative dimensions for persistent homology along diagonals
@@ -220,6 +229,8 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             # Save space for extension matrix
             ext_mat = np.zeros((dim_PH[-1], dim_PH[-1]))
             # compute extension matrix
+            print("compute ext coefficients")
+            start = time.time()
             start_deg = deg-1
             for start_n_dim in range(1, min(deg+1, MV_ss.no_columns)):
                 if MV_ss.page_dim_matrix[no_pages-1][
@@ -236,6 +247,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
                 # end if
                 start_deg -= 1
             # end for
+            print(time.time()-start)
             #
             # add up barcodes in diagonal
             barcode = []
@@ -272,11 +284,15 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             diag_diff = diag_diff[order]
             # set all barcode endpoints to max_r in diagonal_basis
             diagonal_basis.barcode[:, 1] = max_r * np.ones(diagonal_basis.dim)
+            print("assemble barcode basis")
+            start = time.time()
             PH = image_kernel(diagonal_basis, direct_sum_basis,
                               diag_diff, MV_ss.p)
             MV_ss.persistent_homology.append(PH)
+            print(time.time()-start)
         # end if
     # end for
+    print("time:{}".format(time.time()-start_ext))
     return MV_ss
 
 ###############################################################################

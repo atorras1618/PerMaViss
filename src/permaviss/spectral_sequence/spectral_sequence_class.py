@@ -454,6 +454,7 @@ class spectral_sequence(object):
                 partial_cech_diff_and_lift_local,
                 range(self.nerve_spx_number[n_dim-1]))
             workers_pool.close()
+            workers_pool.join()
             # output = []
             # for j in range(self.nerve_spx_number[n_dim-1]):
             #     output.append(partial_cech_diff_and_lift_local(j))
@@ -731,8 +732,11 @@ class spectral_sequence(object):
         """
         # take care of case when local_coord is a `local_chains` object
         if isinstance(local_coord, local_chains):
-            lift_radii = lift_radii[local_coord.ref[nerve_spx_index]]
-            local_coord = local_coord.coord[nerve_spx_index]
+            if len(local_coord.ref[nerve_spx_index]) > 0:
+                lift_radii = lift_radii[local_coord.ref[nerve_spx_index]]
+                local_coord = local_coord.coord[nerve_spx_index]
+            else:
+                return [], []
 
         # return if nothing to lift
         if len(lift_radii) == 0:
@@ -810,6 +814,7 @@ class spectral_sequence(object):
         output = workers_pool.map(
             partial_first_page_local_lift, range(self.nerve_spx_number[n_dim]))
         workers_pool.close()
+        workers_pool.join()
         # proceed to store the result
         prev = 0
         for nerve_spx_index, next in enumerate(
@@ -1071,6 +1076,7 @@ class spectral_sequence(object):
         Sdeg = start_deg
         Sn_dim = start_n_dim
         for idx, chains in enumerate(Hom_reps):
+            print("lift to infty page")
             # lift to infinity page and substract betas
             Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                             death_radii)
@@ -1080,6 +1086,7 @@ class spectral_sequence(object):
             # STORE EXTENSION COEFFICIENTS
             self.extensions[start_n_dim][start_deg][idx] = Betas.T
             # MODIFY TOTAL COMPLEX REPS using BETAS
+            print("modify using betas")
             if np.any(Betas):
                 for ext_deg, Schains in enumerate(
                         self.Hom_reps[self.no_pages - 1][Sn_dim][Sdeg]):
@@ -1089,12 +1096,15 @@ class spectral_sequence(object):
                     for k, local_coord in enumerate(
                             Hom_reps[ext_deg + idx].coord):
                         local_ref = Hom_reps[ext_deg + idx].ref[k]
-                        Hom_reps[ext_deg + idx].coord[k] = (
-                            local_coord + local_chains_beta.coord[k]) % self.p
+                        if len(local_ref) > 0:
+                            Hom_reps[ext_deg + idx].coord[k] = (
+                                local_coord + local_chains_beta.coord[k]
+                                ) % self.p
                     # end for
                 # end for
             # end if
             # reduce up to 1st page using gammas
+            print("reduce using gammas")
             for target_page in range(self.no_pages, 1, -1):
                 # get coefficients on first page
                 Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
@@ -1139,6 +1149,7 @@ class spectral_sequence(object):
                 # end if
             # end for
             # lift to first page
+            print("lift and cech diff")
             Betas, lift_coord = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                      death_radii)
 
@@ -1148,13 +1159,12 @@ class spectral_sequence(object):
             # if lift to first page is nonzero, raise an error
             if np.any(Betas):
                 raise(RuntimeError)
+
             if Sn_dim > 0:
                 # compute Cech differential of lift_coord
                 # and add to current reps
                 image_chains = self.cech_diff(Sn_dim - 1, Sdeg + 1, lift_coord)
                 Hom_reps[idx+1] = Hom_reps[idx + 1] + image_chains
-                lift_aux, _ = self.first_page_lift(
-                    Sn_dim - 1, Sdeg + 1, Hom_reps[idx+1], death_radii)
             # advance reduction position
             Sdeg += 1
             Sn_dim -= 1
