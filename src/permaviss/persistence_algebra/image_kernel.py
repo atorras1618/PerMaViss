@@ -164,95 +164,125 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     # Initialize a copy of F which will be changing as we iterate over a
     Im_coordinates = np.copy(F)
     # Go through all radius where a change happens
+    # value -2 means that the corresponding column has not yet a pivot
+    active_A = A.active(rad)
+    active_B = B.active(rad)
+    pivots_A = np.ones(A.dim) * (-2)
+    pivots_B = np.ones(B.dim) * (-2)
+    # do a first reduction if a[0]==0 if necessary
+    # look over all persistence values
     for i, rad in enumerate(a):
-        if B.broken_basis:
-            Im_coordinates = B.update_broken(Im_coordinates, rad)
-
-        # Update I0 from submatrix of Im
-        I0 = Im_coordinates[B.active(rad)][:, A.active(rad)]
-        # Get the active indices in A and the relative active indices in A
-        active_indices = A.active(rad)
-        active_rel_indices = A.active(rad, start=start_index)
-        # Take care of special case when I0 = []
-        if len(I0) == 0:
-            # Find active domain elements that have not died yet
-            active_not_dead = np.setdiff1d(active_rel_indices, dead_images)
-            for j in active_not_dead:
-                Im_barcode[j, 1] = rad
-                Ker_barcode[kernel_dim, 0] = rad
-                Ker_coordinates[j, kernel_dim] = 1
-                kernel_dim += 1
-                dead_images.append(j)
+        if not B.broken_basis:
+            dying_A = A.death(rad)
+            for idx, p in enumerate(np.copy(pivots_A)):
+                if p in dying_A:
+                    # compute new pivot a
+                    if a != -1:
+                        #P =  call check, reduce , pivot, ==-1 (recursive)
+                else:
+                    # P = call check, reduce , pivot, ==-1 (recursive)
+                # finish well i.e. pivots_A[idx] = P
             # end for
         # end if
 
-        # Find dying domain generators whose image has not died yet
-        dying_generators = A.death(rad, start=start_index)
-        alive_dying = np.setdiff1d(dying_generators, dead_images)
-        # Set the death radius for the image barcodes
-        for j in alive_dying:
-            Im_barcode[j, 1] = rad
-            dead_images.append(j)
-        # end for
+    # end for
 
-        if kernel_dim > 0 and not B.broken_basis:
-            # Update K0 from submatrix of Ker
-            K0 = Ker_coordinates[:, :kernel_dim]
-            K0 = K0[active_rel_indices]
-            if len(K0) == 0:
-                dying_kernels = np.setdiff1d(range(kernel_dim), dead_kernels)
-                for j in dying_kernels:
-                    dead_kernels.append(j)
-                    Ker_barcode[j, 1] = rad
-                # end for
-            # end if
-            else:
-                # Reduce K0 by column additions
-                K0, Q0 = gauss_col(K0, p)
-                # Perform the same reductions on Ker, if Q0 is not empty
-                if np.any(Q0):
-                    Ker_coordinates[:, :kernel_dim] = multiply_mod_p(
-                        Ker_coordinates[:, :kernel_dim], Q0, p)
-                # Compute the start_index of active barcodes
-                start_index_active = len(active_indices) - len(
-                    active_rel_indices)
-                # Look at K0, eliminating linear dependencies and killing
-                # barcodes on image.
-                for j, c in enumerate(K0.T):
-                    # Find pivot in terms of whole basis A, keep also the
-                    # active pivot.
-                    active_pivot = index_pivot(c)
-                    piv = active_rel_indices[active_pivot]
-                    # If the pivot is new and the column is nonzero
-                    if (piv not in dead_images) and (active_pivot > -1):
-                        # Add new coordinates to Image, set barcode endpoint,
-                        # store preimage.
-                        A_rel_coord = A.trans_active_coord(
-                            c, rad, start=start_index)
-                        image_A_rel = multiply_mod_p(
-                            F[:, start_index:], np.transpose([A_rel_coord]),
-                            p)[:, 0]
-                        Im_rel_coordinates[:, piv] = image_A_rel
-                        Im_coordinates[
-                            :, start_index + piv] = np.copy(image_A_rel)
-                        Im_barcode[piv, 1] = rad
-                        PreIm[:, piv] = A_rel_coord
-                        # Set corresponding column in I0 to zero and add piv
-                        # to dead images
-                        I0[
-                            :, active_pivot + start_index_active
-                            ] = np.zeros(np.size(I0, 0))
-                        dead_images.append(piv)
-                    # end if
-                    # If a barcode is dying in the kernel, add death radius
-                    # to Ker_barcode
-                    if (active_pivot == -1) and (j not in dead_kernels):
-                        dead_kernels.append(j)
-                        Ker_barcode[j, 1] = rad
-                    # end if
-                # end for
-            # end else
-        # end if
+def pivot_check_reduce(M, col_idx, pivots):
+    index_pivot
+
+
+
+#        if B.broken_basis:
+#            Im_coordinates = B.update_broken(Im_coordinates, rad)
+#
+#        # Update I0 from submatrix of Im
+#        I0 = Im_coordinates[B.active(rad)][:, A.active(rad)]
+#        # Get the active indices in A and the relative active indices in A
+#        active_indices = A.active(rad)
+#        active_rel_indices = A.active(rad, start=start_index)
+#        # Take care of special case when I0 = []
+#        if len(I0) == 0:
+#            # Find active domain elements that have not died yet
+#            active_not_dead = np.setdiff1d(active_rel_indices, dead_images)
+#            for j in active_not_dead:
+#                Im_barcode[j, 1] = rad
+#                Ker_barcode[kernel_dim, 0] = rad
+#                Ker_coordinates[j, kernel_dim] = 1
+#                kernel_dim += 1
+#                dead_images.append(j)
+#            # end for
+#        # end if
+#
+#        # Find dying domain generators whose image has not died yet
+#        dying_generators = A.death(rad, start=start_index)
+#        alive_dying = np.setdiff1d(dying_generators, dead_images)
+#        # Set the death radius for the image barcodes
+#        for j in alive_dying:
+#            Im_barcode[j, 1] = rad
+#            dead_images.append(j)
+#        # end for
+#
+#        if kernel_dim > 0 and not B.broken_basis:
+#            # Update K0 from submatrix of Ker
+#            K0 = Ker_coordinates[:, :kernel_dim]
+#            K0 = K0[active_rel_indices]
+#            if len(K0) == 0:
+#                dying_kernels = np.setdiff1d(range(kernel_dim), dead_kernels)
+#                for j in dying_kernels:
+#                    dead_kernels.append(j)
+#                    Ker_barcode[j, 1] = rad
+#                # end for
+#            # end if
+#            else:
+#                # Reduce K0 by column additions
+#                K0, Q0 = gauss_col(K0, p)
+#                # Perform the same reductions on Ker, if Q0 is not empty
+#                if np.any(Q0):
+#                    Ker_coordinates[:, :kernel_dim] = multiply_mod_p(
+#                        Ker_coordinates[:, :kernel_dim], Q0, p)
+#                # Compute the start_index of active barcodes
+#                start_index_active = len(active_indices) - len(
+#                    active_rel_indices)
+#                # Look at K0, eliminating linear dependencies and killing
+#                # barcodes on image.
+#                for j, c in enumerate(K0.T):
+#                    # Find pivot in terms of whole basis A, keep also the
+#                    # active pivot.
+#                    active_pivot = index_pivot(c)
+#                    piv = active_rel_indices[active_pivot]
+#                    # If the pivot is new and the column is nonzero
+#                    if (piv not in dead_images) and (active_pivot > -1):
+#                        # Add new coordinates to Image, set barcode endpoint,
+#                        # store preimage.
+#                        A_rel_coord = A.trans_active_coord(
+#                            c, rad, start=start_index)
+#                        image_A_rel = multiply_mod_p(
+#                            F[:, start_index:], np.transpose([A_rel_coord]),
+#                            p)[:, 0]
+#                        Im_rel_coordinates[:, piv] = image_A_rel
+#                        Im_coordinates[
+#                            :, start_index + piv] = np.copy(image_A_rel)
+#                        Im_barcode[piv, 1] = rad
+#                        PreIm[:, piv] = A_rel_coord
+#                        # Set corresponding column in I0 to zero and add piv
+#                        # to dead images
+#                        I0[
+#                            :, active_pivot + start_index_active
+#                            ] = np.zeros(np.size(I0, 0))
+#                        dead_images.append(piv)
+#                    # end if
+#                    # If a barcode is dying in the kernel, add death radius
+#                    # to Ker_barcode
+#                    if (active_pivot == -1) and (j not in dead_kernels):
+#                        dead_kernels.append(j)
+#                        Ker_barcode[j, 1] = rad
+#                    # end if
+#                # end for
+#            # end else
+#        # end if
+
+
+
         # Reduce I0, adding new generators to the kernel and adjusting
         # Im_rel_coordinates.
         if I0.size > 0:
