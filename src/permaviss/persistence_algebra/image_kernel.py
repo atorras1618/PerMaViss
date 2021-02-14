@@ -9,6 +9,7 @@ import numpy as np
 from .barcode_bases import barcode_basis
 
 from ..gauss_mod_p.gauss_mod_p import gauss_col, index_pivot
+from ..gauss_mod_p.arithmetic_mod_p import inv_mod_p, add_mod_c
 from ..gauss_mod_p.functions import multiply_mod_p
 
 
@@ -151,8 +152,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     Im_coordinates = np.copy(F)
     T = np.identity(A.dim)
     # compute last nonzero entries of columns in Im_coordinates
-    pivots_Im = np.ones(A.dim) *(-2)
-    pivots_Im.astype(int)
+    pivots_Im = np.ones(A.dim) * (-2)
+    pivots_Im = pivots_Im.astype(int)
     # Save space for Ker barcode, coordinates and pivots (if necessary)
     if (not B.broken_basis) and (start_index == 0):
         Ker_barcode = np.zeros((A.dim, 2))
@@ -160,15 +161,12 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
         kernel_dim = 0
         # value -2 means that the corresponding column has not yet a pivot
         pivots_Ker = np.ones(A.dim) * (-2)
-        pivots_Ker.astype(int)
+        pivots_Ker = pivots_Ker.astype(int)
         # Save space for preimage
         PreIm = np.identity(A.dim)
     # Go through all radius where a change happens
     # do a first reduction if a[0]==0 if necessary
     for i, rad in enumerate(a):
-        print("Im_coordinates, rad: {}".format(rad))
-        print(Im_coordinates)
-        print(pivots_Im)
         active_A = A.active(rad)
         active_B = B.active(rad)
         dying_A = A.death(rad)
@@ -182,20 +180,20 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                         active_A, col_idx, pivots_Im[:col_idx], p)
                     if pivots_Ker[col_idx] != -1:
                         new_pivots.append(pivots_Ker[col_idx])
-                        Im_barcode[1, pivots_Ker[col_idx]] = rad
+                        Im_barcode[pivots_Ker[col_idx], 1] = rad
                         cycle_coord = Ker_coordinates[:,col_idx]
                         new_coord_Im = multiply_mod_p(
-                            F, np.transpose([cycle_coord]),p)[:, 0]
-                        if np.any(new_coord_im[active_B]):
+                            F[:,active_A], np.transpose([cycle_coord[active_A]]),p)[:, 0]
+                        if np.any(new_coord_Im[active_B]):
                             raise ValueError
-                        else:
-                            Im_coordinates[:,col_idx] = new_coord_im
-                            Im_barcode[col_idx,1] = rad
-                            pivots_Im[pivots_Ker[col_idx]]= int(-1)
-                            PreIm[:,col_idx]=cycle_coord
+                        elif pivots_Im[pivots_Ker[col_idx]] != -1:
+                            Im_coordinates[:,pivots_Ker[col_idx]] = new_coord_Im
+                            Im_barcode[pivots_Ker[col_idx],1] = rad
+                            pivots_Im[pivots_Ker[col_idx]] = int(-1)
+                            PreIm[:, pivots_Ker[col_idx]][active_A] = cycle_coord[active_A]
                         # end if else
                     else:
-                        Ker_barcode[rel_col_idx,1] = rad
+                        Ker_barcode[col_idx,1] = rad
                     # end if else
                 # end if
             # end for
@@ -212,12 +210,13 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
         for col_idx, piv in enumerate(np.copy(pivots_Im)):
             if (piv in dying_B) or (piv in new_pivots) or (col_idx in birth_A):
                 pivots_Im[col_idx] = pivot_check_reduce(Im_coordinates,
-                    active_A, col_idx, pivots_Im[:col_idx], p, T)
+                    active_B, col_idx, pivots_Im[:col_idx], p, T)
                 if pivots_Im[col_idx] != -1:
                     new_pivots.append(pivots_Im[col_idx])
                 else:
+                    print(int(pivots_Im[col_idx]))
                     print(pivots_Im[col_idx])
-                    Im_barcode[pivots_Im[col_idx], 1] = rad
+                    Im_barcode[col_idx, 1] = rad
                     Ker_barcode[kernel_dim, 0] = rad
                     Ker_coordinates[:, kernel_dim] = T[:, col_idx]
                     pivots_Ker[kernel_dim] = int(col_idx)
@@ -226,22 +225,35 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
                 # end if else
             # end if
         # end for
+        print("Im_coordinates, rad: {}".format(rad))
+        print(Im_coordinates)
+        print("pivots_Ker")
+        print(pivots_Ker)
+        print("pivots_Im")
+        print(pivots_Im)
+        print("Im_barcode")
+        print(Im_barcode)
+        print("Ker_barcode")
+        print(Ker_barcode)
     # end for
-    # In principle, not necessary last step
-    # for col_idx, piv in enumerate(pivots_Ker[:kernel_dim]):
-    #     if piv != -1:
-    #         Im_barcode[col_idx, 1] = a[-1]
-    #     # end if
-    # # end for
-    # for col_idx, piv in enumerate(pivots_Im):
-    #     if piv != -1:
-    #         Ker_barcode[j, 1] = a[-1]
-    #     # end if
-    # # end for
-    # Return to normal order in B
+    # Kill bars that might be still alive
+    for col_idx, piv in enumerate(pivots_Ker[:kernel_dim]):
+        if piv != -1:
+            Ker_barcode[col_idx, 1] = a[-1]
+        # end if
+    # end for
+    for col_idx, piv in enumerate(pivots_Im):
+        if piv != -1:
+            Im_barcode[j, 1] = a[-1]
+        # end if
+    # end for
     Im_coordinates = Im_coordinates[return_order_B]
+    print("Im_basis barcode")
+    print(Im_barcode)
     Im_basis = barcode_basis(Im_barcode, B_origin, Im_coordinates,
                              store_well_defined=True)
+    print("Im_basis barcode")
+    print(Im_basis.barcode)
     if B.broken_basis or (start_index > 0):
         return Im_basis
     # Return to normal order in A
@@ -265,20 +277,20 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
 def pivot_check_reduce(M, active_rows, col_idx, pivots_prev, p, T=None):
     new_pivot = index_pivot(M[active_rows, col_idx])
     if new_pivot != -1:
-        new_pivot = active_rows[new_pivot]
+        new_pivot = int(active_rows[new_pivot])
         if (new_pivot != -1) and (new_pivot in pivots_prev):
-            prev_idx = pivots_prev.index(new_pivot)
-            M[:,col_idx] = add_arrays_mod_c(
+            prev_idx = list(pivots_prev).index(new_pivot)
+            M[:,col_idx] = add_mod_c(
                 inv_mod_p(M[new_pivot,prev_idx], p) * M[:,prev_idx],
-                M[:,col_idx])
-            T[:,col_idx] = add_arrays_mod_c(
+                M[:,col_idx], p)
+            T[:,col_idx] = add_mod_c(
                 inv_mod_p(M[new_pivot,prev_idx], p) * T[:,prev_idx],
-                T[:,col_idx])
+                T[:,col_idx], p)
             new_pivot = pivot_check_reduce(M, active_rows, col_idx,
                                            pivots_prev, p, T)
         # end if
     # end if
-    return new_pivot
+    return int(new_pivot)
 # end def
 
 

@@ -14,8 +14,6 @@ def test_image_kernel_1():
     Ker = np.array([[4, 1, 0]]).T
     PreIm = np.array([[4, 4, 0], [0, 1, 4], [0, 0, 1]])
     res_Im, res_Ker, res_PreIm = image_kernel(A, B, F, 5)
-    print(res_Im.coordinates)
-    print(Im)
     assert np.array_equal(res_Im.coordinates, Im)
     assert np.array_equal(res_Ker.coordinates, Ker)
     assert np.array_equal(res_PreIm, PreIm)
@@ -45,6 +43,10 @@ def test_image_kernel_2():
      [0, 0],
      [0, 0]])
     PreIm = np.array([[1, 1, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    print("res_Ker")
+    print(res_Ker.coordinates)
+    print("Ker")
+    print(Ker)
     assert np.array_equal(res_Im.coordinates, Im)
     assert np.array_equal(res_Ker.coordinates, Ker)
     assert np.array_equal(res_PreIm, PreIm)
