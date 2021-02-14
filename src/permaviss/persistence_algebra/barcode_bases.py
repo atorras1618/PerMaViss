@@ -377,6 +377,16 @@ class barcode_basis(object):
         death_bool = (self.barcode[:, 1] == rad)
         return indices[death_bool[start:]]
 
+    def birth(self, rad, start=0):
+        """Try
+        """
+        if start >= self.dim:
+            raise ValueError
+
+        indices = np.array(range(self.dim - start))
+        birth_bool = (self.barcode[:, 0] == rad)
+        return indices[birth_bool[start:]]
+
     ###########################################################################
     # Functions used by spectral_sequence class
 

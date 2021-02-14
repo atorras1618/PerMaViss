@@ -14,6 +14,8 @@ def test_image_kernel_1():
     Ker = np.array([[4, 1, 0]]).T
     PreIm = np.array([[4, 4, 0], [0, 1, 4], [0, 0, 1]])
     res_Im, res_Ker, res_PreIm = image_kernel(A, B, F, 5)
+    print(res_Im.coordinates)
+    print(Im)
     assert np.array_equal(res_Im.coordinates, Im)
     assert np.array_equal(res_Ker.coordinates, Ker)
     assert np.array_equal(res_PreIm, PreIm)
@@ -286,3 +288,15 @@ def test_image_kernel_9():
     assert np.array_equal(Ker_barcode, res_Ker.barcode)
     assert np.array_equal(Ker_coord, res_Ker.coordinates)
     assert np.array_equal(res_PreIm, PreIm)
+
+
+if __name__ == "__main__":
+    test_image_kernel_1()
+    test_image_kernel_2()
+    test_image_kernel_3()
+    test_image_kernel_4()
+    test_image_kernel_5()
+    test_image_kernel_6()
+    test_image_kernel_7()
+    test_image_kernel_8()
+    test_image_kernel_9()
