@@ -12,19 +12,19 @@ from permaviss.persistence_algebra.PH_classic import persistent_homology
 
 def test_double_complex():
     # creating and saving new point cloud ############
-    X = random_cube(500, 3)
-    point_cloud = take_sample(X, 50)
+    X = random_cube(1000, 3)
+    point_cloud = take_sample(X, 180)
     output_file = open("test/spectral_sequence/random_cube.txt", "w")
     for row in point_cloud:
         np.savetxt(output_file, row)
     output_file.close()
     # using old point cloud ###################
-    # saved_data = np.loadtxt("test/spectral_sequence/failing_1.txt")
+    # saved_data = np.loadtxt("test/spectral_sequence/random_cube.txt")
     # no_points = int(np.size(saved_data,0) / 3)
     # point_cloud = np.reshape(saved_data, (no_points, 3))
-    max_r = 0.4
+    max_r = 0.2
     max_dim = 3
-    max_div = 2
+    max_div = 3
     overlap = max_r * 1.01
     p = 3
     # compute ordinary persistent homology
@@ -99,9 +99,6 @@ def cech_differential_twice(MV_ss, n_dim, deg):
     # end for
     # IMAGE OF CECH DIFFERENTIAL twice #############################
     for k in [1, 2]:
-        print(k)
-        print("preim")
-        print(preim)
         cech_im = local_chains(MV_ss.nerve_spx_number[n_dim-k])
         for nerve_face_index, coboundary in enumerate(
                 MV_ss.nerve_differentials[n_dim-k+1]):
@@ -118,3 +115,7 @@ def cech_differential_twice(MV_ss, n_dim, deg):
         assert not np.any(zero_coord)
     # end for
 # end cech_differential
+
+
+if __name__ == "__main__":
+    test_double_complex()

@@ -93,6 +93,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     """
     # Divide point cloud using hypercube cover
     # Use points_IN to build Nerve in future more general version
+    print("dividing point cloud")
     nerve_point_cloud, points_IN, nerve = cubical_cover.generate_cover(
         max_div, overlap, point_cloud)
 
@@ -108,6 +109,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
     MV_ss = spectral_sequence(nerve, nerve_point_cloud, points_IN, max_dim,
                               max_r, no_pages, p)
 
+    print("computing 0 and 1st page")
     # 0 PAGE ##################################################################
     start = time.time()
     for n_dim in range(0, nerve_dim):
@@ -286,8 +288,8 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             diagonal_basis.barcode[:, 1] = max_r * np.ones(diagonal_basis.dim)
             print("assemble barcode basis")
             start = time.time()
-            PH, _ = image_kernel(diagonal_basis, direct_sum_basis,
-                              diag_diff, MV_ss.p)
+            PH, _ = image_kernel(
+                diagonal_basis, direct_sum_basis, diag_diff, MV_ss.p)
             MV_ss.persistent_homology.append(PH)
             print(time.time()-start)
         # end if

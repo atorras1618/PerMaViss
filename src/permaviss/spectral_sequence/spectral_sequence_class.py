@@ -1096,10 +1096,20 @@ class spectral_sequence(object):
                     for k, local_coord in enumerate(
                             Hom_reps[ext_deg + idx].coord):
                         local_ref = Hom_reps[ext_deg + idx].ref[k]
-                        if len(local_ref) > 0:
+                        if (len(local_ref)) > 0 and (
+                                len(local_chains_beta.ref[k]) > 0):
+                            if not np.array_equal(
+                                    local_ref, local_chains_beta.ref[k]):
+                                raise ValueError
                             Hom_reps[ext_deg + idx].coord[k] = (
                                 local_coord + local_chains_beta.coord[k]
                                 ) % self.p
+                        elif len(local_chains_beta.ref[k]) > 0:
+                            Hom_reps[ext_deg + idx].ref[
+                                k] = local_chains_beta.ref[k]
+                            Hom_reps[ext_deg + idx].coord[
+                                k] = local_chains_beta.coord[k]
+                        # end elif
                     # end for
                 # end for
             # end if
