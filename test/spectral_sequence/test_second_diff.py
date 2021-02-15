@@ -26,3 +26,7 @@ def test_second_diff():
     # Check that computed barcodes coincide
     for it, PH in enumerate(MV_ss.persistent_homology):
         assert np.array_equal(PH.barcode, PerHom[it].barcode)
+
+
+if __name__ == "__main__":
+    test_second_diff()

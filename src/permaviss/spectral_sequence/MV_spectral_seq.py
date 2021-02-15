@@ -286,7 +286,7 @@ def create_MV_ss(point_cloud, max_r, max_dim, max_div, overlap, p):
             diagonal_basis.barcode[:, 1] = max_r * np.ones(diagonal_basis.dim)
             print("assemble barcode basis")
             start = time.time()
-            PH = image_kernel(diagonal_basis, direct_sum_basis,
+            PH, _ = image_kernel(diagonal_basis, direct_sum_basis,
                               diag_diff, MV_ss.p)
             MV_ss.persistent_homology.append(PH)
             print(time.time()-start)

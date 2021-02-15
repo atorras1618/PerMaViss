@@ -49,3 +49,7 @@ def test_persistent_homology():
         [0.,  0.,  0.]])
     assert np.allclose(Im[1].coordinates, Im_1_res, rtol=1e-05, atol=1e-08)
     assert np.allclose(PreIm[2], PreIm_2_res, rtol=1e-05,  atol=1e-08)
+
+
+if __name__ == "__main__":
+    test_persistent_homology()

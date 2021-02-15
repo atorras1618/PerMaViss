@@ -49,7 +49,7 @@ def quotient(M, N, p):
     # create a matrix (N|M) in M.prev_basis
     matrix_N_M = np.concatenate((N.coordinates, M.coordinates), axis=1)
     # Compute quotient barcodes for M mod N
-    Q, _, _ = image_kernel(N_M, M.prev_basis, matrix_N_M, p,
+    Q, _ = image_kernel(N_M, M.prev_basis, matrix_N_M, p,
                                  start_index=N.dim, prev_basis=M)
     return Q
 
