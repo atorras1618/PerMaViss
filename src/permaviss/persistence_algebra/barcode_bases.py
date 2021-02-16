@@ -257,7 +257,7 @@ class barcode_basis(object):
         changes_radii = np.resize(self.barcode, (1, 2 * len(self.barcode)))
         return np.unique(changes_radii)
 
-    def active(self, rad, start=0, end=-1):
+    def active(self, rad):
         """Returns array with active indices at rad.
 
         Option to restrict to generators from start to self.dim
@@ -266,17 +266,11 @@ class barcode_basis(object):
         ----------
         rad : `float`
             Radius where we want to check which barcodes are active.
-        start : int, default is 0
-            Generator in `self` from which we start to search.
-        end : int, default is -1
-            Generator in `self` until which we end searching for active
-            generators.
 
         Returns
         -------
         :obj:`Numpy Array`
             One-dimensional array with indices of active generators.
-            This is relative to the start index.
 
         Example
         -------
@@ -287,74 +281,45 @@ class barcode_basis(object):
              [1 3]]
             >>> base3.active(1.2)
             array([0, 2])
-            >>> base3.active(0.8, start=1)
-            array([0])
 
 
         """
-        if end == -1:
-            end = self.dim
-        # end if
-        if start >= self.dim or (end > self.dim) or (end < 0):
-            print("start:{}, end:{}, self.dim:{}".format(start, end, self.dim))
-            raise ValueError
-        # end if
-        indices = np.array(range(end - start))
+        indices = np.array(range(self.dim))
         active_bool = np.logical_and(self.barcode[:, 0] <= rad,
                                      rad < self.barcode[:, 1])
-        return indices[active_bool[start:end]]
+        return indices[active_bool]
 
-    def trans_active_coord(self, coord, rad, start=0):
-        """Given coordinates on the active generators, this returns
-        coordinates in the whole basis.
-
-        This also can be done relative to a start index higher than 0
+    def birth(self, rad):
+        """Returns an array with the indices being born at rad.
 
         Parameters
         ----------
-        coord : :obj:`Numpy Array`
-            One dimensional array specifying the coordinates on the active
-            basis.
         rad : float
-            Radius on which we are checking for active generators.
-        start : int, default is 0
-            We ignore the indices smaller than this. Notice that `coord`
-            as well as the produced absolute coordinates will be adjusted
-            appropriately.
-
-        Returns
-        -------
-        :obj:`Numpy Array`
-            One dimensional array with a
+            Radius at which generators might be born
 
         Example
         -------
-            >>> bars = [[0,5],[0,2],[1,4],[0.5,3]]
-            >>> base7 = barcode_basis(bars)
-            >>> base7.trans_active_coord([0,1,1],2.4)
-            array([ 0.,  0.,  1.,  1.])
-            >>> base7.trans_active_coord([-1,1],3.8)
-            array([-1.,  0.,  1.,  0.])
-            >>> base7.trans_active_coord([-1,1],2.2,1)
-            array([ 0., -1.,  1.])
-
+            >>> print(base4)
+            Barcode basis
+            [[-1  3]
+             [ 0  4]
+             [ 1  4]
+             [ 1  2]]
+            >>> base4.birth(1)
+            array([2, 3])
 
         """
-        trans_coord = np.zeros(self.dim - start)
-        trans_coord[self.active(rad, start)] = coord
-        return trans_coord
+        indices = np.array(range(self.dim))
+        birth_bool = (self.barcode[:, 0] == rad)
+        return indices[birth_bool]
 
-    def death(self, rad, start=0):
+    def death(self, rad):
         """Returns an array with the indices dying at rad.
-
-        These indices are relative to the optional argument start.
 
         Parameters
         ----------
         rad : float
             Radius at which generators might be dying
-        start : int, default is 0
-
 
         Example
         -------
@@ -366,165 +331,11 @@ class barcode_basis(object):
              [ 1  2]]
             >>> base4.death(4)
             array([1, 2])
-            >>> base4.death(4,2)
-            array([0])
 
         """
-        if start >= self.dim:
-            raise ValueError
-
-        indices = np.array(range(self.dim - start))
+        indices = np.array(range(self.dim))
         death_bool = (self.barcode[:, 1] == rad)
-        return indices[death_bool[start:]]
-
-    def birth(self, rad, start=0):
-        """Try
-        """
-        if start >= self.dim:
-            raise ValueError
-
-        indices = np.array(range(self.dim - start))
-        birth_bool = (self.barcode[:, 0] == rad)
-        return indices[birth_bool[start:]]
-
-    ###########################################################################
-    # Functions used by spectral_sequence class
-
-    def birth_radius(self, coordinates):
-        """This finds the birth radius of a list of coordinates.
-
-        Example
-        -------
-            >>> base3 = barcode_basis([[0,2],[0,1],[1,3]])
-            >>> base3.birth_radius([1,0,3])
-            1
-
-
-        """
-        if not np.any(coordinates):
-            return np.nan  # Returns nan if coordinates are zero
-
-        return np.max(self.barcode[np.nonzero(coordinates), 0])
-
-    def death_radius(self, coordinates):
-        """Find the death radius of given coordinates.
-
-        Example
-        -------
-            >>> print(base3)
-            Barcode basis
-            [[0 2]
-             [0 1]
-             [1 3]]
-            >>> base3.death_radius([1,1,1])
-            3
-
-
-        """
-        if not np.any(coordinates):
-            return np.nan  # Returns nan if coordinates are zero
-
-        return np.max(self.barcode[np.nonzero(coordinates)])
-
-    def bool_select(self, selection):
-        """Given a boolean array, we select generators from a barcode basis.
-
-        Example
-        -------
-            >>> print(base3)
-            Barcode basis
-            [[0 2]
-             [0 1]
-             [1 3]]
-            >>> base5 = base3.bool_select([True,False,True])
-            >>> print(base5)
-            Barcode basis
-            [[0 2]
-             [1 3]]
-
-
-        """
-        if self.prev_basis is None:
-            return barcode_basis(self.barcode[selection])
-
-        return barcode_basis(self.barcode[selection], self.prev_basis,
-                             self.coordinates[:, selection])
-
-    def active_coordinates(self, rad):
-        """Active submatrix of coordinates at rad
-
-        Example
-        -------
-            >>> bars = np.array(
-            ... [[0,5],[1,5],[1,5],[2,4]])
-            >>> baseP = barcode_basis(bars)
-            >>> barsC = np.array(
-            ... [[1,4],[2,5]])
-            >>> coord = np.array(
-            ... [[1,0],
-            ...  [0,1],
-            ...  [2,1],
-            ...  [0,1]])
-            >>> baseC = barcode_basis(barsC, baseP, coord)
-            >>> print(baseC)
-            Barcode basis
-            [[1 4]
-             [2 5]]
-            [[1 0]
-             [0 1]
-             [2 1]
-             [0 1]]
-            >>> bars
-            array([[0, 5],
-                   [1, 5],
-                   [1, 5],
-                   [2, 4]])
-            >>> baseC.active_coordinates(1.3)
-            array([[1],
-                   [0],
-                   [2]])
-            >>> baseC.active_coordinates(4.8)
-            array([[0],
-                   [1],
-                   [1]])
-            >>> baseC.active_coordinates(3)
-            array([[1, 0],
-                   [0, 1],
-                   [2, 1],
-                   [0, 1]])
-
-        """
-        A = np.copy(self.coordinates[:, self.active(rad)])
-        return A[self.prev_basis.active(rad)]
-
-    def active_domain(self, rad):
-        """Active columns of coordinates at rad
-
-        Example
-        -------
-
-            >>> print(baseC)
-                Barcode basis
-                [[1 4]
-                 [2 5]]
-                [[1 0]
-                 [0 1]
-                 [2 1]
-                 [0 1]]
-            >>> baseC.active_domain(1.3)
-            array([[1],
-                   [0],
-                   [2],
-                   [0]])
-
-        """
-        if self.dim == 0:
-            return np.array([])
-        else:
-            return np.copy(self.coordinates[:, self.active(rad)])
-
-    ###########################################################################
-    # Function updating broken_differentials
+        return indices[death_bool]
 
     def update_broken(self, A, rad):
         """Updates a matrix A, using the broken differentials of the
