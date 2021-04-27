@@ -337,7 +337,7 @@ class barcode_basis(object):
         death_bool = (self.barcode[:, 1] == rad)
         return indices[death_bool]
 
-    def update_broken(self, A, rad):
+    def update_broken(self, A, rad, p):
         """Updates a matrix A, using the broken differentials of the
         generators dying at rad.
 
@@ -379,6 +379,6 @@ class barcode_basis(object):
             sum_update = np.matmul(self.broken_differentials[:, dying_indices],
                                    A[dying_indices])
             A[dying_indices] = np.zeros((len(dying_indices), np.size(A, 1)))
-            A = A + sum_update
+            A = A + sum_update % p
 
         return A

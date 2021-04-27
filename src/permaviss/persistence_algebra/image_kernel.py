@@ -206,7 +206,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
             # end for
             # update broken barcodes
             if B.broken_basis:
-                Im_coordinates = B.update_broken(Im_coordinates, rad)
+                Im_coordinates = B.update_broken(Im_coordinates, rad, p)
         # end if else
         new_pivots = []
         for col_idx, piv in enumerate(np.copy(pivots_Im)):
@@ -269,7 +269,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
 
 
 def pivot_check_reduce(M, active_rows, col_idx, pivots_prev, p, T=None):
-    new_pivot = index_pivot(M[active_rows, col_idx])
+    new_pivot = index_pivot(M[active_rows, col_idx]%p)
     if new_pivot != -1:
         new_pivot = int(active_rows[new_pivot])
         if (new_pivot != -1) and (new_pivot in pivots_prev):
