@@ -315,20 +315,18 @@ def sort_filtration_by_dim(simplex_tree, maxdim=None):
             filtration_by_dim[dim].append([idx, spx_t, value])
 
     for dim, filtr in enumerate(filtration_by_dim):
-        filtration_by_dim[dim] = [
-            np.asarray(x, dtype=np.int64 if i < 2 else np.int64)
-            for i, x in enumerate(zip(*filtr))
-            ]
+        filtration_by_dim[dim] = [np.asarray(x)
+                                  for i, x in enumerate(zip(*filtr))]
 
     return filtration_by_dim
 
 
 @njit
-def _twist_reduction(boundary, triangular, pivots_lookup, idxs_next_dim):
+def _twist_reduction(boundary, triangular, pivots_lookup):
     """R = MV"""
     n = len(boundary)
 
-    pos_idxs_to_clear = List.empty_list(types.int64)
+    pos_idxs_to_clear = []
     for j in range(n):
         lowest_one = boundary[j][-1] if boundary[j] else -1
         pivot_col = pivots_lookup[lowest_one]
@@ -343,7 +341,7 @@ def _twist_reduction(boundary, triangular, pivots_lookup, idxs_next_dim):
             pivots_lookup[lowest_one] = j
             pos_idxs_to_clear.append(lowest_one)
 
-    return pos_idxs_to_clear
+    return np.asarray(pos_idxs_to_clear, dtype=np.int64)
 
 
 @lru_cache
@@ -354,37 +352,48 @@ def _reduce_single_dim(dim):
     int64_list_typ = types.List(types.int64)
 
     @njit
-    def _inner_reduce_single_dim(idxs_dim, tups_dim, pos_idxs_to_clear,
-                                 idxs_next_dim=None, tups_next_dim=None):
+    def _inner_reduce_single_dim(tups_dim, pos_idxs_to_clear,
+                                 tups_next_dim=None):
         """R = MV"""
-        # Initialize reduced matrix as the boundary matrix
+        # Initialize reduced matrix as the (cleared) boundary matrix
         reduced = List.empty_list(int64_list_typ)
         triangular = List.empty_list(int64_list_typ)
-        if idxs_next_dim is not None:
+        if tups_next_dim is not None:
             spx2idx_next_dim = Dict.empty(tuple_typ_next_dim, types.int64)
-            for j in range(len(idxs_next_dim)):
+            for j in range(len(tups_next_dim)):
                 spx = to_fixed_tuple(tups_next_dim[j], len_tups_next_dim)
                 spx2idx_next_dim[spx] = j
 
-            for i in range(len(idxs_dim)):
-                spx = to_fixed_tuple(tups_dim[i], len_tups_dim)
-                reduced.append(sorted([spx2idx_next_dim[face]
-                                       for face in _drop_elements(spx)]))
-                triangular.append([idxs_dim[i]])
+            if not pos_idxs_to_clear.size:
+                for i in range(len(tups_dim)):
+                    spx = to_fixed_tuple(tups_dim[i], len_tups_dim)
+                    reduced.append(sorted([spx2idx_next_dim[face]
+                                           for face in _drop_elements(spx)]))
+                    triangular.append([i])
+            else:
+                to_clear_bool = np.zeros(len(tups_dim), dtype=np.bool_)
+                to_clear_bool[pos_idxs_to_clear] = True
+                for i in range(len(tups_dim)):
+                    spx = to_fixed_tuple(tups_dim[i], len_tups_dim)
+                    if to_clear_bool[i]:
+                        reduced.append([types.int64(x) for x in range(0)])
+                    else:
+                        reduced.append(
+                            sorted([spx2idx_next_dim[face]
+                                    for face in _drop_elements(spx)])
+                            )
+                    triangular.append([i])
 
-            for pos_idx in pos_idxs_to_clear:
-                reduced[pos_idx] = [types.int64(x) for x in range(0)]
+            pivots_lookup = np.full(len(tups_next_dim), -1, dtype=np.int64)
 
-            pivots_lookup = [-1] * len(idxs_next_dim)
-
-            pos_idxs_to_clear = _twist_reduction(
-                reduced, triangular, pivots_lookup, idxs_next_dim
-                )
+            pos_idxs_to_clear = _twist_reduction(reduced,
+                                                 triangular,
+                                                 pivots_lookup)
 
         else:
-            for i in range(len(idxs_dim)):
+            for i in range(len(tups_dim)):
                 reduced.append([types.int64(x) for x in range(0)])
-                triangular.append([idxs_dim[i]])
+                triangular.append([i])
 
         return reduced, triangular, pos_idxs_to_clear
 
@@ -393,26 +402,23 @@ def _reduce_single_dim(dim):
 
 def get_reduced_triangular(filtr_by_dim):
     maxdim = len(filtr_by_dim) - 1
+    pos_idxs_to_clear = np.empty(0, dtype=np.int64)
     reduced_triangular = []  # WARNING: Populated in reverse order
-    pos_idxs_to_clear = List.empty_list(types.int64)
     for dim in range(maxdim, 0, -1):
         reduction_dim = _reduce_single_dim(dim)
-        idxs_dim, tups_dim, _ = filtr_by_dim[dim]
-        idxs_next_dim, tups_next_dim, _ = filtr_by_dim[dim - 1]
+        _, tups_dim, _ = filtr_by_dim[dim]
+        _, tups_next_dim, _ = filtr_by_dim[dim - 1]
         reduced, triangular, pos_idxs_to_clear = reduction_dim(
-            idxs_dim,
             tups_dim,
-            pos_idxs_to_clear,
-            idxs_next_dim=idxs_next_dim,
+            pos_idxs_to_clear=pos_idxs_to_clear,
             tups_next_dim=tups_next_dim
             )
         reduced_triangular.append((reduced, triangular))
 
     reduction_dim = _reduce_single_dim(0)
-    idxs_dim, tups_dim, _ = filtr_by_dim[0]
-    reduced, triangular, _ = reduction_dim(idxs_dim,
-                                           tups_dim,
-                                           pos_idxs_to_clear)
+    _, tups_dim, _ = filtr_by_dim[0]
+    reduced, triangular, _ = reduction_dim(tups_dim,
+                                           pos_idxs_to_clear=pos_idxs_to_clear)
     reduced_triangular.append((reduced, triangular))
 
     return reduced_triangular[::-1]
@@ -443,8 +449,9 @@ def get_barcode(filtr_by_dim):
         for j in range(len(values_prev_dim)):
             if reduced_prev_dim[j]:
                 i = reduced_prev_dim[j][-1]
-                if values_dim[i] != values_prev_dim[j]:
-                    pairs_dim.append((values_dim[i], values_prev_dim[j]))
+                b, d = values_dim[i], values_prev_dim[j]
+                if b != d:
+                    pairs_dim.append((b, d))
                 all_birth_indices.add(i)
 
         for i in range(len(values_dim)):
