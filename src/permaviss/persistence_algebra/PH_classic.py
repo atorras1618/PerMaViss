@@ -11,7 +11,7 @@ from numba import njit
 from numba import types
 from numba.cpython.unsafe.tuple import tuple_setitem
 from numba.np.unsafe.ndarray import to_fixed_tuple
-from numba.typed import List, Dict
+from numba.typed import Dict
 
 from .barcode_bases import barcode_basis
 from ..gauss_mod_p import gauss_mod_p
@@ -349,15 +349,14 @@ def _reduce_single_dim(dim):
     len_tups_dim = dim + 1
     len_tups_next_dim = dim
     tuple_typ_next_dim = types.UniTuple(types.int64, len_tups_next_dim)
-    int64_list_typ = types.List(types.int64)
 
     @njit
     def _inner_reduce_single_dim(tups_dim, pos_idxs_to_clear,
                                  tups_next_dim=None):
         """R = MV"""
         # Initialize reduced matrix as the (cleared) boundary matrix
-        reduced = List.empty_list(int64_list_typ)
-        triangular = List.empty_list(int64_list_typ)
+        reduced = []
+        triangular = []
         if tups_next_dim is not None:
             spx2idx_next_dim = Dict.empty(tuple_typ_next_dim, types.int64)
             for j in range(len(tups_next_dim)):
