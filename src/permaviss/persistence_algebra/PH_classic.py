@@ -4,11 +4,17 @@
     This module implements a function which computes bases for the image and
     kernel of morphisms between persistence modules.
 """
-import numpy as np
+from functools import lru_cache
 
-from ..gauss_mod_p import gauss_mod_p
+import numpy as np
+from numba import njit
+from numba import types
+from numba.cpython.unsafe.tuple import tuple_setitem
+from numba.np.unsafe.ndarray import to_fixed_tuple
+from numba.typed import List, Dict
 
 from .barcode_bases import barcode_basis
+from ..gauss_mod_p import gauss_mod_p
 
 
 ###############################################################################
@@ -295,3 +301,210 @@ def persistent_homology(D, R, max_rad, p):
 
     """Return everything."""
     return Hom, Im, PreIm
+
+
+def sort_filtration_by_dim(simplex_tree, maxdim=None):
+    if maxdim is None:
+        maxdim = simplex_tree.dimension()
+
+    filtration_by_dim = [[] for _ in range(maxdim + 1)]
+    for idx, (spx, value) in enumerate(simplex_tree.get_filtration()):
+        spx_t = tuple(sorted(spx))
+        dim = len(spx_t) - 1
+        if dim <= maxdim:
+            filtration_by_dim[dim].append([idx, spx_t, value])
+
+    for dim, filtr in enumerate(filtration_by_dim):
+        filtration_by_dim[dim] = [
+            np.asarray(x, dtype=np.int64 if i < 2 else np.int64)
+            for i, x in enumerate(zip(*filtr))
+            ]
+
+    return filtration_by_dim
+
+
+@njit
+def _twist_reduction(boundary, triangular, pivots_lookup, idxs_next_dim):
+    """R = MV"""
+    n = len(boundary)
+
+    pos_idxs_to_clear = List.empty_list(types.int64)
+    for j in range(n):
+        lowest_one = boundary[j][-1] if boundary[j] else -1
+        pivot_col = pivots_lookup[lowest_one]
+        while (lowest_one != -1) and (pivot_col != -1):
+            boundary[j] = _symm_diff(boundary[j][:-1],
+                                     boundary[pivot_col][:-1])
+            triangular[j] = _symm_diff(triangular[j],
+                                       triangular[pivot_col])
+            lowest_one = boundary[j][-1] if boundary[j] else -1
+            pivot_col = pivots_lookup[lowest_one]
+        if lowest_one != -1:
+            pivots_lookup[lowest_one] = j
+            pos_idxs_to_clear.append(lowest_one)
+
+    return pos_idxs_to_clear
+
+
+@lru_cache
+def _reduce_single_dim(dim):
+    len_tups_dim = dim + 1
+    len_tups_next_dim = dim
+    tuple_typ_next_dim = types.UniTuple(types.int64, len_tups_next_dim)
+    int64_list_typ = types.List(types.int64)
+
+    @njit
+    def _inner_reduce_single_dim(idxs_dim, tups_dim, pos_idxs_to_clear,
+                                 idxs_next_dim=None, tups_next_dim=None):
+        """R = MV"""
+        # Initialize reduced matrix as the boundary matrix
+        reduced = List.empty_list(int64_list_typ)
+        triangular = List.empty_list(int64_list_typ)
+        if idxs_next_dim is not None:
+            spx2idx_next_dim = Dict.empty(tuple_typ_next_dim, types.int64)
+            for j in range(len(idxs_next_dim)):
+                spx = to_fixed_tuple(tups_next_dim[j], len_tups_next_dim)
+                spx2idx_next_dim[spx] = j
+
+            for i in range(len(idxs_dim)):
+                spx = to_fixed_tuple(tups_dim[i], len_tups_dim)
+                reduced.append(sorted([spx2idx_next_dim[face]
+                                       for face in _drop_elements(spx)]))
+                triangular.append([idxs_dim[i]])
+
+            for pos_idx in pos_idxs_to_clear:
+                reduced[pos_idx] = [types.int64(x) for x in range(0)]
+
+            pivots_lookup = [-1] * len(idxs_next_dim)
+
+            pos_idxs_to_clear = _twist_reduction(
+                reduced, triangular, pivots_lookup, idxs_next_dim
+                )
+
+        else:
+            for i in range(len(idxs_dim)):
+                reduced.append([types.int64(x) for x in range(0)])
+                triangular.append([idxs_dim[i]])
+
+        return reduced, triangular, pos_idxs_to_clear
+
+    return _inner_reduce_single_dim
+
+
+def get_reduced_triangular(filtr_by_dim):
+    maxdim = len(filtr_by_dim) - 1
+    reduced_triangular = []  # WARNING: Populated in reverse order
+    pos_idxs_to_clear = List.empty_list(types.int64)
+    for dim in range(maxdim, 0, -1):
+        reduction_dim = _reduce_single_dim(dim)
+        idxs_dim, tups_dim, _ = filtr_by_dim[dim]
+        idxs_next_dim, tups_next_dim, _ = filtr_by_dim[dim - 1]
+        reduced, triangular, pos_idxs_to_clear = reduction_dim(
+            idxs_dim,
+            tups_dim,
+            pos_idxs_to_clear,
+            idxs_next_dim=idxs_next_dim,
+            tups_next_dim=tups_next_dim
+            )
+        reduced_triangular.append((reduced, triangular))
+
+    reduction_dim = _reduce_single_dim(0)
+    idxs_dim, tups_dim, _ = filtr_by_dim[0]
+    reduced, triangular, _ = reduction_dim(idxs_dim,
+                                           tups_dim,
+                                           pos_idxs_to_clear)
+    reduced_triangular.append((reduced, triangular))
+
+    return reduced_triangular[::-1]
+
+
+def get_barcode(filtr_by_dim):
+    reduced_triangular = get_reduced_triangular(filtr_by_dim)
+    maxdim = len(filtr_by_dim) - 1
+
+    pairs = [list()] * len(filtr_by_dim)
+
+    _, _, values_maxdim = filtr_by_dim[maxdim]
+    reduced_maxdim, _ = reduced_triangular[maxdim]
+    pairs_maxdim = []
+    for i in range(len(values_maxdim)):
+        if not reduced_maxdim[i]:
+            pairs_maxdim.append((values_maxdim[i], np.inf))
+    pairs[maxdim] = sorted(pairs_maxdim)
+
+    for dim in range(maxdim - 1, -1, -1):
+        all_birth_indices = set()
+        _, _, values_dim = filtr_by_dim[dim]
+        reduced_dim, _ = reduced_triangular[dim]
+        _, _, values_prev_dim = filtr_by_dim[dim + 1]
+        reduced_prev_dim, _ = reduced_triangular[dim + 1]
+
+        pairs_dim = []
+        for j in range(len(values_prev_dim)):
+            if reduced_prev_dim[j]:
+                i = reduced_prev_dim[j][-1]
+                if values_dim[i] != values_prev_dim[j]:
+                    pairs_dim.append((values_dim[i], values_prev_dim[j]))
+                all_birth_indices.add(i)
+
+        for i in range(len(values_dim)):
+            if i not in all_birth_indices:
+                if not reduced_dim[i]:
+                    pairs_dim.append((values_dim[i], np.inf))
+
+        pairs[dim] = sorted(pairs_dim)
+
+    return pairs
+
+
+@njit
+def _symm_diff(x, y):
+    n = len(x)
+    m = len(y)
+    result = []
+    i = 0
+    j = 0
+    while (i < n) and (j < m):
+        if x[i] < y[j]:
+            result.append(x[i])
+            i += 1
+        elif y[j] < x[i]:
+            result.append(y[j])
+            j += 1
+        else:
+            i += 1
+            j += 1
+
+    while i < n:
+        result.append(x[i])
+        i += 1
+
+    while j < m:
+        result.append(y[j])
+        j += 1
+
+    return result
+
+
+@njit
+def _drop_elements(tup: tuple):
+    for x in range(len(tup)):
+        empty = tup[:-1]  # Not empty, but the right size and will be mutated
+        idx = 0
+        for i in range(len(tup)):
+            if i != x:
+                empty = tuple_setitem(empty, idx, tup[i])
+                idx += 1
+        yield empty
+
+
+def check_agreement_with_gudhi(gudhi_barcode, barcode):
+    max_dimension_gudhi = max([pers_info[0] for pers_info in gudhi_barcode])
+    assert max_dimension_gudhi <= len(barcode) - 1
+
+    for dim, barcode_dim in enumerate(barcode):
+        gudhi_barcode_dim = sorted([
+            pers_info[1] for pers_info in gudhi_barcode if pers_info[0] == dim
+            ])
+        assert gudhi_barcode_dim == sorted(barcode_dim), \
+            f"Disagreement in degree {dim}"
