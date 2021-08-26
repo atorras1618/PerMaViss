@@ -122,7 +122,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
     B_origin = B
     return_order_B = range(B.dim)
     if not B.sorted:
-        B = barcode_basis(B.barcode)
+        B = barcode_basis(B.barcode, broken_basis=B.broken_basis,
+                          broken_differentials=B.broken_differentials)
         order = B.sort(send_order=True)
         F = np.copy(F[order])
         return_order_B = np.argsort(order)
@@ -269,7 +270,7 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
 
 
 def pivot_check_reduce(M, active_rows, col_idx, pivots_prev, p, T=None):
-    new_pivot = index_pivot(M[active_rows, col_idx]%p)
+    new_pivot = index_pivot(M[active_rows, col_idx] % p)
     if new_pivot != -1:
         new_pivot = int(active_rows[new_pivot])
         if (new_pivot != -1) and (new_pivot in pivots_prev):

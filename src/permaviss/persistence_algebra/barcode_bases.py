@@ -119,6 +119,7 @@ class barcode_basis(object):
             raise ValueError
 
         self.broken_basis = broken_basis
+        self.broken_differentials = None
 
         # Store given data
         self.barcode = np.copy(bars)
@@ -379,6 +380,6 @@ class barcode_basis(object):
             sum_update = np.matmul(self.broken_differentials[:, dying_indices],
                                    A[dying_indices])
             A[dying_indices] = np.zeros((len(dying_indices), np.size(A, 1)))
-            A = A + sum_update % p
+            A = (A + sum_update) % p
 
         return A

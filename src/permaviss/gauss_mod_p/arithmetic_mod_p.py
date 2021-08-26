@@ -67,7 +67,7 @@ def inv_mod_p(a, p):
     ValueError
         If p is not a prime number
     """
-    if a%p == 0:
+    if a % p == 0:
         print("cannot invert 0!")
         raise ValueError
 
