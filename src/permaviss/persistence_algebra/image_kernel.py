@@ -211,8 +211,8 @@ def image_kernel(A, B, F, p, start_index=0, prev_basis=None):
         # end if else
         new_pivots = []
         for col_idx, piv in enumerate(np.copy(pivots_Im)):
-            if (piv in dying_B) or (piv in new_pivots) or (
-                    col_idx in birth_A):
+            if (piv >= 0 and Im_coordinates[piv, col_idx] % p == 0) or (
+                    piv in dying_B) or (piv in new_pivots) or (col_idx in birth_A):
                 pivots_Im[col_idx] = pivot_check_reduce(
                     Im_coordinates, active_B, col_idx, pivots_Im[:col_idx],
                     p, T)
