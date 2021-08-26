@@ -10,7 +10,7 @@ from permaviss.simplicial_complexes.differentials import complex_differentials
 from permaviss.persistence_algebra.PH_classic import persistent_homology
 
 
-def test_double_complex():
+def test_zig_zags():
     # creating and saving new point cloud ############
     X = torus3D(1000, 1, 3)
     point_cloud = take_sample(X, 300)
@@ -90,3 +90,7 @@ def test_double_complex():
             # end for
         # end for
     # end for
+
+
+if __name__ == "__main__":
+    test_zig_zags()

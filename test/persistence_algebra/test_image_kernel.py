@@ -77,14 +77,14 @@ def test_image_kernel_5():
     A_rel = barcode_basis([[0, 2], [1, 4], [1, 3]])
     B = barcode_basis([[0, 3], [0, 2], [0, 2]])
     F = np.array([[0, 0, 0, 1], [4, 0, 1, 3], [1, 0, 1, 4]])
-    res_Im, res_Ker, PreIm = image_kernel(
+    res_Im, PreIm = image_kernel(
         A, B, F, 5, start_index=1, prev_basis=A_rel)
-    Ker_basis = np.array([[0, 2], [2, 4]])
+    # Ker_basis = np.array([[0, 2], [2, 4]])
     Im_basis = np.array([[1, 3], [1, 2]])
     res_PreIm = np.array([[0, 0], [4, 1], [1, 0]])
-    assert np.array_equal(Im_basis, res_Im.barcode)
-    assert np.array_equal(Ker_basis, res_Ker.barcode)
-    assert np.array_equal(res_PreIm, PreIm)
+    assert np.array_equal(Im_basis, res_Im.barcode.astype(float))
+    # assert np.array_equal(Ker_basis, res_Ker.barcode)
+    assert np.array_equal(res_PreIm, PreIm.astype(float))
 
 
 def test_image_kernel_6():
@@ -196,16 +196,16 @@ def test_image_kernel_6():
         [0.,   1.],
         [0.,   0.4],
         [0.,   0.4]])
-    res_Im_sh, res_Ker_sh, PreIm_sh = image_kernel(
+    res_Im_sh, PreIm_sh = image_kernel(
         A_shuffle, B_shuffle, F_shuffle, 5,
         start_index=start_idx, prev_basis=A_rel)
-    res_Im, res_Ker, PreIm = image_kernel(
+    res_Im, PreIm = image_kernel(
         A, B, F, 5,  start_index=start_idx, prev_basis=A_rel)
     shuffleA = shuffleA - start_idx
     assert np.array_equal(res_Im_sh.barcode, Im)
     assert np.array_equal(res_Im.barcode, Im)
-    assert np.array_equal(res_Ker_sh.coordinates,
-                          res_Ker.coordinates[shuffleA])
+    # assert np.array_equal(res_Ker_sh.coordinates,
+    #                      res_Ker.coordinates[shuffleA])
 
 
 def test_image_kernel_7():
@@ -252,7 +252,7 @@ def test_image_kernel_8():
         [1, 1, 0, 0],
         [1, 0, 1, 0],
         [1, 0, 0, 1]])
-    res_Im, res_Ker, PreIm = image_kernel(A, B, F, 5, start_index=1)
+    res_Im, PreIm = image_kernel(A, B, F, 5, start_index=1)
     Im_bar = np.array([
         [0.,  4.],
         [1.,  3.],
@@ -262,6 +262,10 @@ def test_image_kernel_8():
         [0.,  1.,  1.],
         [0.,  0.,  1.]])
     assert np.array_equal(Im_bar, res_Im.barcode)
+    print("Im_coord")
+    print(Im_coord)
+    print("res_Im.coordinates")
+    print(res_Im.coordinates)
     assert np.array_equal(Im_coord, res_Im.coordinates)
 
 
@@ -286,3 +290,15 @@ def test_image_kernel_9():
     assert np.array_equal(Ker_barcode, res_Ker.barcode)
     assert np.array_equal(Ker_coord, res_Ker.coordinates)
     assert np.array_equal(res_PreIm, PreIm)
+
+
+if __name__ == "__main__":
+    test_image_kernel_1()
+    test_image_kernel_2()
+    test_image_kernel_3()
+    test_image_kernel_4()
+    test_image_kernel_5()
+    test_image_kernel_6()
+    test_image_kernel_7()
+    test_image_kernel_8()
+    test_image_kernel_9()

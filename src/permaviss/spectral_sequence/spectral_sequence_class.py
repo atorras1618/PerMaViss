@@ -1076,7 +1076,6 @@ class spectral_sequence(object):
         Sdeg = start_deg
         Sn_dim = start_n_dim
         for idx, chains in enumerate(Hom_reps):
-            print("lift to infty page")
             # lift to infinity page and substract betas
             Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
                                             death_radii)
@@ -1086,7 +1085,6 @@ class spectral_sequence(object):
             # STORE EXTENSION COEFFICIENTS
             self.extensions[start_n_dim][start_deg][idx] = Betas.T
             # MODIFY TOTAL COMPLEX REPS using BETAS
-            print("modify using betas")
             if np.any(Betas):
                 for ext_deg, Schains in enumerate(
                         self.Hom_reps[self.no_pages - 1][Sn_dim][Sdeg]):
@@ -1096,15 +1094,24 @@ class spectral_sequence(object):
                     for k, local_coord in enumerate(
                             Hom_reps[ext_deg + idx].coord):
                         local_ref = Hom_reps[ext_deg + idx].ref[k]
-                        if len(local_ref) > 0:
+                        if (len(local_ref)) > 0 and (
+                                len(local_chains_beta.ref[k]) > 0):
+                            if not np.array_equal(
+                                    local_ref, local_chains_beta.ref[k]):
+                                raise ValueError
                             Hom_reps[ext_deg + idx].coord[k] = (
                                 local_coord + local_chains_beta.coord[k]
                                 ) % self.p
+                        elif len(local_chains_beta.ref[k]) > 0:
+                            Hom_reps[ext_deg + idx].ref[
+                                k] = local_chains_beta.ref[k]
+                            Hom_reps[ext_deg + idx].coord[
+                                k] = local_chains_beta.coord[k]
+                        # end elif
                     # end for
                 # end for
             # end if
             # reduce up to 1st page using gammas
-            print("reduce using gammas")
             for target_page in range(self.no_pages, 1, -1):
                 # get coefficients on first page
                 Betas, _ = self.first_page_lift(Sn_dim, Sdeg, chains,
@@ -1149,7 +1156,6 @@ class spectral_sequence(object):
                 # end if
             # end for
             # lift to first page
-            print("lift and cech diff")
             Betas, lift_coord = self.first_page_lift(Sn_dim, Sdeg, chains,
                                                      death_radii)
 

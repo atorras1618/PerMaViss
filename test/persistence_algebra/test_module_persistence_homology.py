@@ -26,3 +26,7 @@ def test_module_persistence_homology():
     for j in range(3):
         assert np.array_equal(Hom[j].barcode, H[j])
         assert np.array_equal(PreIm[j], PreImages[j])
+
+
+if __name__ == "__main__":
+    test_module_persistence_homology()
