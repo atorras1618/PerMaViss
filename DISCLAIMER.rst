@@ -2,11 +2,9 @@
 DISCLAIMER
 ==========
 
-**The main purpose of this library is to explore how the Persistent Mayer Vietoris spectral sequence can be used for computing persistent homology.**
+**The main purpose of this library is to explore how the Persistent Mayer Vietoris
 
-**This does not pretend to be an optimal library. Thus, this is slower than most other persistent homology computations.**
-
-**This library is still on development and is still highly undertested. If you notice any issues, please email
+**This library is still on development. If you notice any issues, please email
 TorrasCasasA@cardiff.ac.uk**
 
 **This library is published under the standard MIT licence. Thus:
