@@ -165,7 +165,7 @@ SOFTWARE.**
 How to cite
 ===========
 
-Álvaro Torras Casas. (2020, January 20). PerMaViss: Persistence Mayer Vietoris spectral sequence (Version v0.0.2). Zenodo. http://doi.org/10.5281/zenodo.3613870
+Álvaro Torras Casas. (2021). PerMaViss: Persistence Mayer Vietoris spectral sequence (v0.2). Zenodo. https://doi.org/10.5281/zenodo.5266475
 
 Reference
 =========
