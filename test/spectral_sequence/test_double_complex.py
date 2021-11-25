@@ -12,16 +12,16 @@ from permaviss.persistence_algebra.PH_classic import persistent_homology
 
 def test_double_complex():
     # creating and saving new point cloud ############
-    X = random_cube(1000, 3)
-    point_cloud = take_sample(X, 180)
-    output_file = open("test/spectral_sequence/random_cube.txt", "w")
-    for row in point_cloud:
-        np.savetxt(output_file, row)
-    output_file.close()
+    # X = random_cube(1000, 3)
+    # point_cloud = take_sample(X, 180)
+    # output_file = open("test/spectral_sequence/random_cube.txt", "w")
+    # for row in point_cloud:
+    #     np.savetxt(output_file, row)
+    # output_file.close()
     # using old point cloud ###################
-    # saved_data = np.loadtxt("test/spectral_sequence/random_cube.txt")
-    # no_points = int(np.size(saved_data,0) / 3)
-    # point_cloud = np.reshape(saved_data, (no_points, 3))
+    saved_data = np.loadtxt("test/spectral_sequence/random_cube.txt")
+    no_points = int(np.size(saved_data,0) / 3)
+    point_cloud = np.reshape(saved_data, (no_points, 3))
     max_r = 0.2
     max_dim = 3
     max_div = 3
