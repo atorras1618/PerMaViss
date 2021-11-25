@@ -3,7 +3,7 @@ import numpy as np
 import scipy.spatial.distance as dist
 
 
-def take_sample(point_cloud, no_samples):
+def take_sample(point_cloud, no_samples, seed=None):
     """ Take a subsample from samples using a minmax algorithm.
 
     We start from a random point. Then choose the point further appart. Next,
@@ -17,6 +17,8 @@ def take_sample(point_cloud, no_samples):
     np_samples : int
         Number of samples that we want to take. It has to be smaller than
         the dimension of `point_cloud`.
+    seed : None or int
+        Set a random seed.
 
     Returns
     -------
@@ -24,6 +26,8 @@ def take_sample(point_cloud, no_samples):
         Matrix storing the coordinates of the sampled points.
 
     """
+    if seed != None:
+        np.random.seed(seed)
     no_points = len(point_cloud)
     no_samples = min(no_points, no_samples)
     Dist = dist.squareform(dist.pdist(point_cloud))
@@ -66,7 +70,7 @@ def circle(no_points, radius):
     return np.asarray(point_cloud)
 
 
-def random_circle(no_points, radius, epsilon, center=[0, 0]):
+def random_circle(no_points, radius, epsilon, center=[0, 0], seed=None):
     """ Take random points around a circle on the plane.
 
     Parameters
@@ -79,6 +83,8 @@ def random_circle(no_points, radius, epsilon, center=[0, 0]):
         Noise that we want to apply to each sampled point.
     centre : `list(float, float)`
         Two entries specifying the position of the centre.
+    seed : None or int
+        Set a random seed.
 
     Returns
     -------
@@ -86,6 +92,8 @@ def random_circle(no_points, radius, epsilon, center=[0, 0]):
         Coordinates of sampled points from around the circle.
 
     """
+    if seed != None:
+        np.random.seed(seed)
     point_cloud = []
     for n in range(no_points):
         random_angle = np.random.rand() * 2 * np.pi

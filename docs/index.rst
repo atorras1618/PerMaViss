@@ -27,7 +27,6 @@ Also, it would be great to have more examples for different covers. Additionally
    about/index.rst
    install.rst
    examples/index.rst
-   notebooks/index.rst
    reference/index.rst
 
 
