@@ -15,7 +15,6 @@ setup.cfg
 *.swp
 *_templates*
 %SystemDrive%
-**/random_cube.txt
 
 # profiling
 prof.calltree
