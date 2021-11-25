@@ -2,13 +2,13 @@
 Usage and examples
 ==================
 
-In these tutorials we will see how data can be broken down into pieces and persistent homology can still be computed through the Mayer-Vietoris procedure. 
+In these tutorials we will see how data can be broken down into pieces and persistent homology can still be computed through the Mayer-Vietoris procedure.
 Check the `notebooks <https://github.com/atorras1618/PerMaViss/tree/master/examples>`_ if you prefer to work through these.
 
 Torus
 -----
 
-We compute persistent homology through two methods. First we compute persistent homology using the standard method. Then we compute this again using the Persistence Mayer Vietoris spectral sequence. At the end we compare both results and confirm that they coincide. 
+We compute persistent homology through two methods. First we compute persistent homology using the standard method. Then we compute this again using the Persistence Mayer Vietoris spectral sequence. At the end we compare both results and confirm that they coincide.
 
 First we do all the relevant imports for this example
 
@@ -25,7 +25,7 @@ We start by taking a sample of 1300 points from a torus of section radius 1 and 
 
 
 Next we compute the distance matrix of `point_cloud`. Also we compute the Vietoris Rips complex of `point_cloud`
-up to a maximum dimension `3` and maximum filtration radius `1.6`. 
+up to a maximum dimension `3` and maximum filtration radius `1.6`.
 
     >>> Dist = dist.squareform(dist.pdist(point_cloud))
     >>> max_r = 1.6
@@ -38,7 +38,7 @@ Then we get the persistent homology of `point_cloud` with the specified paramete
     >>> p = 5
     >>> Diff = complex_differentials(C, p)
     >>> PerHom, _, _ = persistent_homology(Diff, R, max_r, p)
-    >>> print(PerHom[2].barcode)    
+    >>> print(PerHom[2].barcode)
     [[ 1.36770353  1.38090695]
      [ 1.51515438  1.6       ]]
 
@@ -65,7 +65,7 @@ Now we will proceed to compute again persistent homology of `point_cloud` using 
      [161   5   0   0   0   0   0   0   0]]
 
 
-Now, we compare the computed persistent homology barcodes by both methods. Unless an `AssertError` comes up, this means that the computed barcodes **coincide**. Also, we plot the relevant barcodes. 
+Now, we compare the computed persistent homology barcodes by both methods. Unless an `AssertError` comes up, this means that the computed barcodes **coincide**. Also, we plot the relevant barcodes.
 
     >>> for it, PH in enumerate(MV_ss.persistent_homology):
     >>>     # Check that computed barcodes coincide
@@ -81,9 +81,9 @@ Now, we compare the computed persistent homology barcodes by both methods. Unles
     >>>     for k, b in enumerate(PH.barcode):
     >>>         ax.fill([b[0],b[1],b[1],b[0]],[y_coord,y_coord,y_coord+width,y_coord+width],'black',label='H0')
     >>>         y_coord += step
-    >>>   
-    >>> 
-    >>>     # Show figure 
+    >>>
+    >>>
+    >>>     # Show figure
     >>>     ax.axes.get_yaxis().set_visible(False)
     >>>     ax.set_xlim([min_r,max_r])
     >>>     ax.set_ylim([-step, max_r + step])
@@ -99,7 +99,7 @@ Now, we compare the computed persistent homology barcodes by both methods. Unles
 .. image:: TorusBarcode2.png
    :width: 500
 
-Here we look at the extension information on one dimensional persistence classes. For this we exploit the extra information stored in `MV_ss`. What we do is plot the one dimensional barcodes, highlighting those bars from the ``(0,1)`` position in the infinity page in red. Also, we highlight in blue when these bars are extended by a bar in the ``(1,0)`` position on the infinity page. All the black bars are only coming from classes in the ``(1,0)`` position on the infinity page.  
+Here we look at the extension information on one dimensional persistence classes. For this we exploit the extra information stored in `MV_ss`. What we do is plot the one dimensional barcodes, highlighting those bars from the ``(0,1)`` position in the infinity page in red. Also, we highlight in blue when these bars are extended by a bar in the ``(1,0)`` position on the infinity page. All the black bars are only coming from classes in the ``(1,0)`` position on the infinity page.
 
     >>> PH = MV_ss.persistent_homology
     >>> start_rad = min(PH[1].barcode[:,0])
@@ -120,9 +120,9 @@ Here we look at the extension information on one dimensional persistence classes
     >>>         ax.fill([b[0], midpoint, midpoint, b[0]],[y_coord,y_coord,y_coord+step,y_coord+step],c="#bc4b51", edgecolor='none')
     >>>         ax.fill([midpoint, b[1], b[1], midpoint],[y_coord,y_coord,y_coord+step,y_coord+step],c='#468189', edgecolor='none')
     >>>         y_coord = y_coord + step
-    >>> 
-    >>>     y_coord += 2 * step 
-    >>> 
+    >>>
+    >>>     y_coord += 2 * step
+    >>>
     >>> # Show figure
     >>> ax.axes.get_yaxis().set_visible(False)
     >>> ax.set_xlim([start_rad,end_rad])
@@ -132,13 +132,13 @@ Here we look at the extension information on one dimensional persistence classes
 .. image:: TorusExtension.png
   :width: 500
 
-We can also study the representatives associated to these barcodes. In the following, we go through 
+We can also study the representatives associated to these barcodes. In the following, we go through
 all possible extended bars. In red, we plot representatives of a class from ``(1,0)``. These are
-extended to representatives from ``(0,1)`` that we plot in dashed yellow lines. 
+extended to representatives from ``(0,1)`` that we plot in dashed yellow lines.
 
     >>> extension_indices = [i for i, x in enumerate(
     >>>     np.any(MV_ss.extensions[1][0][1], axis=0)) if x]
-    >>> 
+    >>>
     >>> for idx_cycle in extension_indices:
     >>>     # initialize plot
     >>>     fig = plt.figure()
@@ -150,20 +150,20 @@ extended to representatives from ``(0,1)`` that we plot in dashed yellow lines.
     >>>         end_point = point_cloud[edge[1]]
     >>>         ax.plot([start_point[0], end_point[0]],
     >>>                 [start_point[1], end_point[1]],
-    >>>                 [start_point[2], end_point[2]], 
+    >>>                 [start_point[2], end_point[2]],
     >>>                 color="#031926",
     >>>                 alpha=0.5*((max_r-Dist[edge[0],edge[1]])/max_r))
-    >>>     
+    >>>
     >>>     # plot vertices
     >>>     poly3d = []
     >>>     for face in C[2]:
     >>>         triangles = []
     >>>         for pt in face:
     >>>             triangles.append(point_cloud[pt])
-    >>>         
+    >>>
     >>>         poly3d.append(triangles)
-    >>>         
-    >>>     ax.add_collection3d(Poly3DCollection(poly3d, linewidths=1, 
+    >>>
+    >>>     ax.add_collection3d(Poly3DCollection(poly3d, linewidths=1,
     >>>                                          alpha=0.1, color='#468189'))
     >>>     # plot red cycle, that is, a cycle in (1,0)
     >>>     cycle = MV_ss.tot_complex_reps[1][0][1][idx_cycle]
@@ -177,7 +177,7 @@ extended to representatives from ``(0,1)`` that we plot in dashed yellow lines.
     >>>                 plt.plot(
     >>>                     [start_pt[0], end_pt[0]], [start_pt[1],end_pt[1]],
     >>>                     [start_pt[2], end_pt[2]], c="#bc4b51", linewidth=5)
-    >>>         # end if 
+    >>>         # end if
     >>>     # end for
     >>>     # Plot yellow cycles from (0,1) that extend the red cycle
     >>>     for idx, cycle in enumerate(MV_ss.tot_complex_reps[0][1][0]):
@@ -195,9 +195,9 @@ extended to representatives from ``(0,1)`` that we plot in dashed yellow lines.
     >>>                                 1][int(l)][1]]
     >>>                         plt.plot([start_pt[0], end_pt[0]],
     >>>                                  [start_pt[1],end_pt[1]],
-    >>>                                  [start_pt[2], end_pt[2]], 
+    >>>                                  [start_pt[2], end_pt[2]],
     >>>                                  '--', c='#f7cd6c', linewidth=2)
-    >>>                 # end if 
+    >>>                 # end if
     >>>             # end for
     >>>         # end if
     >>>     # end for
@@ -225,7 +225,7 @@ extended to representatives from ``(0,1)`` that we plot in dashed yellow lines.
 Random 3D point cloud
 ---------------------
 
-We can repeat the same procedure as with the torus, but with random 3D point clouds. 
+We can repeat the same procedure as with the torus, but with random 3D point clouds.
 First we do all the relevant imports for this example
 
     >>> import scipy.spatial.distance as dist
@@ -241,7 +241,7 @@ We start by taking a sample of 1300 points from a torus of section radius 1 and 
 
 
 Next we compute the distance matrix of `point_cloud`. Also we compute the Vietoris Rips complex of `point_cloud`
-up to a maximum dimension `3` and maximum filtration radius `1.6`. 
+up to a maximum dimension `3` and maximum filtration radius `1.6`.
 
     >>> Dist = dist.squareform(dist.pdist(point_cloud))
     >>> max_r = 0.39
@@ -249,7 +249,7 @@ up to a maximum dimension `3` and maximum filtration radius `1.6`.
     >>> C, R = vietoris_rips(Dist, max_r, max_dim)
 
 Afterwards, we compute the complex differentials using arithmetic mod `p`, a prime number.
-Then we get the persistent homology of `point_cloud` with the specified parameters. We store the result in `PerHom`. 
+Then we get the persistent homology of `point_cloud` with the specified parameters. We store the result in `PerHom`.
 
     >>> p = 5
     >>> Diff = complex_differentials(C, p)
@@ -286,8 +286,8 @@ Now we will proceed to compute again persistent homology of `point_cloud` using 
          [65  3  0  0  0  0  0  0  0]
          [91  7  1  0  0  0  0  0  0]]
 
-In particular, notice that in this example the second page differential is nonzero. 
-Now, we compare the computed persistent homology barcodes by both methods. Unless an `AssertError` comes up, this means that the computed barcodes **coincide**. Also, we plot the relevant barcodes. 
+In particular, notice that in this example the second page differential is nonzero.
+Now, we compare the computed persistent homology barcodes by both methods. Unless an `AssertError` comes up, this means that the computed barcodes **coincide**. Also, we plot the relevant barcodes.
 
     >>> for it, PH in enumerate(MV_ss.persistent_homology):
     >>>     # Check that computed barcodes coincide
@@ -303,9 +303,9 @@ Now, we compare the computed persistent homology barcodes by both methods. Unles
     >>>     for k, b in enumerate(PH.barcode):
     >>>         ax.fill([b[0],b[1],b[1],b[0]],[y_coord,y_coord,y_coord+width,y_coord+width],'black',label='H0')
     >>>         y_coord += step
-    >>>   
-    >>> 
-    >>>     # Show figure 
+    >>>
+    >>>
+    >>>     # Show figure
     >>>     ax.axes.get_yaxis().set_visible(False)
     >>>     ax.set_xlim([min_r,max_r])
     >>>     ax.set_ylim([-step, max_r + step])
@@ -354,16 +354,16 @@ Here we look at the extension information on one dimensional persistence classes
     >>>                     # end if
     >>>                 # end for
     >>>             # end if
-    >>> 
+    >>>
     >>>         # end for
     >>>         if current_rad < b[1]:
     >>>             ax.fill([current_rad, b[1], b[1], current_rad],
     >>>                             [y_coord,y_coord,y_coord+step,y_coord+step],
     >>>                             c="#031926")
-    >>>         # end if    
+    >>>         # end if
     >>>         y_coord = y_coord + 2 * step
     >>>     # end for
-    >>> 
+    >>>
     >>>     # Show figure
     >>>     ax.axes.get_yaxis().set_visible(False)
     >>>     ax.set_xlim([start_rad, end_rad])

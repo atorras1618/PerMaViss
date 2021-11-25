@@ -30,7 +30,7 @@ def take_sample(point_cloud, no_samples):
     k = int(np.random.rand() * no_points) - 1
     selection = [k]
     point_selection = [point_cloud[k]]
-    for i in range(no_samples):
+    for i in range(no_samples-1):
         not_selected = np.setdiff1d(range(no_points), selection)
         rest_Dist = np.min(Dist[not_selected][:, selection], axis=1)
         k = not_selected[np.argmax(rest_Dist)]
