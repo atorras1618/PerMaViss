@@ -131,7 +131,7 @@ class spectral_sequence(object):
         # dimensions of spectral sequence
         self.no_pages = no_pages
         self.no_rows = max_dim
-        self.no_columns = len(nerve) - 1
+        self.no_columns = len(nerve)
         self.max_r = max_r
         self.p = p
         local_chains.p = p
