@@ -15,6 +15,9 @@
 .. image:: https://zenodo.org/badge/222728935.svg
    :target: https://zenodo.org/badge/latestdoi/222728935
 
+.. image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/atorras1618/PerMaViss/HEAD
+
 PerMaViss
 *********
 

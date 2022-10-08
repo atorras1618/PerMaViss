@@ -13,7 +13,5 @@ PerMaViss requires:
 Optional for examples and notebooks:
 
 - Matplotlib
-- mpl_toolkits
 
 .. include:: ../INSTALLATION.rst
-
